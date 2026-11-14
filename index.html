@@ -17,7 +17,7 @@ async function auth(kind){
   login.disabled=true;signup.disabled=true;show(kind==='signup'?'Отправляем запрос на регистрацию…':'Проверяем данные для входа…');
   const slow=setTimeout(()=>show('Сервер отвечает дольше обычного. Не нажимай кнопку повторно.'),12000);
   try{
-    const result=kind==='signup'?await db.auth.signUp({email,password}):await db.auth.signInWithPassword({email,password});
+    const result=kind==='signup'?await db.auth.signUp({email,password,options:{emailRedirectTo:'https://kirillbebzenka-coder.github.io/teplo-app/'}}):await db.auth.signInWithPassword({email,password});
     if(result.error)throw result.error;
     if(kind==='signup'){
       show(result.data?.session?'Аккаунт создан, вход выполнен.':'Запрос принят. Проверь письмо для подтверждения email (включая Спам).');
