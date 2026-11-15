@@ -14,9 +14,59 @@ nav.teplo-tabs a[aria-current="page"]{background:#281d2a;color:#d89a45;border-co
 .qty-controls{display:flex;gap:13px;align-items:center}.qty-controls button{min-width:40px;font-size:21px}.product button{display:block;margin-top:12px}.cart-line strong{flex:1;min-width:100px}#goCheckout{width:100%;margin-top:8px}
 
 #orders{scroll-margin-top:20px}#orders .order{border-color:#655167 !important}#demoCheckoutStatus{line-height:1.5;font-weight:650}
-</style><link rel="stylesheet" href="./theme.css?v=20"></head><body><main><header><div><h1>TEPLO</h1><small>Доставка с теплом · Теплодар</small></div><span id="connection">Проверяем…</span></header><nav class="teplo-tabs" aria-label="Разделы TEPLO"><a href="./?v=15" aria-current="page">🛍<span>Покупатель</span></a><a href="dispatcher.html?v=15">📋<span>Диспетчер</span></a><a href="shop.html?v=17">🏪<span>Магазин</span></a><a href="courier.html?v=15">🛵<span>Курьер</span></a></nav><section><h2>Вход</h2><p class="muted">Для просмотра каталога вход не нужен. Для просмотра своих заказов — нужен.</p><input id="email" type="email" autocomplete="email" placeholder="Email"><input id="password" type="password" autocomplete="current-password" placeholder="Пароль (минимум 6 символов)"><button id="login">Войти</button> <button id="signup">Регистрация</button> <button id="resend">Повторить письмо</button> <button id="logout" hidden>Выйти</button><p id="authStatus" role="status" aria-live="polite" style="min-height:24px;color:#d89a45;font-weight:600"></p><p id="who"></p></section><section id="delivery-form"><h2>📍 Доставка и оплата</h2><p class="muted">Выбери товары в каталоге, проверь корзину, укажи данные доставки. Создаём только демонстрационные заказы без оплаты и реальной доставки.</p><div class="amount-preview" id="checkoutSummary">Корзина пуста. Выбери товар ниже.</div><div>
+</style><link rel="stylesheet" href="./theme.css?v=24"><style>
+/* TEPLO UX v24: one obvious action at a time */
+.welcome{padding:16px 3px 18px}
+.welcome>span{color:#d5a36e;text-transform:uppercase;font-size:12px;letter-spacing:.13em;font-weight:750}
+.welcome h2{margin:9px 0 8px;color:#f4eef4;font-size:clamp(25px,6vw,34px);line-height:1.18;letter-spacing:-.02em}
+.welcome p{color:#a9adba;line-height:1.4;margin:0;font-size:14px}
+header{margin:0 0 5px}
+.quick-orders{border:1px solid #75516b;color:#e9b5d1!important;border-radius:12px;padding:9px 12px;text-decoration:none;font-weight:750;font-size:13px;white-space:nowrap}
+#accountSection{padding:0!important;margin:0 0 18px!important;border:1px solid #3f3848!important;overflow:hidden}
+#authDetails>summary{padding:15px 16px;color:#eadce6;font-size:14px;cursor:pointer;font-weight:700;list-style:none}
+#authDetails>summary::-webkit-details-marker{display:none}
+.auth-content{border-top:1px solid #343b4c;padding:13px}
+.auth-content input{height:48px}
+#market{background:transparent!important;border:0!important;box-shadow:none!important;padding:0!important;margin:8px 0 18px!important}
+.heading-row{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.heading-row h2{margin:0}
+.demo-tag{border:1px solid #664a61;border-radius:20px;color:#efb2d2;padding:4px 9px;font-size:11px;letter-spacing:.04em}
+#market .shop{margin:12px 0!important;padding:17px!important}
+#market .product{border-radius:14px!important;box-shadow:none!important;background:#161e29!important;padding:14px!important;display:grid;grid-template-columns:minmax(0,1fr) auto;column-gap:12px;align-items:center}
+#market .product strong{grid-column:1;font-size:16px}
+#market .product p{grid-column:1;color:#ebba85!important;font-weight:800;margin:5px 0}
+#market .product small{grid-column:1;font-size:12px;line-height:1.3}
+#market .product .add-btn{grid-column:2;grid-row:1/span 3;min-height:43px;padding:9px 12px;white-space:nowrap;font-size:14px}
+#market h3{color:#e2b0ce}
+#catalogStatus{font-size:13px;min-height:18px;color:#e1b68e}
+#market #refresh{font-size:13px;background:#232a39!important;color:#edd8e4!important;border:1px solid #4e4355!important;padding:7px 12px}
+#cart-section,#delivery-form,#orders-section{scroll-margin-top:17px}
+#cart-section h2,#delivery-form h2{margin-top:0}
+#cart-section>button,#delivery-form #saveDemoCheckout{width:100%;min-height:52px}
+#delivery-form label{font-size:13px}
+#delivery-form input,#delivery-form select{min-height:48px;margin-top:6px}
+#delivery-form>p.muted{font-size:13px}
+#orderSuccess{background:#251e2b!important;border:1px solid #75516b!important}
+#orderSuccess h2{color:#f3c1da;margin-top:0}
+#cartBar{position:fixed;left:0;right:0;bottom:calc(78px + env(safe-area-inset-bottom));z-index:210;padding:0 10px;pointer-events:none}
+#cartBar[hidden]{display:none}
+.cart-bar-inner{max-width:680px;margin:auto;display:flex;gap:10px;align-items:center;background:#2a2230;border:1px solid #8e647f;padding:8px 10px 8px 15px;border-radius:16px;box-shadow:0 13px 30px #0009;pointer-events:auto}
+.cart-bar-copy{flex:1;min-width:0}.cart-bar-copy strong{font-size:15px}.cart-bar-copy small{display:block;color:#b4acb7;font-size:12px}
+#cartBarOpen{white-space:nowrap;min-height:44px;padding:8px 12px}
+#oldTechnical{display:none!important}
+#orders-section .order{margin:10px 0!important}
+#orders-section .order h3{font-size:17px;margin:0}
+#orders-section .order p{font-size:14px;margin:9px 0}
+#orders-section #refreshOrders{background:#232a39!important;color:#e8d9e4!important;font-size:13px}
+main{padding-bottom:calc(172px + env(safe-area-inset-bottom))}
+@media(max-width:420px){header h1{font-size:38px}.welcome h2{font-size:27px}#market .product .add-btn{font-size:12px;padding:9px 8px}section{padding:14px!important}}
+</style></head><body><main><header><div><h1>TEPLO</h1><small>Доставка с теплом · Теплодар</small></div><a href="#orders-section" class="quick-orders">Мои заказы</a><span id="connection" hidden>Проверяем…</span></header><nav class="teplo-tabs" aria-label="Разделы TEPLO"><a href="./?v=15" aria-current="page">🛍<span>Покупатель</span></a><a href="dispatcher.html?v=15">📋<span>Диспетчер</span></a><a href="shop.html?v=17">🏪<span>Магазин</span></a><a href="courier.html?v=15">🛵<span>Курьер</span></a></nav><div class="welcome"><span>Доставка с теплом</span><h2>Выбирай вкусное.<br>Остальное — просто.</h2><p>Пока всё работает в тестовом режиме — без оплаты и доставки.</p></div>
+<section id="accountSection" class="account-section"><details id="authDetails"><summary id="accountSummary">Аккаунт · Войти / регистрация</summary><div class="auth-content"><p class="muted">Вход нужен только для оформления заказа и просмотра его статуса.</p><input id="email" type="email" autocomplete="email" placeholder="Email"><input id="password" type="password" autocomplete="current-password" placeholder="Пароль (минимум 6 символов)"><button id="login">Войти</button> <button id="signup">Регистрация</button> <button id="resend">Повторить письмо</button> <button id="logout" hidden>Выйти</button><p id="authStatus" role="status" aria-live="polite" style="min-height:24px;color:#d89a45;font-weight:600"></p><p id="who"></p></div></details></section>
+<section id="market"><div class="heading-row"><h2>1. Выбери товары</h2><span class="demo-tag">● ТЕСТ</span></div><p class="muted">Нажми «+ Добавить» у понравившегося товара.</p><button id="refresh">Обновить</button><div id="catalog"></div></section>
+<section id="cart-section" hidden><h2>2. Корзина</h2><button type="button" id="backToCatalog" class="secondary">← Назад к товарам</button><div id="cart"></div><button id="goCheckout">Продолжить →</button></section>
+<section id="delivery-form" hidden><h2>3. Оформление</h2><button type="button" id="backToCart" class="secondary">← Вернуться в корзину</button><p class="muted">Введи данные и подтверди тестовый заказ.</p><div class="amount-preview" id="checkoutSummary">Корзина пуста. Выбери товар ниже.</div><div>
 
-<p class="muted">Только для теста: укажи вымышленные имя, телефон и адрес. Настоящую оплату не запрашиваем.</p><label class="field" for="demoName">Имя получателя</label><input id="demoName" maxlength="100" placeholder="Тестовый покупатель"><label class="field" for="demoPhone">Телефон получателя (тестовый)</label><input id="demoPhone" type="tel" maxlength="22" placeholder="+380000000000">
+<p class="muted">Для теста используй вымышленные данные. Настоящей доставки и оплаты нет.</p><label class="field" for="demoName">Имя получателя</label><input id="demoName" maxlength="100" placeholder="Тестовый покупатель"><label class="field" for="demoPhone">Телефон получателя (тестовый)</label><input id="demoPhone" type="tel" maxlength="22" placeholder="+380000000000">
 <label class="field" for="demoStreet">Улица в Теплодаре</label>
 <input id="demoStreet" maxlength="100" autocomplete="street-address" placeholder="Например, улица Центральная">
 <label class="field" for="demoHouse">Дом</label><input id="demoHouse" maxlength="20" placeholder="Например, 10">
@@ -26,20 +76,29 @@ nav.teplo-tabs a[aria-current="page"]{background:#281d2a;color:#d89a45;border-co
 <option value="cash_on_delivery">Наличными при получении</option>
 <option value="card_on_delivery">Картой при получении (при наличии терминала)</option>
 </select>
-<button id="saveDemoCheckout">Оформить тестовый заказ</button>
-<p id="demoCheckoutStatus" role="status" aria-live="polite"></p></div></section><section id="market"><h2>🏪 Магазины и товары</h2><p class="muted">Добавь товары в корзину. Пока доступен тестовый магазин.</p><button id="refresh">Обновить каталог</button><div id="catalog"></div></section><section id="cart-section"><h2>🛒 Корзина</h2><div id="cart"></div><button id="goCheckout">Перейти к доставке и оплате ↑</button></section><section><details><summary>Дополнительные технические проверки (необязательно)</summary><p class="muted">Настоящие заказы сейчас выключены.</p><button id="testCheckout">Создать демонстрационный заказ без адреса</button><p id="testStatus" role="status" aria-live="polite"></p><details><summary>Обычное оформление (пока выключено)</summary><p class="muted">Реальные заказы пока заблокированы на сервере.</p><select id="shopPick" style="width:100%;padding:12px;background:#0b1220;color:white"></select><div id="productPick"></div><input id="custName" placeholder="Имя"><input id="custPhone" placeholder="Телефон"><input id="custAddress" placeholder="Адрес доставки"><button id="checkout" disabled title="Доставка пока выключена">Оформить настоящий заказ (выключено)</button><p id="checkoutStatus"></p></details></details></section><section><h2>Мои заказы</h2><button id="refreshOrders">Обновить заказы</button><div id="orders" role="region" aria-live="polite" aria-label="Мои заказы"></div></section><section><h2>Состояние</h2><p id="msg">Подключаемся…</p><p class="muted">Реальные доставки пока отключены. Тестовые суммы вычисляет сервер.</p></section></main><script type="module">
+<button id="saveDemoCheckout">Подтвердить заказ (тест)</button>
+<p id="demoCheckoutStatus" role="status" aria-live="polite"></p></div></section>
+<section id="orderSuccess" hidden><h2>✓ Заказ оформлен!</h2><p id="successDetails">Диспетчер скоро увидит тестовый заказ.</p></section>
+<section id="orders-section"><h2>Мои заказы</h2><button id="refreshOrders">Обновить</button><div id="orders" role="region" aria-live="polite" aria-label="Мои заказы"></div></section>
+<div hidden id="oldTechnical"><section><details><summary>Дополнительные технические проверки (необязательно)</summary><p class="muted">Настоящие заказы сейчас выключены.</p><button id="testCheckout">Создать демонстрационный заказ без адреса</button><p id="testStatus" role="status" aria-live="polite"></p><details><summary>Обычное оформление (пока выключено)</summary><p class="muted">Реальные заказы пока заблокированы на сервере.</p><select id="shopPick" style="width:100%;padding:12px;background:#0b1220;color:white"></select><div id="productPick"></div><input id="custName" placeholder="Имя"><input id="custPhone" placeholder="Телефон"><input id="custAddress" placeholder="Адрес доставки"><button id="checkout" disabled title="Доставка пока выключена">Оформить настоящий заказ (выключено)</button><p id="checkoutStatus"></p></details></details></section><section><h2>Состояние</h2><p id="msg">Подключаемся…</p><p class="muted">Реальные доставки пока отключены. Тестовые суммы вычисляет сервер.</p></section></div></main>
+<div id="cartBar" hidden><div class="cart-bar-inner"><div class="cart-bar-copy"><strong id="cartBarTotal">0 грн</strong><small id="cartBarCount">Корзина</small></div><button type="button" id="cartBarOpen">Корзина →</button></div></div>
+<script type="module">
 import {createClient} from 'https://esm.sh/@supabase/supabase-js@2';
 const db=createClient('https://bgtegxdekqsajttkhhrj.supabase.co','sb_publishable_aSOKkJ_F47sGj9e8v8uJ3g_24rlQ8XG');
 const $=id=>document.getElementById(id); const el=(tag,txt='',cls='')=>{const n=document.createElement(tag);n.textContent=String(txt??'');if(cls)n.className=cls;return n};
 let loadedShops=[]; let loadedProducts=[]; let cartShopId=null; let cartItems=new Map(); let cartRequestId=null; let deliveryFeePreview=65;
 const money=n=>new Intl.NumberFormat('uk-UA',{style:'currency',currency:'UAH'}).format(Number(n||0));
 function message(t,error=false){$('msg').textContent=t;$('msg').className=error?'error':'ok'}
-async function session(){const {data,error}=await db.auth.getUser();if(error&&error.name!=='AuthSessionMissingError')message(error.message,true);const u=data?.user;$('who').textContent=u?'Вы вошли: '+u.email:'Гость';$('logout').hidden=!u;return u}
+async function session(){const {data,error}=await db.auth.getUser();if(error&&error.name!=='AuthSessionMissingError')message(error.message,true);const u=data?.user;$('who').textContent=u?'Вы вошли: '+u.email:'Гость';$('logout').hidden=!u;$('accountSummary').textContent=u?'✓ Вошли как '+u.email:'Аккаунт · Войти / регистрация';return u}
 function renderCart(){
  const root=$('cart'),summary=$('checkoutSummary');
  root.replaceChildren();
  const lines=[...cartItems.values()],total=lines.reduce((s,x)=>s+x.price*x.quantity,0);
- if(!lines.length){root.append(el('p','Корзина пуста. Добавь товар из каталога.','muted'));summary.textContent='Корзина пуста — сначала выбери товар.';return}
+ const units=lines.reduce((n,x)=>n+x.quantity,0);
+ $('cartBar').hidden=!units;
+ $('cartBarTotal').textContent=money(total+(units?deliveryFeePreview:0));
+ $('cartBarCount').textContent=units+' '+(units===1?'товар':units<5?'товара':'товаров')+' · с доставкой';
+ if(!lines.length){$('cart-section').hidden=true;$('delivery-form').hidden=true;root.append(el('p','Корзина пока пуста.','muted'));summary.textContent='Выбери товар в каталоге.';return}
  for(const item of lines){
   const row=el('div','','cart-line');
   row.append(el('strong',item.name),el('span',money(item.price*item.quantity)));
@@ -67,7 +126,7 @@ function addToCart(product,shop){
  if(cartShopId&&cartShopId!==shop.id){$('catalogStatus').textContent='Одна корзина — один магазин. Очисти предыдущую корзину перед выбором другого магазина.';return}
  cartShopId=shop.id;
  adjustCart({id:product.id,name:product.name,price:Number(product.price),quantity:0},1);
- $('catalogStatus').textContent='Добавлено: '+product.name;
+ $('catalogStatus').textContent='✓ '+product.name+' добавлено в корзину';
 }
 async function catalog(){
  const root=$('catalog');root.replaceChildren(el('p','Загрузка…'));
@@ -88,7 +147,7 @@ async function catalog(){
     else for(const p of products){
       const line=el('div','','product');
       line.append(el('strong',p.name),el('p',money(p.price)),el('small',p.description||''));
-      const btn=el('button','Добавить в корзину');
+      const btn=el('button','+ Добавить');btn.className='add-btn';
       btn.onclick=()=>addToCart(p,s);line.append(btn);card.append(line)
     }
     root.append(card);
@@ -102,7 +161,7 @@ async function auth(kind){
   const email=$('email').value.trim(), password=$('password').value;
   const status=$('authStatus'), login=$('login'), signup=$('signup');
   const show=(text,error=false)=>{status.textContent=text;status.style.color=error?'#ff9999':'#d89a45'};
-  if(!email||!password){show('Введи email и пароль.',true);return}
+  if(!email||!password){$('authDetails').open=true;show('Введи email и пароль.',true);return}
   if(kind==='signup'&&password.length<6){show('Пароль должен содержать минимум 6 символов.',true);return}
   login.disabled=true;signup.disabled=true;show(kind==='signup'?'Отправляем запрос на регистрацию…':'Проверяем данные для входа…');
   const slow=setTimeout(()=>show('Сервер отвечает дольше обычного. Не нажимай кнопку повторно.'),12000);
@@ -112,7 +171,7 @@ async function auth(kind){
     if(kind==='signup'){
       show(result.data?.session?'Аккаунт создан, вход выполнен.':'Запрос принят. Проверь письмо для подтверждения email (включая Спам).');
     }else{show('Вход выполнен.')}
-    await session(); await orders();
+    await session();if(result.data?.session){$('authDetails').open=false}await orders();
   }catch(e){show('Ошибка: '+(e?.message||String(e)),true)}
   finally{clearTimeout(slow);login.disabled=false;signup.disabled=false}
 }
@@ -144,15 +203,15 @@ async function saveDemoCheckout(){
  if(!cartRequestId)cartRequestId=crypto.randomUUID();
  try{
   const {data:{user},error:authError}=await db.auth.getUser();
-  if(authError||!user)throw Error('Сначала войди в тестовый аккаунт.');
+  if(authError||!user){$('authDetails').open=true;$('accountSection').scrollIntoView({behavior:'smooth'});throw Error('Войди в аккаунт выше и повтори оформление.');}
   const {data,error}=await db.rpc('place_teplo_demo_cart',{
    p_shop_id:cartShopId,p_items:lines.map(x=>({product_id:x.id,quantity:x.quantity})),
    p_customer_name:name,p_customer_phone:phone,p_street:street,p_house:house,
    p_apartment:apartment,p_payment_method:payment,p_request_id:cartRequestId
   });
   if(error)throw error;
-  status.textContent='✅ Тестовый заказ №'+String(data).slice(0,8)+' принят сервером. Он появился в разделе «Мои заказы». Диспетчер увидит его на другом телефоне. Оплата и доставка не выполняются.';
-  cartItems.clear();cartShopId=null;cartRequestId=null;renderCart();await orders();$('orders').scrollIntoView({behavior:'smooth',block:'start'});
+  status.textContent='✓ Заказ оформлен!';$('successDetails').textContent='Тестовый заказ №'+String(data).slice(0,8)+' сохранён. Диспетчер увидит его в своей панели.';$('orderSuccess').hidden=false;
+  cartItems.clear();cartShopId=null;cartRequestId=null;renderCart();await orders();$('orderSuccess').scrollIntoView({behavior:'smooth',block:'start'});
  }catch(e){status.style.color='#ff9999';const reason=e?.message||String(e);status.textContent='Заказ не создан: '+reason+'. Корзина сохранена — можно исправить ошибку и повторить.'}
  finally{btn.disabled=false}
 }
@@ -175,7 +234,10 @@ async function createDemoOrder(){
 }
 async function pickProducts(){const id=$('shopPick').value;const root=$('productPick');root.replaceChildren();loadedProducts=[];if(!id)return;const {data,error}=await db.from('products').select('id,name,price').eq('shop_id',id).eq('is_available',true);if(error){message(error.message,true);return}loadedProducts=data||[];for(const p of loadedProducts){const row=el('label',p.name+' · '+money(p.price)+' — кол-во: ');row.style.display='block';const inp=document.createElement('input');inp.type='number';inp.min='0';inp.max='50';inp.value='0';inp.dataset.product=p.id;row.append(inp);root.append(row)}}
 async function checkout(){try{const u=await session();if(!u)throw Error('Сначала войди');const items=[...$('productPick').querySelectorAll('input')].map(x=>({product_id:x.dataset.product,quantity:Number(x.value)})).filter(x=>Number.isInteger(x.quantity)&&x.quantity>0&&x.quantity<=50);if(!items.length)throw Error('Выбери хотя бы один товар');const name=$('custName').value.trim(),phone=$('custPhone').value.trim(),address=$('custAddress').value.trim();if(!name||!phone||!address)throw Error('Заполни имя, телефон и адрес');$('checkout').disabled=true;const {data,error}=await db.rpc('create_order',{p_shop_id:$('shopPick').value,p_items:items,p_customer_name:name,p_customer_phone:phone,p_delivery_address:address,p_customer_comment:'Тестовый заказ TEPLO'});if(error)throw error;$('checkoutStatus').textContent='Заказ создан: '+data;await orders()}catch(e){$('checkoutStatus').textContent='Ошибка: '+e.message}finally{$('checkout').disabled=false}}
-$('goCheckout').onclick=()=>document.getElementById('delivery-form').scrollIntoView({behavior:'smooth'});renderCart();$('shopPick').onchange=pickProducts;$('checkout').onclick=checkout;$('testCheckout').onclick=createDemoOrder;$('saveDemoCheckout').onclick=saveDemoCheckout;
+$('cartBarOpen').onclick=()=>{$('cart-section').hidden=false;$('cart-section').scrollIntoView({behavior:'smooth',block:'start'})};
+$('backToCatalog').onclick=()=>document.getElementById('market').scrollIntoView({behavior:'smooth',block:'start'});
+$('backToCart').onclick=()=>document.getElementById('cart-section').scrollIntoView({behavior:'smooth',block:'start'});
+$('goCheckout').onclick=()=>{$('delivery-form').hidden=false;document.getElementById('delivery-form').scrollIntoView({behavior:'smooth',block:'start'})};renderCart();$('shopPick').onchange=pickProducts;$('checkout').onclick=checkout;$('testCheckout').onclick=createDemoOrder;$('saveDemoCheckout').onclick=saveDemoCheckout;
 $('login').onclick=()=>auth('login');$('signup').onclick=()=>auth('signup');$('resend').onclick=resendConfirmation;$('logout').onclick=async()=>{await db.auth.signOut();await session();await orders();message('Вы вышли')};$('refresh').onclick=catalog;$('refreshOrders').onclick=orders;
 db.auth.onAuthStateChange(()=>{setTimeout(()=>{void session().catch(e=>message('Сессия: '+e.message,true))},0)});await session();await catalog();await orders();
 </script></body></html>
