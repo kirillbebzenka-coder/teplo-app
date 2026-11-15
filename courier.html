@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="ru"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="color-scheme" content="dark">
+<title>TEPLO · Курьер</title>
+<style>
+:root{color-scheme:dark;--bg:#0b1220;--card:#142035;--line:#30415d;--white:#f3f6fb;--muted:#afbdd0;--accent:#c7f36b}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--white);font:16px/1.48 system-ui,-apple-system,Arial,sans-serif}
+main{max-width:800px;margin:0 auto;padding:16px}
+header{display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap;margin:12px 0 22px}
+.brand{font-size:30px;font-weight:850;letter-spacing:.02em;color:var(--accent)}
+nav{display:flex;gap:15px;flex-wrap:wrap}a{color:var(--accent);text-underline-offset:3px}
+h1{font-size:clamp(28px,6vw,40px);margin:0 0 8px}
+h2{font-size:22px;margin:4px 0 13px}h3{margin:0 0 6px;font-size:20px}
+p{margin:10px 0}section,article{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:18px;margin:14px 0}
+.muted{color:var(--muted)}.warning{color:#ffd184}.ok{color:var(--accent)}.error{color:#ffa5a5}
+.row{display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+button{background:var(--accent);color:#192311;border:0;border-radius:12px;font:inherit;font-weight:750;padding:13px 17px;cursor:pointer}
+button:disabled{opacity:.5;cursor:default}
+button:focus-visible,a:focus-visible{outline:3px solid white;outline-offset:3px}
+.chip{display:inline-flex;border-radius:20px;border:1px solid #556d3a;color:var(--accent);font-size:14px;padding:6px 12px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(185px,1fr));gap:12px;margin:15px 0}
+.stat{background:#0c182a;padding:12px;border:1px solid var(--line);border-radius:12px}
+.stat strong{font-size:23px;display:block}.amount{font-size:26px;color:var(--accent);font-weight:800}
+.small{font-size:14px}.item{border-top:1px solid var(--line);padding:9px 0}
+.steps{display:flex;flex-wrap:wrap;gap:7px;margin:16px 0}
+.step{background:#0c182a;border:1px solid var(--line);border-radius:11px;padding:7px 10px;font-size:13px;color:var(--muted)}
+.step.done{border-color:#51693d;color:var(--accent)}
+.step.active{border-color:var(--accent);color:var(--white);font-weight:750}
+#notice{white-space:pre-wrap}
+@media(max-width:420px){main{padding:12px}section,article{padding:14px}.brand{font-size:26px}}
+</style></head>
+<body><main>
+<header><div class="brand">TEPLO</div><nav><a href="./">Покупатель</a><a href="dispatcher.html">Диспетчер</a></nav></header>
+<h1>Курьер</h1><p class="muted">Теплодар · задания и проверка доставки</p>
+<section><div class="row"><button id="refresh">Обновить задания</button><span id="access" class="chip">Проверяем вход…</span></div>
+<p id="notice" class="muted" role="status" aria-live="polite">Подключаемся…</p></section>
+<div id="stats" class="grid"></div>
+<section><h2>Мои задания</h2><div id="jobs"></div></section>
+<section><p class="warning"><strong>Тестовый режим.</strong> Симуляция не назначает настоящего курьера и не меняет фактический статус заказа. Никакой оплаты, готовки и доставки делать не нужно.</p>
+<p class="muted small">Для реальных курьеров отображение заданий ограничено назначением и серверными правами. Изменение реальных заказов здесь пока отключено.</p></section>
+</main>
+<script type="module">
+import {createClient} from 'https://esm.sh/@supabase/supabase-js@2';
+const db=createClient('https://bgtegxdekqsajttkhhrj.supabase.co','sb_publishable_aSOKkJ_F47sGj9e8v8uJ3g_24rlQ8XG');
+const $=id=>document.getElementById(id);
+const node=(tag,value='',cls='')=>{const el=document.createElement(tag);el.textContent=String(value??'');if(cls)el.className=cls;return el};
+const money=x=>new Intl.NumberFormat('uk-UA',{style:'currency',currency:'UAH'}).format(Number(x||0));
+const stateNames={pending:'Ожидает подтверждения',confirmed:'Подтверждён',preparing:'Готовится',ready_for_pickup:'Готов к выдаче',assigned:'Назначен курьер',picked_up:'Забран курьером',delivered:'Доставлен',cancelled:'Отменён'};
+const stages=['pending','confirmed','preparing','ready_for_pickup','assigned','picked_up','delivered'];
+let loading=false;
+function metric(label,value){const box=node('div','','stat');box.append(node('strong',value),node('span',label,'muted'));return box}
+function elementText(tag,label,value){const p=node('p');p.append(node('strong',label+' '),node('span',value));return p}
+function stageTimeline(stage){
+ const box=node('div','','steps'), index=stages.indexOf(stage);
+ const labels=[['pending','Ожидает'],['confirmed','Подтверждён'],['preparing','Готовится'],['ready_for_pickup','Готов'],['assigned','Назначен'],['picked_up','Забран'],['delivered','Доставлен']];
+ labels.forEach(([key,label],i)=>box.append(node('span',label,'step '+(i<index?'done':i===index?'active':''))));
+ return box;
+}
+async function moveDemo(o,next,button,msg){
+ button.disabled=true;msg.className='muted';msg.textContent='Сохраняем этап в базе…';
+ try{
+  const {data,error}=await db.rpc('advance_teplo_demo_order',{p_order_id:o.id,p_next_status:next});
+  if(error)throw error;
+  msg.className='ok';msg.textContent='Тестовый этап: '+(stateNames[data]||data);
+  await load();
+ }catch(e){msg.className='error';msg.textContent='Ошибка: '+(e?.message||String(e))}
+ finally{button.disabled=false}
+}
+function renderDemo(o){
+ const card=node('article');
+ card.append(node('h3','🧪 Тестовое задание · '+(o.shop_name_snapshot||'TEPLO')),node('p','Заказ '+String(o.id).slice(0,8),'muted small'));
+ const current=o.demo_status||'pending';
+ card.append(node('p','Текущий этап: '+(stateNames[current]||current),'chip'),stageTimeline(current),elementText('p','Стоимость:',money(o.total)));
+ (o.order_items||[]).forEach(item=>card.append(node('div',item.product_name_snapshot+' × '+item.quantity+' · '+money(item.unit_price_snapshot),'item')));
+ card.append(node('p','Адрес и телефон — тестовые данные. Не выезжать и ничего не доставлять.','warning'));
+ const feedback=node('p','','muted');
+ if(current==='assigned'||current==='picked_up'){
+  const next=current==='assigned'?'picked_up':'delivered';
+  const b=node('button',current==='assigned'?'Забрал заказ (тест)':'Доставил (тест)');
+  b.addEventListener('click',()=>moveDemo(o,next,b,feedback));
+  card.append(b);
+ }else if(current==='delivered'){
+  card.append(node('p','✅ Демонстрационная доставка завершена.','ok'));
+ }else{
+  card.append(node('p','Пока это не курьерский этап. В диспетчерской доведи тестовый заказ до «Назначен курьер».','muted'));
+  const a=node('a','Открыть диспетчерскую');a.href='dispatcher.html';card.append(a);
+ }
+ card.append(feedback);
+ return card;
+}
+function renderReal(o){
+ const card=node('article');
+ card.append(node('h3',o.shop_name_snapshot||'Заказ'),node('p','Заказ '+String(o.id).slice(0,8)+' · '+(stateNames[o.status]||o.status),'chip'),elementText('p','Куда доставить:',o.delivery_address||'—'),elementText('p','Получатель:',o.customer_name||'—'),elementText('p','Телефон:',o.customer_phone||'—'),elementText('p','Сумма:',money(o.total)));
+ (o.order_items||[]).forEach(item=>card.append(node('div',item.product_name_snapshot+' × '+item.quantity,'item')));
+ card.append(node('p','Пилотный просмотр: действия по реальным заказам пока недоступны.','muted'));
+ return card;
+}
+async function load(){
+ if(loading)return;loading=true;$('refresh').disabled=true;
+ const notice=$('notice'),jobs=$('jobs'),stats=$('stats');
+ notice.className='muted';notice.textContent='Обновляем данные…';
+ try{
+  const {data:session,error:authError}=await db.auth.getUser();
+  if(authError)throw authError;
+  const user=session?.user;
+  if(!user){
+   $('access').textContent='Гость';
+   notice.textContent='Для просмотра заданий войди в TEPLO через страницу покупателя и вернись сюда.';
+   jobs.replaceChildren();stats.replaceChildren();return;
+  }
+  const {data:profile,error:profileError}=await db.from('profiles').select('role').eq('id',user.id).single();
+  if(profileError)throw profileError;
+  const isCourier=profile?.role==='courier';
+  $('access').textContent=isCourier?'Роль: курьер':'Режим симуляции';
+  if(isCourier){
+   const {data:assignments,error:assignmentError}=await db.from('courier_assignments')
+    .select('order_id').eq('courier_id',user.id).is('released_at',null).limit(50);
+   if(assignmentError)throw assignmentError;
+   const ids=(assignments||[]).map(x=>x.order_id);
+   let items=[];
+   if(ids.length){
+    const {data,error}=await db.from('orders')
+       .select('id,shop_name_snapshot,customer_name,customer_phone,delivery_address,total,status,is_test,order_items(product_name_snapshot,quantity)')
+       .in('id',ids).eq('is_test',false);
+    if(error)throw error;items=data||[];
+   }
+   stats.replaceChildren(metric('Мои назначения',items.length),metric('Забрать',items.filter(o=>o.status==='assigned').length),metric('В пути',items.filter(o=>o.status==='picked_up').length));
+   jobs.replaceChildren();
+   if(!items.length)jobs.append(node('p','Назначенных заданий пока нет.','muted'));
+   else items.forEach(o=>jobs.append(renderReal(o)));
+   notice.textContent='Данные настоящих назначений видны только курьеру с правами доступа. Изменение статусов пока отключено.';
+  }else{
+   const {data:orders,error}=await db.from('orders').select('id,shop_name_snapshot,subtotal,delivery_fee,total,demo_status,is_test,order_items(product_name_snapshot,quantity,unit_price_snapshot)')
+     .eq('customer_id',user.id).eq('is_test',true).order('created_at',{ascending:false}).limit(10);
+   if(error)throw error;const rows=orders||[];
+   stats.replaceChildren(metric('Тестовых заданий',rows.length),metric('Передано курьеру',rows.filter(o=>['assigned','picked_up'].includes(o.demo_status)).length),metric('Доставлено (демо)',rows.filter(o=>o.demo_status==='delivered').length));
+   jobs.replaceChildren();
+   if(!rows.length)jobs.append(node('p','Для этого аккаунта нет тестовых заказов.','muted'));
+   else rows.forEach(o=>jobs.append(renderDemo(o)));
+   notice.textContent='Симуляция курьера. Для неё можно использовать твой тестовый аккаунт; доступ к чужим заказам не предоставляется.';
+  }
+ }catch(e){notice.className='error';notice.textContent='Ошибка загрузки: '+(e?.message||String(e));jobs.replaceChildren();stats.replaceChildren()}
+ finally{loading=false;$('refresh').disabled=false}
+}
+$('refresh').addEventListener('click',load);
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)void load()});
+db.auth.onAuthStateChange(()=>setTimeout(()=>{void load()},0));
+await load();
+</script></body></html>
