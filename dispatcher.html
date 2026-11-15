@@ -21,7 +21,7 @@ button:disabled{opacity:.6}button:focus-visible,a:focus-visible{outline:3px soli
 .warning{color:#ffd68b}.error{color:#ffa5a5}.order h3{font-size:19px;margin:0}
 .summary{display:flex;gap:10px;flex-wrap:wrap}.metric{background:#0d192a;border:1px solid var(--line);padding:11px 14px;border-radius:12px;flex:1;min-width:120px}
 .metric strong{display:block;font-size:24px}.meta{font-size:14px;color:var(--muted);margin:4px 0}.details{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:8px;margin:14px 0}
-.item{padding:8px 0;border-top:1px solid var(--line)}.total{font-weight:800;color:var(--green)}
+.demo-actions{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}.secondary{background:#30415d;color:#f5f7fb}.item{padding:8px 0;border-top:1px solid var(--line)}.total{font-weight:800;color:var(--green)}
 #notice{white-space:pre-wrap}
 @media(max-width:440px){main{padding:14px}section,.order{padding:15px}.brand{font-size:26px}}
 </style>
@@ -37,7 +37,7 @@ button:disabled{opacity:.6}button:focus-visible,a:focus-visible{outline:3px soli
 </section>
 <div id="stats" class="summary"></div>
 <div id="list"></div>
-<p class="muted">Эта версия панели только для просмотра. Изменение статусов, назначение курьеров и приём реальных заказов здесь не включены. Заказы с меткой «ТЕСТ» не готовить и не доставлять.</p>
+<p class="muted">Для тестовых заказов работают только симулированные этапы. Настоящие статусы, действия магазина и назначение реального курьера не меняются. Реальные заказы пока не принимаются.</p>
 </main>
 <script type="module">
 import {createClient} from 'https://esm.sh/@supabase/supabase-js@2';
@@ -46,6 +46,18 @@ const $=id=>document.getElementById(id);
 const txt=(tag,text,cls='')=>{const e=document.createElement(tag);e.textContent=String(text??'');if(cls)e.className=cls;return e};
 const money=value=>new Intl.NumberFormat('uk-UA',{style:'currency',currency:'UAH'}).format(Number(value||0));
 const stateName={pending:'Ожидает подтверждения',confirmed:'Подтверждён',preparing:'Готовится',ready_for_pickup:'Готов к выдаче',assigned:'Курьер назначен',picked_up:'Забран курьером',delivered:'Доставлен',cancelled:'Отменён'};
+const nextDemo={pending:'confirmed',confirmed:'preparing',preparing:'ready_for_pickup',ready_for_pickup:'assigned',assigned:'picked_up',picked_up:'delivered'};
+const nextDemoLabel={confirmed:'Подтвердить (тест)',preparing:'Начать приготовление (тест)',ready_for_pickup:'Готов к выдаче (тест)',assigned:'Назначить курьера (симуляция)',picked_up:'Забран курьером (симуляция)',delivered:'Доставлен (симуляция)'};
+async function changeDemoStage(order,next,button,status){
+ button.disabled=true;status.className='muted';status.textContent='Меняем только демонстрационный этап…';
+ try {
+   const {data,error}=await db.rpc('advance_teplo_demo_order',{p_order_id:order.id,p_next_status:next});
+   if(error)throw error;
+   status.textContent='Этап симуляции: '+(stateName[data]||data);
+   await load();
+ }catch(e){status.className='error';status.textContent='Ошибка: '+(e?.message||String(e))}
+ finally{button.disabled=false}
+}
 const when=date=>new Date(date).toLocaleString('ru-RU',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});
 let loading=false;
 function metric(label,value){const block=txt('div','','metric');block.append(txt('strong',value),txt('span',label,'muted'));return block}
@@ -55,7 +67,26 @@ function renderOrder(order,staff){
  top.append(txt('h3',(order.is_test?'🧪 ТЕСТ · ':'')+(order.shop_name_snapshot||'Магазин')));
  top.append(txt('span',stateName[order.status]||order.status,'pill'));
  card.append(top,txt('div','Заказ '+String(order.id).slice(0,8)+' · '+when(order.created_at),'meta'));
- if(order.is_test)card.append(txt('p','Не выполнять: демонстрационная запись без оплаты, приготовления и доставки.','warning'));
+ if(order.is_test){
+  card.append(txt('p','Не выполнять: демонстрационная запись без оплаты, приготовления и доставки.','warning'));
+  const stage=order.demo_status||'pending';
+  card.append(txt('p','Тестовый этап: '+(stateName[stage]||stage),'pill'));
+  const demoActions=txt('div','','demo-actions');
+  const feedback=txt('p','','muted');
+  const next=nextDemo[stage];
+  if(next){
+    const action=txt('button',nextDemoLabel[next]||'Следующий этап');
+    action.addEventListener('click',()=>changeDemoStage(order,next,action,feedback));
+    demoActions.append(action);
+  }
+  if(stage!=='pending'){
+    const reset=txt('button','Начать симуляцию заново');
+    reset.className='secondary';
+    reset.addEventListener('click',()=>changeDemoStage(order,'pending',reset,feedback));
+    demoActions.append(reset);
+  }
+  card.append(demoActions,feedback);
+}
  const details=txt('div','','details');
  const left=txt('div');
  left.append(txt('div','Сумма товаров: '+money(order.subtotal)),txt('div','Доставка: '+money(order.delivery_fee)),txt('div','Итого: '+money(order.total),'total'));
@@ -84,9 +115,9 @@ async function load(){
    const {data:profile,error:profileError}=await db.from('profiles').select('role').eq('id',user.id).single();
    if(profileError)throw profileError;
    const staff=['admin','dispatcher'].includes(profile?.role);
-   $('access').textContent=staff?'Диспетчер · просмотр':'Демо · только свой заказ';
+   $('access').textContent=staff?'Диспетчер · просмотр':'Демо · свои тестовые заказы';
    let query=db.from('orders')
-     .select('id,shop_name_snapshot,customer_name,customer_phone,delivery_address,status,subtotal,delivery_fee,total,created_at,is_test,order_items(product_name_snapshot,quantity,unit_price_snapshot)')
+     .select('id,shop_name_snapshot,customer_name,customer_phone,delivery_address,status,demo_status,subtotal,delivery_fee,total,created_at,is_test,order_items(product_name_snapshot,quantity,unit_price_snapshot)')
      .order('created_at',{ascending:false}).limit(50);
    if(!staff)query=query.eq('customer_id',user.id).eq('is_test',true);
    const {data,error}=await query;
@@ -101,8 +132,8 @@ async function load(){
    if(!orders.length)list.append(txt('section','Заказов для просмотра пока нет.','muted'));
    else orders.forEach(order=>list.append(renderOrder(order,staff)));
    notice.textContent=staff
-     ?'Показаны последние '+orders.length+' заказов, которые разрешает просматривать сервер. Пока только чтение.'
-     :'Предварительный просмотр диспетчерской панели. Твоя роль — покупатель; сервер разрешает показать только твои тестовые заказы. Другие заказы недоступны.';
+     ?'Показаны последние '+orders.length+' заказов, доступных по роли. Для тестовых заказов разрешена только симуляция этапов.'
+     :'Тестовый просмотр диспетчерской панели. Твоя роль — покупатель: доступны только твои тестовые заказы и их симулированные этапы. Другие заказы недоступны.';
  }catch(e){notice.className='error';notice.textContent='Не удалось получить заказы: '+(e?.message||String(e));stats.replaceChildren();list.replaceChildren()}
  finally{loading=false;$('refresh').disabled=false}
 }
