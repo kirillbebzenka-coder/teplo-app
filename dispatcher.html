@@ -28,7 +28,7 @@ button:disabled{opacity:.6}button:focus-visible,a:focus-visible{outline:3px soli
 </head>
 <body>
 <main>
-<div class="top"><div class="brand">TEPLO</div><div class="row"><a href="./">Покупатель</a><a href="courier.html">Курьер →</a></div></div>
+<div class="top"><div class="brand">TEPLO</div><nav class="row" aria-label="Разделы TEPLO"><a href="./">🛍 Покупатель</a><span class="pill" aria-current="page">📋 Диспетчер</span><a href="courier.html">🛵 Курьер</a></nav></div>
 <h1>Панель диспетчера</h1>
 <p class="subtitle">Теплодар · просмотр заказов из Supabase</p>
 <section>
@@ -90,7 +90,7 @@ function renderOrder(order,staff){
  const details=txt('div','','details');
  const left=txt('div');
  left.append(txt('div','Сумма товаров: '+money(order.subtotal)),txt('div','Доставка: '+money(order.delivery_fee)),txt('div','Итого: '+money(order.total),'total'));
- details.append(left);
+ details.append(left);if(order.is_test){const demo=txt('div');demo.append(txt('div','Адрес (демо): '+(order.delivery_address||'—')),txt('div','Оплата (демо): '+(order.payment_method==='card_on_delivery'?'Картой при получении (если доступно)':'Наличными при получении')));details.append(demo)}
  if(staff&&!order.is_test){
   const info=txt('div');
   info.append(txt('div','Получатель: '+(order.customer_name||'—')),txt('div','Телефон: '+(order.customer_phone||'—')),txt('div','Адрес: '+(order.delivery_address||'—')));
@@ -117,7 +117,7 @@ async function load(){
    const staff=['admin','dispatcher'].includes(profile?.role);
    $('access').textContent=staff?'Диспетчер · просмотр':'Демо · свои тестовые заказы';
    let query=db.from('orders')
-     .select('id,shop_name_snapshot,customer_name,customer_phone,delivery_address,status,demo_status,subtotal,delivery_fee,total,created_at,is_test,order_items(product_name_snapshot,quantity,unit_price_snapshot)')
+     .select('id,shop_name_snapshot,customer_name,customer_phone,delivery_address,payment_method,status,demo_status,subtotal,delivery_fee,total,created_at,is_test,order_items(product_name_snapshot,quantity,unit_price_snapshot)')
      .order('created_at',{ascending:false}).limit(50);
    if(!staff)query=query.eq('customer_id',user.id).eq('is_test',true);
    const {data,error}=await query;
