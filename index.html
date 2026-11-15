@@ -1,243 +1,147 @@
-<!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name="theme-color" content="#0b0b10"><meta name="viewport" content="width=device-width,initial-scale=1"><title>TEPLO · Доставка с теплом</title><style>:root{color-scheme:dark}body{background:#0b1220;color:#f4f7fb;font:16px system-ui;margin:0}main{max-width:740px;margin:auto;padding:22px}header{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}nav.teplo-nav{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0 22px}nav.teplo-nav a{padding:10px 12px;border:1px solid #435569;border-radius:10px;color:#d89a45;text-decoration:none;font-weight:650}nav.teplo-nav a[aria-current="page"]{background:#281d2a;border-color:#d89a45}label.field{display:block;margin:12px 0 5px;font-weight:650}select#paymentMethod{width:100%;font:inherit;padding:12px;background:#0b1220;color:#f4f7fb;border:1px solid #435569;border-radius:10px}#demoCheckoutStatus{white-space:pre-wrap} h1{color:#d89a45}section,.shop,.product,.order{background:#131e30;border:1px solid #26364e;border-radius:16px;padding:16px;margin:12px 0}input,button{font:inherit;padding:12px;border-radius:10px;margin:5px 0}input{background:#0b1220;color:white;border:1px solid #435569;box-sizing:border-box;width:100%}button{background:#d89a45;border:0;color:#211913;font-weight:700;cursor:pointer}button:disabled{opacity:.5}small,.muted{color:#a8b5c8}#msg{white-space:pre-wrap}#msg.error{color:#ff9999}#msg.ok{color:#d89a45}
-body{min-width:300px}
-main{padding-bottom:calc(112px + env(safe-area-inset-bottom))}
-nav.teplo-tabs{position:fixed;z-index:200;left:0;right:0;bottom:0;background:#101b2d;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;padding:8px 10px calc(9px + env(safe-area-inset-bottom));border-top:1px solid #435569;box-shadow:0 -6px 25px #050b15dd}
-nav.teplo-tabs a{min-width:0;display:flex;align-items:center;justify-content:center;flex-direction:column;line-height:1.25;gap:3px;text-align:center;color:#d4dfea;text-decoration:none;font-size:15px;padding:8px 3px;border:1px solid transparent;border-radius:12px;font-weight:700}
-nav.teplo-tabs a span{font-size:clamp(10px,2.65vw,13px)}
-nav.teplo-tabs a[aria-current="page"]{background:#281d2a;color:#d89a45;border-color:#79516b}
-#delivery-form{border:2px solid #79516b;scroll-margin-top:18px}
-#delivery-form input,#delivery-form select{display:block;width:100%;box-sizing:border-box}
-#delivery-form button{width:100%;margin-top:14px}
-#delivery-form h2{margin-bottom:4px}
-#delivery-form .amount-preview{padding:12px 14px;background:#101c2c;border-radius:12px;margin:14px 0;font-weight:800}
-.cart-line{border:1px solid #334766;border-radius:12px;padding:12px;margin:9px 0;display:flex;gap:7px;justify-content:space-between;align-items:center;flex-wrap:wrap}
-.qty-controls{display:flex;gap:13px;align-items:center}.qty-controls button{min-width:40px;font-size:21px}.product button{display:block;margin-top:12px}.cart-line strong{flex:1;min-width:100px}#goCheckout{width:100%;margin-top:8px}
-
-#orders{scroll-margin-top:20px}#orders .order{border-color:#655167 !important}#demoCheckoutStatus{line-height:1.5;font-weight:650}
-</style><link rel="stylesheet" href="./theme.css?v=24"><style>
-/* TEPLO UX v24: one obvious action at a time */
-.welcome{padding:16px 3px 18px}
-.welcome>span{color:#d5a36e;text-transform:uppercase;font-size:12px;letter-spacing:.13em;font-weight:750}
-.welcome h2{margin:9px 0 8px;color:#f4eef4;font-size:clamp(25px,6vw,34px);line-height:1.18;letter-spacing:-.02em}
-.welcome p{color:#a9adba;line-height:1.4;margin:0;font-size:14px}
-header{margin:0 0 5px}
-.quick-orders{border:1px solid #75516b;color:#e9b5d1!important;border-radius:12px;padding:9px 12px;text-decoration:none;font-weight:750;font-size:13px;white-space:nowrap}
-#accountSection{padding:0!important;margin:0 0 18px!important;border:1px solid #3f3848!important;overflow:hidden}
-#authDetails>summary{padding:15px 16px;color:#eadce6;font-size:14px;cursor:pointer;font-weight:700;list-style:none}
-#authDetails>summary::-webkit-details-marker{display:none}
-.auth-content{border-top:1px solid #343b4c;padding:13px}
-.auth-content input{height:48px}
-#market{background:transparent!important;border:0!important;box-shadow:none!important;padding:0!important;margin:8px 0 18px!important}
-.heading-row{display:flex;align-items:center;justify-content:space-between;gap:10px}
-.heading-row h2{margin:0}
-.demo-tag{border:1px solid #664a61;border-radius:20px;color:#efb2d2;padding:4px 9px;font-size:11px;letter-spacing:.04em}
-#market .shop{margin:12px 0!important;padding:17px!important}
-#market .product{border-radius:14px!important;box-shadow:none!important;background:#161e29!important;padding:14px!important;display:grid;grid-template-columns:minmax(0,1fr) auto;column-gap:12px;align-items:center}
-#market .product strong{grid-column:1;font-size:16px}
-#market .product p{grid-column:1;color:#ebba85!important;font-weight:800;margin:5px 0}
-#market .product small{grid-column:1;font-size:12px;line-height:1.3}
-#market .product .add-btn{grid-column:2;grid-row:1/span 3;min-height:43px;padding:9px 12px;white-space:nowrap;font-size:14px}
-#market h3{color:#e2b0ce}
-#catalogStatus{font-size:13px;min-height:18px;color:#e1b68e}
-#market #refresh{font-size:13px;background:#232a39!important;color:#edd8e4!important;border:1px solid #4e4355!important;padding:7px 12px}
-#cart-section,#delivery-form,#orders-section{scroll-margin-top:17px}
-#cart-section h2,#delivery-form h2{margin-top:0}
-#cart-section>button,#delivery-form #saveDemoCheckout{width:100%;min-height:52px}
-#delivery-form label{font-size:13px}
-#delivery-form input,#delivery-form select{min-height:48px;margin-top:6px}
-#delivery-form>p.muted{font-size:13px}
-#orderSuccess{background:#251e2b!important;border:1px solid #75516b!important}
-#orderSuccess h2{color:#f3c1da;margin-top:0}
-#cartBar{position:fixed;left:0;right:0;bottom:calc(78px + env(safe-area-inset-bottom));z-index:210;padding:0 10px;pointer-events:none}
-#cartBar[hidden]{display:none}
-.cart-bar-inner{max-width:680px;margin:auto;display:flex;gap:10px;align-items:center;background:#2a2230;border:1px solid #8e647f;padding:8px 10px 8px 15px;border-radius:16px;box-shadow:0 13px 30px #0009;pointer-events:auto}
-.cart-bar-copy{flex:1;min-width:0}.cart-bar-copy strong{font-size:15px}.cart-bar-copy small{display:block;color:#b4acb7;font-size:12px}
-#cartBarOpen{white-space:nowrap;min-height:44px;padding:8px 12px}
-#oldTechnical{display:none!important}
-#orders-section .order{margin:10px 0!important}
-#orders-section .order h3{font-size:17px;margin:0}
-#orders-section .order p{font-size:14px;margin:9px 0}
-#orders-section #refreshOrders{background:#232a39!important;color:#e8d9e4!important;font-size:13px}
-main{padding-bottom:calc(172px + env(safe-area-inset-bottom))}
-@media(max-width:420px){header h1{font-size:38px}.welcome h2{font-size:27px}#market .product .add-btn{font-size:12px;padding:9px 8px}section{padding:14px!important}}
-</style></head><body><main><header><div><h1>TEPLO</h1><small>Доставка с теплом · Теплодар</small></div><a href="#orders-section" class="quick-orders">Мои заказы</a><span id="connection" hidden>Проверяем…</span></header><nav class="teplo-tabs" aria-label="Разделы TEPLO"><a href="./?v=15" aria-current="page">🛍<span>Покупатель</span></a><a href="dispatcher.html?v=15">📋<span>Диспетчер</span></a><a href="shop.html?v=17">🏪<span>Магазин</span></a><a href="courier.html?v=15">🛵<span>Курьер</span></a></nav><div class="welcome"><span>Доставка с теплом</span><h2>Выбирай вкусное.<br>Остальное — просто.</h2><p>Пока всё работает в тестовом режиме — без оплаты и доставки.</p></div>
-<section id="accountSection" class="account-section"><details id="authDetails"><summary id="accountSummary">Аккаунт · Войти / регистрация</summary><div class="auth-content"><p class="muted">Вход нужен только для оформления заказа и просмотра его статуса.</p><input id="email" type="email" autocomplete="email" placeholder="Email"><input id="password" type="password" autocomplete="current-password" placeholder="Пароль (минимум 6 символов)"><button id="login">Войти</button> <button id="signup">Регистрация</button> <button id="resend">Повторить письмо</button> <button id="logout" hidden>Выйти</button><p id="authStatus" role="status" aria-live="polite" style="min-height:24px;color:#d89a45;font-weight:600"></p><p id="who"></p></div></details></section>
-<section id="market"><div class="heading-row"><h2>1. Выбери товары</h2><span class="demo-tag">● ТЕСТ</span></div><p class="muted">Нажми «+ Добавить» у понравившегося товара.</p><button id="refresh">Обновить</button><div id="catalog"></div></section>
-<section id="cart-section" hidden><h2>2. Корзина</h2><button type="button" id="backToCatalog" class="secondary">← Назад к товарам</button><div id="cart"></div><button id="goCheckout">Продолжить →</button></section>
-<section id="delivery-form" hidden><h2>3. Оформление</h2><button type="button" id="backToCart" class="secondary">← Вернуться в корзину</button><p class="muted">Введи данные и подтверди тестовый заказ.</p><div class="amount-preview" id="checkoutSummary">Корзина пуста. Выбери товар ниже.</div><div>
-
-<p class="muted">Для теста используй вымышленные данные. Настоящей доставки и оплаты нет.</p><label class="field" for="demoName">Имя получателя</label><input id="demoName" maxlength="100" placeholder="Тестовый покупатель"><label class="field" for="demoPhone">Телефон получателя (тестовый)</label><input id="demoPhone" type="tel" maxlength="22" placeholder="+380000000000">
-<label class="field" for="demoStreet">Улица в Теплодаре</label>
-<input id="demoStreet" maxlength="100" autocomplete="street-address" placeholder="Например, улица Центральная">
-<label class="field" for="demoHouse">Дом</label><input id="demoHouse" maxlength="20" placeholder="Например, 10">
-<label class="field" for="demoApartment">Квартира / подъезд (необязательно)</label><input id="demoApartment" maxlength="20" placeholder="Например, 4">
-<label class="field" for="paymentMethod">Способ оплаты</label>
-<select id="paymentMethod">
-<option value="cash_on_delivery">Наличными при получении</option>
-<option value="card_on_delivery">Картой при получении (при наличии терминала)</option>
-</select>
-<button id="saveDemoCheckout">Подтвердить заказ (тест)</button>
-<p id="demoCheckoutStatus" role="status" aria-live="polite"></p></div></section>
-<section id="orderSuccess" hidden><h2>✓ Заказ оформлен!</h2><p id="successDetails">Диспетчер скоро увидит тестовый заказ.</p></section>
-<section id="orders-section"><h2>Мои заказы</h2><button id="refreshOrders">Обновить</button><div id="orders" role="region" aria-live="polite" aria-label="Мои заказы"></div></section>
-<div hidden id="oldTechnical"><section><details><summary>Дополнительные технические проверки (необязательно)</summary><p class="muted">Настоящие заказы сейчас выключены.</p><button id="testCheckout">Создать демонстрационный заказ без адреса</button><p id="testStatus" role="status" aria-live="polite"></p><details><summary>Обычное оформление (пока выключено)</summary><p class="muted">Реальные заказы пока заблокированы на сервере.</p><select id="shopPick" style="width:100%;padding:12px;background:#0b1220;color:white"></select><div id="productPick"></div><input id="custName" placeholder="Имя"><input id="custPhone" placeholder="Телефон"><input id="custAddress" placeholder="Адрес доставки"><button id="checkout" disabled title="Доставка пока выключена">Оформить настоящий заказ (выключено)</button><p id="checkoutStatus"></p></details></details></section><section><h2>Состояние</h2><p id="msg">Подключаемся…</p><p class="muted">Реальные доставки пока отключены. Тестовые суммы вычисляет сервер.</p></section></div></main>
-<div id="cartBar" hidden><div class="cart-bar-inner"><div class="cart-bar-copy"><strong id="cartBarTotal">0 грн</strong><small id="cartBarCount">Корзина</small></div><button type="button" id="cartBarOpen">Корзина →</button></div></div>
-<script type="module">
-import {createClient} from 'https://esm.sh/@supabase/supabase-js@2';
-const db=createClient('https://bgtegxdekqsajttkhhrj.supabase.co','sb_publishable_aSOKkJ_F47sGj9e8v8uJ3g_24rlQ8XG');
-const $=id=>document.getElementById(id); const el=(tag,txt='',cls='')=>{const n=document.createElement(tag);n.textContent=String(txt??'');if(cls)n.className=cls;return n};
-let loadedShops=[]; let loadedProducts=[]; let cartShopId=null; let cartItems=new Map(); let cartRequestId=null; let deliveryFeePreview=65;
-const money=n=>new Intl.NumberFormat('uk-UA',{style:'currency',currency:'UAH'}).format(Number(n||0));
-function message(t,error=false){$('msg').textContent=t;$('msg').className=error?'error':'ok'}
-async function session(){const {data,error}=await db.auth.getUser();if(error&&error.name!=='AuthSessionMissingError')message(error.message,true);const u=data?.user;$('who').textContent=u?'Вы вошли: '+u.email:'Гость';$('logout').hidden=!u;$('accountSummary').textContent=u?'✓ Вошли как '+u.email:'Аккаунт · Войти / регистрация';return u}
-function renderCart(){
- const root=$('cart'),summary=$('checkoutSummary');
- root.replaceChildren();
- const lines=[...cartItems.values()],total=lines.reduce((s,x)=>s+x.price*x.quantity,0);
- const units=lines.reduce((n,x)=>n+x.quantity,0);
- $('cartBar').hidden=!units;
- $('cartBarTotal').textContent=money(total+(units?deliveryFeePreview:0));
- $('cartBarCount').textContent=units+' '+(units===1?'товар':units<5?'товара':'товаров')+' · с доставкой';
- if(!lines.length){$('cart-section').hidden=true;$('delivery-form').hidden=true;root.append(el('p','Корзина пока пуста.','muted'));summary.textContent='Выбери товар в каталоге.';return}
- for(const item of lines){
-  const row=el('div','','cart-line');
-  row.append(el('strong',item.name),el('span',money(item.price*item.quantity)));
-  const controls=el('div','','qty-controls');
-  const minus=el('button','−'),count=el('span',String(item.quantity)),plus=el('button','+');
-  minus.setAttribute('aria-label','Уменьшить количество '+item.name);
-  plus.setAttribute('aria-label','Увеличить количество '+item.name);
-  minus.onclick=()=>adjustCart(item,-1);plus.onclick=()=>adjustCart(item,1);
-  controls.append(minus,count,plus);row.append(controls);root.append(row);
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0b0b10"><meta name="color-scheme" content="dark">
+<title>TEPLO — Рестораны Теплодара</title>
+<link rel="stylesheet" href="./theme.css?v=25">
+<style>
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}body{margin:0;min-width:300px;color:#f6f2f5;background:#0b0b10}
+main{max-width:940px;margin:auto;padding:0 16px calc(120px + env(safe-area-inset-bottom))}
+.top{height:78px;display:flex;justify-content:space-between;align-items:center;gap:15px}
+.logo{font-size:35px;font-weight:900;letter-spacing:.12em;color:transparent!important;-webkit-text-stroke:1.25px #f0a5ca!important;line-height:1.2}
+.logo small{display:block;font-size:10px;-webkit-text-stroke:0;color:#b4aab7!important;letter-spacing:.14em;font-weight:650}
+.city{display:flex;gap:9px;align-items:center;border:1px solid #43404c;border-radius:30px;padding:8px 12px;background:#191b24;color:#f4e6ee;font-size:13px;font-weight:740;white-space:nowrap}
+.city span{font-size:16px}
+.hero{padding:24px 0 14px;max-width:720px}
+.eyebrow{font-size:11px;font-weight:850;letter-spacing:.17em;color:#e1b27e;text-transform:uppercase;margin-bottom:9px}
+.hero h1{font-size:clamp(37px,8vw,59px);line-height:1.04;letter-spacing:-.055em;margin:0;font-weight:860;color:#f5f0f2!important}
+.hero h1 em{font-style:normal;color:#edb3d3}
+.hero p{font-size:15px;line-height:1.58;color:#b9b8c2;max-width:560px;margin:15px 0}
+.search{display:flex;align-items:center;gap:10px;background:#1a1d29;border:1px solid #464354;border-radius:16px;padding:0 16px;height:56px;margin:14px 0 18px}
+.search svg{flex:0 0 21px;opacity:.75}.search input{height:100%;flex:1;border:0!important;background:transparent!important;box-shadow:none!important;color:#f9eef5!important;font:inherit!important;outline:none!important;padding:0!important;margin:0!important;min-width:0}
+.search input::placeholder{color:#a4a0b0}
+.chip-row{display:flex;gap:9px;overflow-x:auto;scrollbar-width:none;padding:2px 0 13px}
+.chip-row::-webkit-scrollbar{display:none}
+.chip-row button{flex:0 0 auto;white-space:nowrap;background:#20222e!important;color:#e2dce5!important;border:1px solid #46404e!important;border-radius:22px!important;padding:9px 14px;min-height:41px;box-shadow:none!important;font-size:14px}
+.chip-row button.active{background:#42303d!important;border-color:#b4819e!important;color:#ffdaec!important}
+.head-row{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:15px 0 14px}
+.head-row h2{margin:0;font-size:22px;letter-spacing:-.03em;color:#f8eff4}
+.head-row span{font-size:12px;color:#aaaab7}
+.restaurants{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,325px),1fr));gap:18px}
+.restaurant{display:block;color:inherit!important;text-decoration:none!important;overflow:hidden;border-radius:21px!important;background:#191c28!important;border:1px solid #373444!important;box-shadow:0 10px 25px #0003!important;transition:transform .2s ease,border-color .2s ease}
+.restaurant:hover{transform:translateY(-3px);border-color:#a07693!important}
+.restaurant .cover{height:185px;position:relative;overflow:hidden;background:#24212a}
+.cover::after{content:"";position:absolute;inset:0;background:linear-gradient(0deg,rgba(10,8,15,.65),transparent 65%)}
+.cover img{width:100%;height:100%;object-fit:cover;display:block;filter:saturate(.84) brightness(.8)}
+.cover .brand-tag{position:absolute;z-index:1;bottom:15px;left:17px;color:#fff;font-size:23px;font-weight:800;text-shadow:0 2px 9px #0009}
+.cover .flag{position:absolute;z-index:2;top:12px;left:12px;background:#251d2bde;color:#ffdae9;border:1px solid #886179;border-radius:11px;padding:7px 10px;font-size:11px;font-weight:790;letter-spacing:.015em}
+.restaurant-body{padding:18px!important}
+.restaurant-body h3{font-size:21px;color:#f6e8f0;margin:0!important}
+.restaurant-body p{color:#abb0c0;font-size:13px;margin:8px 0 10px;line-height:1.5}
+.tags{display:flex;flex-wrap:wrap;gap:7px}
+.tag{border-radius:18px;background:#272431;color:#ddc7d5;font-size:12px;padding:5px 9px}
+.action{margin-top:15px;display:flex;align-items:center;justify-content:space-between;color:#e5afcc;font-size:13px;font-weight:800}
+.action strong{color:#edbb83;font-weight:780;font-size:13px}
+.info-banner{padding:19px!important;margin:24px 0!important;border:1px solid #674d63!important;background:linear-gradient(140deg,#241e2b,#191b28)!important;border-radius:17px!important}
+.info-banner h3{font-size:18px;color:#f4c3dc;margin:0 0 5px}
+.info-banner p{margin:0;color:#bbb0c0;font-size:13px}
+.empty{color:#c0b9c5;padding:20px;text-align:center}
+footer{color:#8e8b9c;font-size:12px;text-align:center;padding:18px 0 8px}
+footer details{text-align:left;margin:10px auto;max-width:340px}
+footer summary{cursor:pointer;text-align:center}
+footer a{display:inline-block;margin:9px 8px;color:#d3a3bd!important}
+.nav-bottom{z-index:200;position:fixed;bottom:0;left:0;right:0;display:grid;grid-template-columns:1fr 1fr;background:#12131bfa;border-top:1px solid #37303e;padding:8px 16px calc(10px + env(safe-area-inset-bottom));box-shadow:0 -8px 28px #0009}
+.nav-bottom a{display:flex;align-items:center;justify-content:center;gap:8px;text-decoration:none!important;border-radius:12px;min-height:48px;font-size:14px;font-weight:780;color:#a9a4b5!important}
+.nav-bottom a.active{background:#372535;color:#fac4df!important}
+@media(max-width:500px){main{padding-left:15px;padding-right:15px}.top{height:72px}.hero{padding-top:12px}.hero h1{font-size:43px}.cover{height:175px!important}.restaurants{grid-template-columns:1fr}.restaurant-body{padding:17px!important}}
+@media(prefers-reduced-motion:reduce){.restaurant{transition:none}}
+</style>
+</head>
+<body>
+<main>
+<header class="top"><div class="logo">TEPLO<small>ДОСТАВКА С ТЕПЛОМ</small></div><div class="city"><span>📍</span> Теплодар</div></header>
+<section class="hero">
+<div class="eyebrow">Твой город. Твои любимые места.</div>
+<h1>Вкусное — <em>ближе,</em><br>чем кажется.</h1>
+<p>Выбирай ресторан, изучай меню и собирай заказ без лишних экранов.</p>
+</section>
+<div class="search">
+<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#d7b7cc" stroke-width="2" stroke-linecap="round"><circle cx="10.8" cy="10.8" r="7.5"/><path d="m16.4 16.4 4.4 4.4"/></svg>
+<input id="search" type="search" placeholder="Ресторан или блюдо" aria-label="Поиск ресторанов и блюд" autocomplete="off">
+</div>
+<div class="chip-row" aria-label="Категории">
+<button data-kind="all" class="active" aria-pressed="true">Все</button>
+<button data-kind="pizza" aria-pressed="false">🍕 Пицца</button>
+<button data-kind="pasta" aria-pressed="false">🍝 Паста</button>
+<button data-kind="burger" aria-pressed="false">🍔 Бургеры</button>
+<button data-kind="dessert" aria-pressed="false">🍰 Десерты</button>
+</div>
+<div class="head-row"><h2>Рестораны рядом</h2><span id="count">2 места</span></div>
+<div class="restaurants" id="restaurants">
+<a class="restaurant" href="felicita.html?v=25" data-tags="pizza pasta burger dessert salad snack drink" data-search="феличита фелічіта felicita пицца паста бургеры салаты десерты">
+ <div class="cover" style="background:radial-gradient(ellipse at 50% 25%,#76483b,#211620 78%)">
+ <img loading="lazy" src="https://images.unsplash.com/photo-1513104890138-7c749659a591?auto=format&fit=crop&w=1100&q=80" alt="Иллюстративная фотография пиццы, не фото блюд ресторана">
+ <span class="flag">ПРЕВЬЮ МЕНЮ</span><div class="brand-tag">Фелічіта</div>
+ </div>
+ <div class="restaurant-body">
+  <h3>Фелічіта</h3>
+  <p>Итальянская атмосфера · категории блюд и подробное демо-меню</p>
+  <div class="tags"><span class="tag">🍕 Пицца</span><span class="tag">🍝 Паста</span><span class="tag">🥗 Салаты</span></div>
+  <div class="action"><span>Посмотреть меню →</span><strong>Демо · не заказать</strong></div>
+ </div>
+</a>
+<a class="restaurant" href="order.html?v=25" data-tags="pizza" data-search="teplo test тест пицца заказ доставка">
+ <div class="cover" style="background:radial-gradient(ellipse at 50% 20%,#7a4238,#2a1c2b 75%)">
+ <img loading="lazy" src="https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?auto=format&fit=crop&w=1100&q=80" alt="Иллюстративная фотография пиццы">
+ <span class="flag">МОЖНО ТЕСТИРОВАТЬ</span><div class="brand-tag">TEPLO TEST</div>
+ </div>
+ <div class="restaurant-body">
+  <h3>TEPLO TEST</h3>
+  <p>Тестовый магазин для проверки оформления и статусов заказов</p>
+  <div class="tags"><span class="tag">🍕 Пицца</span><span class="tag">🧪 Тестовый заказ</span><span class="tag">Без оплаты</span></div>
+  <div class="action"><span>Собрать заказ →</span><strong>Доставка 65 грн (демо)</strong></div>
+ </div>
+</a>
+</div>
+<p id="noResults" class="empty" hidden>Пока ничего не нашли. Попробуй другой запрос.</p>
+<section class="info-banner"><h3>Мы только начинаем 💗</h3><p>TEPLO находится в тестовом режиме. Фелічіта показана как дизайн-превью, без официального меню или приёма заказов. Для проверки покупки используй TEPLO TEST.</p></section>
+<footer>
+© TEPLO · Теплодар
+<details><summary>Для команды TEPLO</summary>
+<a href="dispatcher.html?v=25">Диспетчер</a>
+<a href="shop.html?v=25">Магазин</a>
+<a href="courier.html?v=25">Курьер</a>
+<a href="team.html?v=25">Администратор</a>
+</details>
+</footer>
+</main>
+<nav class="nav-bottom" aria-label="Навигация покупателя"><a href="./?v=25" class="active" aria-current="page">🏪 Рестораны</a><a href="order.html?v=25#orders-section">🧾 Мои заказы</a></nav>
+<script>
+const input=document.getElementById('search');
+const cards=[...document.querySelectorAll('.restaurant')];
+const count=document.getElementById('count');
+const empty=document.getElementById('noResults');
+let kind='all';
+function apply(){
+ const q=input.value.trim().toLocaleLowerCase('ru');
+ let n=0;
+ for(const card of cards){
+  const show=(kind==='all'||card.dataset.tags.split(' ').includes(kind))&&(!q||card.dataset.search.includes(q));
+  card.hidden=!show;if(show)n++;
  }
- const grand=total+deliveryFeePreview;
- root.append(el('p','Товары: '+money(total)+' · Доставка (тест): '+money(deliveryFeePreview)));
- root.append(el('h3','Итого: '+money(grand)));
- summary.textContent=lines.length+' позиций · Товары '+money(total)+' + доставка '+money(deliveryFeePreview)+' = '+money(grand)+' (расчёт предварительный)';
+ count.textContent=n+' '+(n===1?'место':n<5?'места':'мест');
+ empty.hidden=n>0;
 }
-function adjustCart(item,change){
- const current=cartItems.get(item.id)?.quantity||0;
- const next=Math.max(0,Math.min(20,current+change));
- if(next===0)cartItems.delete(item.id);
- else cartItems.set(item.id,{...item,quantity:next});
- if(!cartItems.size)cartShopId=null;
- cartRequestId=null;renderCart();
-}
-function addToCart(product,shop){
- if(cartShopId&&cartShopId!==shop.id){$('catalogStatus').textContent='Одна корзина — один магазин. Очисти предыдущую корзину перед выбором другого магазина.';return}
- cartShopId=shop.id;
- adjustCart({id:product.id,name:product.name,price:Number(product.price),quantity:0},1);
- $('catalogStatus').textContent='✓ '+product.name+' добавлено в корзину';
-}
-async function catalog(){
- const root=$('catalog');root.replaceChildren(el('p','Загрузка…'));
- try{
-  const {data:shops,error}=await db.from('shops').select('id,name,address,description,emoji,is_active').eq('is_active',true).order('name');
-  if(error)throw error;
-  root.replaceChildren();loadedShops=shops||[];
-  const feedback=el('p','','muted');feedback.id='catalogStatus';root.append(feedback);
-  $('shopPick').replaceChildren(...loadedShops.map(s=>{const o=document.createElement('option');o.value=s.id;o.textContent=s.name;return o}));
-  await pickProducts();
-  if(!loadedShops.length)root.append(el('p','Активных магазинов пока нет.'));
-  for(const s of loadedShops){
-    const card=el('article','','shop');
-    card.append(el('h3',(s.emoji||'🏪')+' '+s.name),el('p',s.address||''));
-    const {data:products,error:pe}=await db.from('products').select('id,name,price,description,is_available').eq('shop_id',s.id).eq('is_available',true).order('name');
-    if(pe)card.append(el('p','Товары недоступны: '+pe.message));
-    else if(!products?.length)card.append(el('p','Товары ещё не добавлены.'));
-    else for(const p of products){
-      const line=el('div','','product');
-      line.append(el('strong',p.name),el('p',money(p.price)),el('small',p.description||''));
-      const btn=el('button','+ Добавить');btn.className='add-btn';
-      btn.onclick=()=>addToCart(p,s);line.append(btn);card.append(line)
-    }
-    root.append(card);
-  }
-  $('connection').textContent='База доступна';
-  message('Каталог загружен. Магазинов: '+loadedShops.length);
- }catch(e){$('connection').textContent='Ошибка';root.replaceChildren(el('p','Не удалось загрузить каталог.'));message(e.message,true)}
-}
-async function orders(){const root=$('orders');root.replaceChildren();try{const u=await session();if(!u){root.append(el('p','Войди, чтобы увидеть свои заказы.'));return}const {data,error}=await db.from('orders').select('id,shop_name_snapshot,is_test,status,demo_status,delivery_address,payment_method,subtotal,delivery_fee,total,created_at,order_items(product_name_snapshot,quantity,unit_price_snapshot)').eq('customer_id',u.id).order('created_at',{ascending:false}).limit(30);if(error)throw error;if(!data.length){root.append(el('p','Заказов пока нет.'));return}for(const o of data){const card=el('article','','order');card.append(el('h3',(o.is_test?'🧪 ТЕСТ — НЕ ВЫПОЛНЯТЬ · ':'')+(o.shop_name_snapshot||'Заказ')),el('p','Статус: '+(o.is_test?({'pending':'Ожидает подтверждения (тест)','confirmed':'Подтверждён (тест)','preparing':'Готовится (тест)','ready_for_pickup':'Готов к выдаче (тест)','assigned':'Передан курьеру (тест)','picked_up':'Забран курьером (тест)','delivered':'Доставлен (тест)'}[o.demo_status]||o.demo_status):o.status)),el('p','Итого: '+money(o.total)+' (доставка '+money(o.delivery_fee)+')'),el('p','Адрес: '+(o.delivery_address||'—')),el('p','Оплата: '+(o.payment_method==='card_on_delivery'?'Картой при получении (если доступно)':'Наличными при получении')),el('small',new Date(o.created_at).toLocaleString('ru-UA')));for(const p of o.order_items||[])card.append(el('p',p.product_name_snapshot+' × '+p.quantity+' · '+money(p.unit_price_snapshot)));root.append(card)}}catch(e){message('Заказы: '+e.message,true)}}
-async function auth(kind){
-  const email=$('email').value.trim(), password=$('password').value;
-  const status=$('authStatus'), login=$('login'), signup=$('signup');
-  const show=(text,error=false)=>{status.textContent=text;status.style.color=error?'#ff9999':'#d89a45'};
-  if(!email||!password){$('authDetails').open=true;show('Введи email и пароль.',true);return}
-  if(kind==='signup'&&password.length<6){show('Пароль должен содержать минимум 6 символов.',true);return}
-  login.disabled=true;signup.disabled=true;show(kind==='signup'?'Отправляем запрос на регистрацию…':'Проверяем данные для входа…');
-  const slow=setTimeout(()=>show('Сервер отвечает дольше обычного. Не нажимай кнопку повторно.'),12000);
-  try{
-    const result=kind==='signup'?await db.auth.signUp({email,password,options:{emailRedirectTo:'https://kirillbebzenka-coder.github.io/teplo-app/'}}):await db.auth.signInWithPassword({email,password});
-    if(result.error)throw result.error;
-    if(kind==='signup'){
-      show(result.data?.session?'Аккаунт создан, вход выполнен.':'Запрос принят. Проверь письмо для подтверждения email (включая Спам).');
-    }else{show('Вход выполнен.')}
-    await session();if(result.data?.session){$('authDetails').open=false}await orders();
-  }catch(e){show('Ошибка: '+(e?.message||String(e)),true)}
-  finally{clearTimeout(slow);login.disabled=false;signup.disabled=false}
-}
-async function resendConfirmation(){
-  const status=$('authStatus'), btn=$('resend'), email=$('email').value.trim();
-  const show=(s,bad=false)=>{status.textContent=s;status.style.color=bad?'#ff9999':'#d89a45'};
-  if(!email){show('Сначала введи email.',true);return}
-  btn.disabled=true;
-  show('Запрашиваем новое письмо подтверждения…');
-  try{
-    const {error}=await db.auth.resend({type:'signup',email,options:{emailRedirectTo:'https://kirillbebzenka-coder.github.io/teplo-app/'}});
-    if(error)throw error;
-    show('Если аккаунт ожидает подтверждения, письмо отправлено. Проверь входящие и спам.');
-  }catch(e){
-    if(/rate limit|429|too many/i.test(String(e?.message||e))){
-      show('Лимит писем Supabase пока исчерпан. Не отправляй запросы повторно — попробуй позднее.',true);
-    }else{show('Ошибка: '+(e?.message||String(e)),true)}
-  }finally{btn.disabled=false}
-}
-async function saveDemoCheckout(){
- const btn=$('saveDemoCheckout'),status=$('demoCheckoutStatus');
- const name=$('demoName').value.trim(),phone=$('demoPhone').value.trim(),
-       street=$('demoStreet').value.trim(),house=$('demoHouse').value.trim(),
-       apartment=$('demoApartment').value.trim(),payment=$('paymentMethod').value;
- const lines=[...cartItems.values()];
- if(!cartShopId||!lines.length){status.style.color='#ff9999';status.textContent='Выбери товар в каталоге и добавь его в корзину.';return}
- if(name.length<2||phone.length<7||street.length<3||!house){status.style.color='#ff9999';status.textContent='Заполни имя, тестовый телефон, улицу и дом.';return}
- btn.disabled=true;status.style.color='#d89a45';status.textContent='Отправляем демо-заказ на сервер…';
- if(!cartRequestId)cartRequestId=crypto.randomUUID();
- try{
-  const {data:{user},error:authError}=await db.auth.getUser();
-  if(authError||!user){$('authDetails').open=true;$('accountSection').scrollIntoView({behavior:'smooth'});throw Error('Войди в аккаунт выше и повтори оформление.');}
-  const {data,error}=await db.rpc('place_teplo_demo_cart',{
-   p_shop_id:cartShopId,p_items:lines.map(x=>({product_id:x.id,quantity:x.quantity})),
-   p_customer_name:name,p_customer_phone:phone,p_street:street,p_house:house,
-   p_apartment:apartment,p_payment_method:payment,p_request_id:cartRequestId
-  });
-  if(error)throw error;
-  status.textContent='✓ Заказ оформлен!';$('successDetails').textContent='Тестовый заказ №'+String(data).slice(0,8)+' сохранён. Диспетчер увидит его в своей панели.';$('orderSuccess').hidden=false;
-  cartItems.clear();cartShopId=null;cartRequestId=null;renderCart();await orders();$('orderSuccess').scrollIntoView({behavior:'smooth',block:'start'});
- }catch(e){status.style.color='#ff9999';const reason=e?.message||String(e);status.textContent='Заказ не создан: '+reason+'. Корзина сохранена — можно исправить ошибку и повторить.'}
- finally{btn.disabled=false}
-}
-async function createDemoOrder(){
-  const btn=$('testCheckout'), status=$('testStatus');
-  btn.disabled=true;
-  status.style.color='#d89a45';
-  status.textContent='Создаём тестовую запись…';
-  try{
-    const user=await session();
-    if(!user)throw Error('Сначала войди в тестовый аккаунт.');
-    const {data,error}=await db.rpc('create_teplo_test_order');
-    if(error)throw error;
-    status.textContent='Тестовый заказ сохранён (или уже существовал). ID: '+data+'. Никакая доставка не оформлена.';
-    await orders();
-  }catch(e){
-    status.style.color='#ff9999';
-    status.textContent='Ошибка: '+(e?.message||String(e));
-  }finally{btn.disabled=false}
-}
-async function pickProducts(){const id=$('shopPick').value;const root=$('productPick');root.replaceChildren();loadedProducts=[];if(!id)return;const {data,error}=await db.from('products').select('id,name,price').eq('shop_id',id).eq('is_available',true);if(error){message(error.message,true);return}loadedProducts=data||[];for(const p of loadedProducts){const row=el('label',p.name+' · '+money(p.price)+' — кол-во: ');row.style.display='block';const inp=document.createElement('input');inp.type='number';inp.min='0';inp.max='50';inp.value='0';inp.dataset.product=p.id;row.append(inp);root.append(row)}}
-async function checkout(){try{const u=await session();if(!u)throw Error('Сначала войди');const items=[...$('productPick').querySelectorAll('input')].map(x=>({product_id:x.dataset.product,quantity:Number(x.value)})).filter(x=>Number.isInteger(x.quantity)&&x.quantity>0&&x.quantity<=50);if(!items.length)throw Error('Выбери хотя бы один товар');const name=$('custName').value.trim(),phone=$('custPhone').value.trim(),address=$('custAddress').value.trim();if(!name||!phone||!address)throw Error('Заполни имя, телефон и адрес');$('checkout').disabled=true;const {data,error}=await db.rpc('create_order',{p_shop_id:$('shopPick').value,p_items:items,p_customer_name:name,p_customer_phone:phone,p_delivery_address:address,p_customer_comment:'Тестовый заказ TEPLO'});if(error)throw error;$('checkoutStatus').textContent='Заказ создан: '+data;await orders()}catch(e){$('checkoutStatus').textContent='Ошибка: '+e.message}finally{$('checkout').disabled=false}}
-$('cartBarOpen').onclick=()=>{$('cart-section').hidden=false;$('cart-section').scrollIntoView({behavior:'smooth',block:'start'})};
-$('backToCatalog').onclick=()=>document.getElementById('market').scrollIntoView({behavior:'smooth',block:'start'});
-$('backToCart').onclick=()=>document.getElementById('cart-section').scrollIntoView({behavior:'smooth',block:'start'});
-$('goCheckout').onclick=()=>{$('delivery-form').hidden=false;document.getElementById('delivery-form').scrollIntoView({behavior:'smooth',block:'start'})};renderCart();$('shopPick').onchange=pickProducts;$('checkout').onclick=checkout;$('testCheckout').onclick=createDemoOrder;$('saveDemoCheckout').onclick=saveDemoCheckout;
-$('login').onclick=()=>auth('login');$('signup').onclick=()=>auth('signup');$('resend').onclick=resendConfirmation;$('logout').onclick=async()=>{await db.auth.signOut();await session();await orders();message('Вы вышли')};$('refresh').onclick=catalog;$('refreshOrders').onclick=orders;
-db.auth.onAuthStateChange(()=>{setTimeout(()=>{void session().catch(e=>message('Сессия: '+e.message,true))},0)});await session();await catalog();await orders();
-</script></body></html>
+input.addEventListener('input',apply);
+document.querySelectorAll('.chip-row button').forEach(btn=>{
+ btn.addEventListener('click',()=>{
+  kind=btn.dataset.kind;
+  document.querySelectorAll('.chip-row button').forEach(b=>{b.classList.toggle('active',b===btn);b.setAttribute('aria-pressed',String(b===btn))});
+  apply();
+ });
+});
+</script>
+</body>
+</html>
