@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="color-scheme" content="dark"><title>TEPLO · Управление командой</title>
+<style>
+:root{color-scheme:dark}*{box-sizing:border-box}body{margin:0;background:#0b1220;color:#f3f6fb;font:16px/1.5 system-ui,-apple-system,sans-serif}
+main{max-width:780px;margin:auto;padding:18px 18px 40px}
+h1{font-size:clamp(28px,6vw,38px);margin:9px 0}.brand{font-size:30px;color:#c7f36b;font-weight:850}
+a{color:#c7f36b}p{margin:9px 0}.muted{color:#a8b5c8}.warning{color:#ffd388}
+section,article{border:1px solid #34465f;background:#142035;border-radius:16px;padding:16px;margin:14px 0}
+label{display:block;font-weight:650;margin:11px 0 5px}
+input,select,button{font:inherit;padding:12px;border-radius:10px}
+input,select{width:100%;background:#0b1220;color:white;border:1px solid #435569}
+button{background:#c7f36b;color:#17220b;font-weight:750;border:0;cursor:pointer}
+button:disabled{opacity:.5}button:focus-visible,input:focus-visible,select:focus-visible,a:focus-visible{outline:3px solid #fff;outline-offset:2px}
+.row{display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+.role{border:1px solid #4d6d37;color:#c7f36b;border-radius:22px;padding:4px 10px;font-size:13px}
+.error{color:#ffa5a5}.success{color:#c7f36b}#notice,#feedback{white-space:pre-wrap}
+.small{font-size:14px}.cards{display:grid;gap:9px}
+@media(max-width:430px){main{padding:12px}section,article{padding:13px}}
+</style></head><body><main>
+<div class="row"><span class="brand">TEPLO</span><a href="dispatcher.html?v=18">← Диспетчер</a></div>
+<h1>Управление командой</h1>
+<p class="muted">Администрирование ролей, магазинов и сотрудников TEPLO.</p>
+<section><div class="row"><button id="refresh">Обновить</button><span id="access" class="role">Проверяем роль…</span></div><p id="notice" class="muted" role="status" aria-live="polite">Проверяем доступ…</p></section>
+<div id="adminArea" hidden>
+<section>
+<h2>Назначить роль сотруднику</h2>
+<p class="muted">Сотрудник должен сначала самостоятельно зарегистрироваться и подтвердить email. Пароль сотрудника здесь не требуется.</p>
+<form id="staffForm">
+<label for="staffEmail">Email сотрудника</label><input id="staffEmail" type="email" required autocomplete="off" placeholder="worker@example.com" maxlength="254">
+<label for="staffRole">Роль</label>
+<select id="staffRole" required>
+<option value="dispatcher">Диспетчер</option>
+<option value="venue">Сотрудник магазина</option>
+<option value="courier">Курьер</option>
+<option value="customer">Покупатель (отозвать права сотрудника)</option>
+</select>
+<div id="shopField" hidden><label for="shopId">Магазин сотрудника</label><select id="shopId"></select></div>
+<button id="save" type="submit">Сохранить назначение</button>
+<p id="feedback" role="status" aria-live="polite"></p>
+</form>
+</section>
+<section><h2>Сотрудники</h2><div id="staffList" class="cards"></div></section>
+</div>
+<section><p class="warning"><strong>Реальная доставка отключена.</strong> Роли не включают автоматически заказы, платежи или курьерские назначения.</p></section>
+</main>
+<script type="module">
+import {createClient} from 'https://esm.sh/@supabase/supabase-js@2';
+const db=createClient('https://bgtegxdekqsajttkhhrj.supabase.co','sb_publishable_aSOKkJ_F47sGj9e8v8uJ3g_24rlQ8XG');
+const $=id=>document.getElementById(id);
+const e=(tag,text='',cls='')=>{const n=document.createElement(tag);n.textContent=String(text??'');if(cls)n.className=cls;return n};
+const labelRole={admin:'Администратор',dispatcher:'Диспетчер',venue:'Магазин',courier:'Курьер',customer:'Покупатель'};
+let busy=false;
+function roleField(){$('shopField').hidden=$('staffRole').value!=='venue'}
+$('staffRole').addEventListener('change',roleField);roleField();
+async function load(){
+ if(busy)return;busy=true;$('refresh').disabled=true;
+ const status=$('notice');status.className='muted';status.textContent='Загрузка…';
+ try{
+  const {data:{user},error:authError}=await db.auth.getUser();
+  if(authError)throw authError;
+  if(!user){$('access').textContent='Нужен вход';$('adminArea').hidden=true;status.textContent='Войди в TEPLO на странице покупателя.';return}
+  const {data:profile,error:profileError}=await db.from('profiles').select('role').eq('id',user.id).single();
+  if(profileError)throw profileError;
+  if(profile?.role!=='admin'){$('access').textContent='Нет прав';$('adminArea').hidden=true;status.textContent='Этот раздел доступен только администратору.';return}
+  $('access').textContent='Администратор';
+  const [{data:staff,error:staffError},{data:shops,error:shopsError}]=await Promise.all([
+    db.rpc('teplo_staff_directory'),
+    db.from('shops').select('id,name,is_active').eq('is_active',true).order('name')
+  ]);
+  if(staffError)throw staffError;if(shopsError)throw shopsError;
+  $('adminArea').hidden=false;
+  $('shopId').replaceChildren();
+  for(const shop of shops||[]){
+    const option=document.createElement('option');option.value=shop.id;option.textContent=shop.name;$('shopId').append(option);
+  }
+  const root=$('staffList');root.replaceChildren();
+  if(!staff?.length)root.append(e('p','Сотрудников пока нет.','muted'));
+  for(const member of staff||[]){
+    const card=e('article');
+    card.append(e('strong',member.email),e('p',labelRole[member.role]||member.role,'role'));
+    if(member.shop_name)card.append(e('p','Магазин: '+member.shop_name,'small'));
+    if(member.role==='courier')card.append(e('p',member.on_shift?'🟢 На смене':'⚪ Не на смене','small'));
+    root.append(card);
+  }
+  status.textContent='Доступ подтверждён сервером. Сотрудников: '+(staff?.length||0);
+ }catch(err){$('adminArea').hidden=true;status.className='error';status.textContent='Ошибка: '+(err?.message||String(err))}
+ finally{$('refresh').disabled=false;busy=false}
+}
+$('staffForm').addEventListener('submit',async ev=>{
+ ev.preventDefault();
+ const email=$('staffEmail').value.trim(),role=$('staffRole').value,shop=role==='venue'?$('shopId').value:null;
+ const f=$('feedback');f.className='muted';f.textContent='Проверяем и сохраняем роль…';
+ if(role==='venue'&&!shop){f.className='error';f.textContent='Выбери магазин.';return}
+ if(!window.confirm('Подтвердить назначение роли «'+(labelRole[role]||role)+'» для '+email+'?'))return;
+ $('save').disabled=true;
+ try{
+  const {error}=await db.rpc('teplo_set_staff_role',{p_email:email,p_role:role,p_shop_id:shop});
+  if(error)throw error;
+  f.className='success';f.textContent='Роль сохранена. Сотрудник сможет войти со своим аккаунтом.';
+  $('staffEmail').value='';await load();
+ }catch(err){f.className='error';f.textContent='Не удалось сохранить: '+(err?.message||String(err))}
+ finally{$('save').disabled=false}
+});
+$('refresh').addEventListener('click',load);
+await load();
+</script></body></html>
