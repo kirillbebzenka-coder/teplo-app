@@ -24,11 +24,11 @@ button:disabled{opacity:.6}button:focus-visible,a:focus-visible{outline:3px soli
 .demo-actions{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}.secondary{background:#30415d;color:#f5f7fb}.item{padding:8px 0;border-top:1px solid var(--line)}.total{font-weight:800;color:var(--green)}
 #notice{white-space:pre-wrap}
 @media(max-width:440px){main{padding:14px}section,.order{padding:15px}.brand{font-size:26px}}
-</style>
+nav.teplo-tabs{position:fixed;z-index:200;bottom:0;left:0;right:0;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;background:#101b2d;border-top:1px solid #435569;padding:8px 10px calc(9px + env(safe-area-inset-bottom));box-shadow:0 -6px 25px #050b15dd}nav.teplo-tabs a{min-width:0;display:flex;align-items:center;justify-content:center;flex-direction:column;text-align:center;gap:3px;border:1px solid transparent;border-radius:12px;padding:8px 3px;color:#d4dfea;text-decoration:none;font-weight:700;font-size:15px;line-height:1.25}nav.teplo-tabs a span{font-size:clamp(11px,2.9vw,14px)}nav.teplo-tabs a[aria-current="page"]{background:#283b2b;border-color:#8ebf56;color:#c7f36b}main{padding-bottom:calc(120px + env(safe-area-inset-bottom))}body{min-width:300px}</style>
 </head>
 <body>
 <main>
-<div class="top"><div class="brand">TEPLO</div><nav class="row" aria-label="Разделы TEPLO"><a href="./">🛍 Покупатель</a><span class="pill" aria-current="page">📋 Диспетчер</span><a href="courier.html">🛵 Курьер</a></nav></div>
+<div class="top"><div class="brand">TEPLO</div></div>
 <h1>Панель диспетчера</h1>
 <p class="subtitle">Теплодар · просмотр заказов из Supabase</p>
 <section>
@@ -39,6 +39,11 @@ button:disabled{opacity:.6}button:focus-visible,a:focus-visible{outline:3px soli
 <div id="list"></div>
 <p class="muted">Для тестовых заказов работают только симулированные этапы. Настоящие статусы, действия магазина и назначение реального курьера не меняются. Реальные заказы пока не принимаются.</p>
 </main>
+<nav class="teplo-tabs" aria-label="Разделы TEPLO">
+<a href="./?v=15">🛍<span>Покупатель</span></a>
+<a href="dispatcher.html?v=15" aria-current="page">📋<span>Диспетчер</span></a>
+<a href="courier.html?v=15">🛵<span>Курьер</span></a>
+</nav>
 <script type="module">
 import {createClient} from 'https://esm.sh/@supabase/supabase-js@2';
 const db=createClient('https://bgtegxdekqsajttkhhrj.supabase.co','sb_publishable_aSOKkJ_F47sGj9e8v8uJ3g_24rlQ8XG');
