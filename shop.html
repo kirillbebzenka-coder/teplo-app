@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="ru"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="color-scheme" content="dark">
+<title>TEPLO · Магазин</title>
+<style>
+:root{color-scheme:dark;--bg:#0b1220;--card:#142035;--line:#31425b;--ink:#f3f6fb;--muted:#afbdd0;--accent:#c7f36b}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font:16px/1.5 system-ui,-apple-system,sans-serif;margin:0;min-width:300px}
+main{max-width:800px;padding:16px 16px calc(125px + env(safe-area-inset-bottom));margin:auto}
+header{display:flex;justify-content:space-between;align-items:center;gap:12px}
+.logo{font-size:30px;font-weight:800;color:var(--accent)}
+h1{font-size:clamp(26px,6vw,37px);line-height:1.18;margin:18px 0 4px}
+h2{font-size:22px;margin:0 0 12px}
+h3{font-size:20px;margin:0}
+p{margin:9px 0}
+section,article{background:var(--card);border:1px solid var(--line);border-radius:17px;padding:17px;margin:13px 0}
+.muted{color:var(--muted)}.warning{color:#ffd485}.ok{color:var(--accent)}.error{color:#ffa5a5}
+.row{display:flex;gap:11px;justify-content:space-between;align-items:center;flex-wrap:wrap}
+button{background:var(--accent);color:#18230c;border:0;border-radius:11px;padding:12px 15px;font:inherit;font-weight:750;cursor:pointer}
+button:disabled{opacity:.55;cursor:default}
+a{color:var(--accent)}
+.badge{display:inline-block;padding:5px 11px;border-radius:30px;color:var(--accent);border:1px solid #4e6e37;font-size:13px}
+.stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.stat{background:#0e1827;border:1px solid var(--line);padding:12px;border-radius:12px;min-width:0}
+.stat strong{font-size:22px;display:block}.stat span{font-size:12px;color:var(--muted);overflow-wrap:anywhere}
+.line{border-top:1px solid var(--line);padding:8px 0}
+.amount{color:var(--accent);font-weight:800}
+#notice{white-space:pre-wrap}
+nav.teplo-tabs{position:fixed;z-index:200;bottom:0;left:0;right:0;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:5px;background:#101b2d;border-top:1px solid #435569;padding:8px 8px calc(9px + env(safe-area-inset-bottom));box-shadow:0 -6px 25px #050b15dd}
+nav.teplo-tabs a{min-width:0;display:flex;align-items:center;justify-content:center;flex-direction:column;text-align:center;gap:3px;border:1px solid transparent;border-radius:12px;padding:8px 2px;color:#d4dfea;text-decoration:none;font-weight:700;font-size:15px;line-height:1.25}
+nav.teplo-tabs a span{font-size:clamp(10px,2.65vw,13px)}
+nav.teplo-tabs a[aria-current=page]{background:#283b2b;border-color:#8ebf56;color:var(--accent)}
+button:focus-visible,a:focus-visible{outline:3px solid #fff;outline-offset:3px}
+@media(max-width:400px){main{padding:12px 12px 125px}section,article{padding:13px}}
+</style></head><body>
+<main>
+<header><div class="logo">TEPLO</div><span class="badge">Панель магазина</span></header>
+<h1>Заказы магазина</h1>
+<p class="muted">Приём и приготовление заказов · Теплодар</p>
+<section>
+<div class="row"><button id="refresh">Обновить</button><span class="badge" id="access">Проверяем вход…</span></div>
+<p id="notice" role="status" aria-live="polite" class="muted">Подключаемся к Supabase…</p>
+</section>
+<div class="stats" id="stats"></div>
+<div id="orders"></div>
+<section><p class="warning"><strong>Сейчас тест.</strong> Не готовить, не продавать и не передавать тестовые заказы курьерам.</p>
+<p class="muted">В демо-режиме доступны только твои тестовые заказы. Для реального магазина потребуется отдельная учётная запись сотрудника с назначенными правами. Настоящие действия пока выключены.</p></section>
+</main>
+<nav class="teplo-tabs" aria-label="Разделы TEPLO">
+<a href="./?v=17">🛍<span>Покупатель</span></a>
+<a href="dispatcher.html?v=17">📋<span>Диспетчер</span></a>
+<a href="shop.html?v=17" aria-current="page">🏪<span>Магазин</span></a>
+<a href="courier.html?v=17">🛵<span>Курьер</span></a>
+</nav>
+<script type="module">
+import {createClient} from 'https://esm.sh/@supabase/supabase-js@2';
+const db=createClient('https://bgtegxdekqsajttkhhrj.supabase.co','sb_publishable_aSOKkJ_F47sGj9e8v8uJ3g_24rlQ8XG');
+const $=id=>document.getElementById(id);
+const el=(tag,text='',cls='')=>{const node=document.createElement(tag);node.textContent=String(text??'');if(cls)node.className=cls;return node};
+const money=value=>new Intl.NumberFormat('uk-UA',{style:'currency',currency:'UAH'}).format(Number(value||0));
+const labels={pending:'Ожидает подтверждения',confirmed:'Подтверждён',preparing:'Готовится',ready_for_pickup:'Готов к выдаче',assigned:'Курьер назначен',picked_up:'Забран курьером',delivered:'Доставлен',cancelled:'Отменён'};
+let busy=false;
+function stat(label,value){const div=el('div','','stat');div.append(el('strong',value),el('span',label));return div}
+function link(label,href){const a=el('a',label);a.href=href;return a}
+async function nextStage(order,next,button,feedback){
+ button.disabled=true;feedback.className='muted';feedback.textContent='Сохраняем тестовый этап…';
+ try{
+  const {data,error}=await db.rpc('advance_teplo_demo_order',{p_order_id:order.id,p_next_status:next});
+  if(error)throw error;
+  feedback.className='ok';feedback.textContent='Этап изменён: '+(labels[data]||data);
+  await load();
+ }catch(e){feedback.className='error';feedback.textContent='Ошибка: '+(e?.message||String(e))}
+ finally{button.disabled=false}
+}
+function display(order,isDemo){
+ const card=el('article');
+ const stage=isDemo?order.demo_status:order.status;
+ const top=el('div','','row');
+ top.append(el('h3',(isDemo?'🧪 ТЕСТ · ':'')+(order.shop_name_snapshot||'Магазин')),
+            el('span',labels[stage]||stage,'badge'));
+ card.append(top,el('p','Заказ '+String(order.id).slice(0,8),'muted'));
+ const time=el('p',new Date(order.created_at).toLocaleString('ru-RU'),'muted');
+ card.append(time);
+ (order.order_items||[]).forEach(item=>card.append(el('div',item.product_name_snapshot+' × '+item.quantity+' · '+money(item.unit_price_snapshot),'line')));
+ card.append(el('p','Итого: '+money(order.total),'amount'));
+ if(!isDemo){
+  card.append(el('p','Получатель: '+(order.customer_name||'—')),
+              el('p','Телефон: '+(order.customer_phone||'—')),
+              el('p','Адрес: '+(order.delivery_address||'—')));
+  card.append(el('p','Просмотр настоящего заказа. Изменение статуса пока отключено.','muted'));
+ }else{
+  card.append(el('p','Демонстрация: ничего не готовить и не доставлять.','warning'));
+  const feedback=el('p','','muted');
+  if(stage==='confirmed'||stage==='preparing'){
+    const next=stage==='confirmed'?'preparing':'ready_for_pickup';
+    const button=el('button',stage==='confirmed'?'Начать приготовление (тест)':'Готов к выдаче (тест)');
+    button.onclick=()=>nextStage(order,next,button,feedback);
+    card.append(button);
+  }else if(stage==='pending'){
+    card.append(el('p','Заказ ещё ожидает подтверждения диспетчера.','muted'),link('Открыть диспетчерскую','dispatcher.html?v=17'));
+  }else if(stage==='ready_for_pickup'){
+    card.append(el('p','Заказ готов — теперь диспетчер должен назначить курьера.','muted'),link('К диспетчеру','dispatcher.html?v=17'));
+  }else if(stage==='assigned'||stage==='picked_up'){
+    card.append(el('p','Заказ передан на курьерский этап.','muted'),link('Курьерский экран','courier.html?v=17'));
+  }else if(stage==='delivered'){
+    card.append(el('p','✅ Тестовый заказ доставлен. Для нового цикла можно создать ещё один в каталоге или сбросить симуляцию в диспетчерской.','ok'));
+  }
+  card.append(feedback);
+ }
+ return card;
+}
+async function load(){
+ if(busy)return;busy=true;$('refresh').disabled=true;
+ const notice=$('notice'),list=$('orders'),stats=$('stats');
+ notice.className='muted';notice.textContent='Загружаем…';
+ try{
+  const {data:{user},error:authError}=await db.auth.getUser();
+  if(authError)throw authError;
+  if(!user){$('access').textContent='Гость';notice.textContent='Для просмотра заказов сначала войди в TEPLO через страницу покупателя.';list.replaceChildren();stats.replaceChildren();return}
+  const {data:profile,error:profileError}=await db.from('profiles').select('role').eq('id',user.id).single();
+  if(profileError)throw profileError;
+  let rows=[],demo=true;
+  if(profile?.role==='venue'){
+    const {data:members,error:memberError}=await db.from('shop_members').select('shop_id').eq('user_id',user.id);
+    if(memberError)throw memberError;
+    const ids=(members||[]).map(m=>m.shop_id);
+    demo=false;
+    if(ids.length){
+      const {data,error}=await db.from('orders').select('id,shop_id,shop_name_snapshot,customer_name,customer_phone,delivery_address,total,status,created_at,is_test,order_items(product_name_snapshot,quantity,unit_price_snapshot)')
+        .in('shop_id',ids).eq('is_test',false).order('created_at',{ascending:false}).limit(50);
+      if(error)throw error;
+      rows=data||[];
+    }
+    $('access').textContent='Сотрудник магазина';
+    notice.textContent='Отображаются только заказы закреплённых за твоим аккаунтом магазинов. Управление настоящими заказами пока отключено.';
+  }else{
+    const {data,error}=await db.from('orders').select('id,shop_name_snapshot,total,status,demo_status,is_test,created_at,order_items(product_name_snapshot,quantity,unit_price_snapshot)')
+      .eq('customer_id',user.id).eq('is_test',true).order('created_at',{ascending:false}).limit(30);
+    if(error)throw error;
+    rows=data||[];
+    $('access').textContent='Демо · свои заказы';
+    notice.textContent='Это тренажёр работы магазина. Ты видишь только собственные тестовые заказы, не заказы других покупателей.';
+  }
+  list.replaceChildren();stats.replaceChildren();
+  const status=o=>demo?o.demo_status:o.status;
+  stats.append(stat('Всего заказов',rows.length),stat('Готовятся',rows.filter(o=>status(o)==='preparing').length),stat('Готовы к выдаче',rows.filter(o=>status(o)==='ready_for_pickup').length));
+  if(!rows.length)list.append(el('section','Доступных заказов пока нет.','muted'));
+  else rows.forEach(o=>list.append(display(o,demo)));
+ }catch(e){notice.className='error';notice.textContent='Ошибка: '+(e?.message||String(e));list.replaceChildren();stats.replaceChildren()}
+ finally{busy=false;$('refresh').disabled=false}
+}
+$('refresh').addEventListener('click',load);
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)void load()});
+db.auth.onAuthStateChange(()=>{setTimeout(()=>{void load()},0)});
+await load();
+</script></body></html>
