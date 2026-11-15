@@ -4,8 +4,8 @@
   "restaurant": {
     "name": "Фелічіта",
     "city": "Теплодар",
-    "address": "Теплодар, Одеська область, Україна (точна адреса уточнюється)",
-    "addressSource": null,
+    "address": "вул. Романа Прокопія, 2, Теплодар, Одеська область, Україна",
+    "addressSource": "https://trada.gov.ua/?page_id=87216",
     "officialPartner": false,
     "orderingEnabled": false,
     "menuVerified": false,
