@@ -29,11 +29,29 @@ button:focus-visible,a:focus-visible{outline:3px solid white;outline-offset:3px}
 .step.active{border-color:var(--accent);color:var(--white);font-weight:750}
 #notice{white-space:pre-wrap}
 @media(max-width:420px){main{padding:12px}section,article{padding:14px}.brand{font-size:26px}}
-nav.teplo-tabs{position:fixed;z-index:200;bottom:0;left:0;right:0;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;background:#101b2d;border-top:1px solid #435569;padding:8px 10px calc(9px + env(safe-area-inset-bottom));box-shadow:0 -6px 25px #050b15dd}nav.teplo-tabs a{min-width:0;display:flex;align-items:center;justify-content:center;flex-direction:column;text-align:center;gap:3px;border:1px solid transparent;border-radius:12px;padding:8px 3px;color:#d4dfea;text-decoration:none;font-weight:700;font-size:15px;line-height:1.25}nav.teplo-tabs a span{font-size:clamp(10px,2.65vw,13px)}nav.teplo-tabs a[aria-current="page"]{background:#281d2a;border-color:#79516b;color:#d89a45}main{padding-bottom:calc(120px + env(safe-area-inset-bottom))}body{min-width:300px}</style><link rel="stylesheet" href="./theme.css?v=20"></head>
+nav.teplo-tabs{position:fixed;z-index:200;bottom:0;left:0;right:0;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;background:#101b2d;border-top:1px solid #435569;padding:8px 10px calc(9px + env(safe-area-inset-bottom));box-shadow:0 -6px 25px #050b15dd}nav.teplo-tabs a{min-width:0;display:flex;align-items:center;justify-content:center;flex-direction:column;text-align:center;gap:3px;border:1px solid transparent;border-radius:12px;padding:8px 3px;color:#d4dfea;text-decoration:none;font-weight:700;font-size:15px;line-height:1.25}nav.teplo-tabs a span{font-size:clamp(10px,2.65vw,13px)}nav.teplo-tabs a[aria-current="page"]{background:#281d2a;border-color:#79516b;color:#d89a45}main{padding-bottom:calc(120px + env(safe-area-inset-bottom))}body{min-width:300px}</style><link rel="stylesheet" href="./theme.css?v=24">
+<style>
+.courier-top{padding:12px!important}
+.courier-top .row{gap:8px}
+#notice{font-size:12px;margin:8px 0 0}
+.jobs-section{padding:12px!important;background:transparent!important;border:0!important;box-shadow:none!important}
+.jobs-section>h2{font-size:23px;margin-bottom:14px}
+#jobs article{margin:12px 0!important;padding:17px!important;border:1px solid #564455!important}
+#jobs article h3{color:#f3e7ee;font-size:19px}
+#jobs article .chip{display:inline-flex;font-size:13px;margin:10px 0;color:#efbf89!important}
+#jobs article button{min-height:50px;width:100%;font-weight:770!important;margin:12px 0 4px}
+#jobs article .warning{font-size:12px}
+#jobs article .item{font-size:14px;color:#bdbecc}
+#stats .stat{min-width:100px}
+#courierShift{border-color:#614f67!important}
+#shiftButton{width:100%;min-height:49px}
+.technical{background:transparent!important;border:0!important;box-shadow:none!important;padding:7px!important}
+.technical summary{font-size:12px}
+</style></head>
 <body><main>
 <header><div class="brand">TEPLO</div></header>
-<h1>Курьер</h1><p class="muted">Теплодар · задания и проверка доставки</p>
-<section><div class="row"><button id="refresh">Обновить задания</button><span id="access" class="chip">Проверяем вход…</span></div>
+<h1>Мои доставки</h1><p class="muted">Здесь появляются заказы, назначенные тебе диспетчером.</p>
+<section class="courier-top"><div class="row"><span id="access" class="chip">Проверяем вход…</span><button id="refresh" class="secondary">↻ Обновить</button></div>
 <p id="notice" class="muted" role="status" aria-live="polite">Подключаемся…</p></section>
 <div id="stats" class="grid"></div>
 <section id="courierShift" hidden>
@@ -42,9 +60,8 @@ nav.teplo-tabs{position:fixed;z-index:200;bottom:0;left:0;right:0;display:grid;g
 <button id="shiftButton" disabled>Начать смену</button>
 <p class="muted small">Заявки могут назначать только диспетчер и администратор. Смена не включает реальную доставку.</p>
 </section>
-<section><h2>Мои задания</h2><p id="arrivalAlert" role="status" aria-live="polite" hidden style="border:1px solid #79516b;padding:12px;border-radius:12px;color:#f0b5d0;background:#281d2a;font-weight:700"></p><div id="jobs"></div></section>
-<section><p class="warning"><strong>Тестовый режим.</strong> Заказы в демо отображаются только назначенному диспетчером аккаунту. Симуляция не меняет настоящий статус заказа. Никакой оплаты, готовки и доставки делать не нужно.</p>
-<p class="muted small">Для реальных курьеров отображение заданий ограничено назначением и серверными правами. Настоящие статусы доступны только назначенному курьеру и только после запуска реальной доставки.</p></section>
+<section class="jobs-section"><h2>Заказы</h2><p id="arrivalAlert" role="status" aria-live="polite" hidden style="border:1px solid #79516b;padding:12px;border-radius:12px;color:#f0b5d0;background:#281d2a;font-weight:700"></p><div id="jobs"></div></section>
+<details class="technical"><summary>Что означает тестовый режим?</summary><p class="muted">Настоящая доставка выключена. Тестовые заказы не нужно забирать, оплачивать или отвозить.</p></details>
 </main><nav class="teplo-tabs" aria-label="Разделы TEPLO"><a href="./?v=15">🛍<span>Покупатель</span></a><a href="dispatcher.html?v=15">📋<span>Диспетчер</span></a><a href="shop.html?v=17">🏪<span>Магазин</span></a><a href="courier.html?v=15" aria-current="page">🛵<span>Курьер</span></a></nav>
 <script type="module">
 import {createClient} from 'https://esm.sh/@supabase/supabase-js@2';
@@ -89,13 +106,13 @@ async function moveDemo(o,next,button,msg){
 }
 function renderDemo(o){
  const card=node('article');
- card.append(node('h3','🧪 Тестовое задание · '+(o.shop_name_snapshot||'TEPLO')),node('p','Заказ '+String(o.id).slice(0,8),'muted small'));
+ card.append(node('h3','🛵 Заказ №'+String(o.id).slice(0,8)),node('p','Тест · '+(o.shop_name_snapshot||'TEPLO'),'muted small'));
  const current=o.demo_status||'pending';
- card.append(node('p','Текущий этап: '+(stateNames[current]||current),'chip'),stageTimeline(current),elementText('p','Стоимость:',money(o.total)));
+ card.append(node('p',stateNames[current]||current,'chip'),elementText('p','Сумма:',money(o.total)));
  (o.order_items||[]).forEach(item=>card.append(node('div',item.product_name_snapshot+' × '+item.quantity+' · '+money(item.unit_price_snapshot),'item')));
  card.append(elementText('p','Адрес (тест):',o.delivery_address||'—'));
  card.append(elementText('p','Оплата (тест):',o.payment_method==='card_on_delivery'?'Картой при получении':'Наличными'));
- card.append(node('p','Это тестовые данные. Не выезжать, не принимать оплату и ничего не доставлять.','warning'));
+ card.append(node('p','Только тест — не выезжать.','warning'));
  const feedback=node('p','','muted');
  if(current==='assigned'||current==='picked_up'){
   const next=current==='assigned'?'picked_up':'delivered';
@@ -105,7 +122,7 @@ function renderDemo(o){
  }else if(current==='delivered'){
   card.append(node('p','✅ Демонстрационная доставка завершена.','ok'));
  }else{
-  card.append(node('p','Пока это не курьерский этап. В диспетчерской доведи тестовый заказ до «Назначен курьер».','muted'));
+  card.append(node('p','Ожидаем назначения курьера.','muted'));
   const a=node('a','Открыть диспетчерскую');a.href='dispatcher.html';card.append(a);
  }
  card.append(feedback);
@@ -215,7 +232,7 @@ async function load(){
   for(const o of realOrders)jobs.append(renderReal(o));
   if(!demoOrders.length&&!realOrders.length)jobs.append(node('p','Пока назначенных тебе заказов нет. Диспетчер должен назначить тебя на тестовый заказ.','muted'));
   lastSync=Date.now();
-  notice.textContent='Заказы проверяются автоматически примерно раз в 8 секунд, пока экран открыт. Обновлено: '+new Date(lastSync).toLocaleTimeString('ru-RU');
+  notice.textContent='● Автообновление · '+new Date(lastSync).toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'});
  }catch(e){
   notice.className='error';notice.textContent='Ошибка загрузки: '+(e?.message||String(e));
  }finally{
