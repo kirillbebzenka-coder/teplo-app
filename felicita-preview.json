@@ -1,0 +1,443 @@
+{
+  "version": 1,
+  "recordType": "non_official_design_preview",
+  "restaurant": {
+    "name": "Фелічіта",
+    "city": "Теплодар",
+    "address": "вул. Романа Прокопія, 2, Теплодар, Одеська область, Україна",
+    "addressSource": "https://trada.gov.ua/?page_id=87216",
+    "officialPartner": false,
+    "orderingEnabled": false,
+    "menuVerified": false,
+    "notice": "ДЕМОНСТРАЦИОННОЕ МЕНЮ. Названия, рецептуры, ассортимент, вес, фотографии и цены не подтверждены рестораном. Это образец интерфейса, не предложение заведения."
+  },
+  "categories": [
+    {
+      "id": "pizza",
+      "name": "Пицца",
+      "emoji": "🍕"
+    },
+    {
+      "id": "pasta",
+      "name": "Паста",
+      "emoji": "🍝"
+    },
+    {
+      "id": "salad",
+      "name": "Салаты",
+      "emoji": "🥗"
+    },
+    {
+      "id": "burger",
+      "name": "Бургеры",
+      "emoji": "🍔"
+    },
+    {
+      "id": "snack",
+      "name": "Закуски",
+      "emoji": "🍟"
+    },
+    {
+      "id": "dessert",
+      "name": "Десерты",
+      "emoji": "🍰"
+    },
+    {
+      "id": "drink",
+      "name": "Напитки",
+      "emoji": "🥤"
+    }
+  ],
+  "items": [
+    {
+      "id": "sample-pizza-1",
+      "category": "pizza",
+      "name": "Маргарита",
+      "description": "Томатный соус, моцарелла, свежие томаты и базилик.",
+      "price": null,
+      "weight": null,
+      "available": false,
+      "previewOnly": true
+    },
+    {
+      "id": "sample-pizza-2",
+      "category": "pizza",
+      "name": "Пепперони",
+      "description": "Томатный соус, сыр и ломтики пикантной салями.",
+      "price": null,
+      "weight": null,
+      "available": false,
+      "previewOnly": true
+    },
+    {
+      "id": "sample-pizza-3",
+      "category": "pizza",
+      "name": "Четыре сыра",
+      "description": "Сочетание мягких и выдержанных сыров на нежной основе.",
+      "price": null,
+      "weight": null,
+      "available": false,
+      "previewOnly": true
+    },
+    {
+      "id": "sample-pizza-4",
+      "category": "pizza",
+      "name": "Грибная",
+      "description": "Шампиньоны, сливочный соус, моцарелла и травы.",
+      "price": null,
+      "weight": null,
+      "available": false,
+      "previewOnly": true
+    },
+    {
+      "id": "sample-pizza-5",
+      "category": "pizza",
+      "name": "Барбекю",
+      "description": "Курица, сыр, красный лук и соус барбекю.",
+      "price": null,
+      "weight": null,
+      "available": false,
+      "previewOnly": true
+    },
+    {
+      "id": "sample-pizza-6",
+      "category": "pizza",
+      "name": "Гавайская",
+      "description": "Куриное филе, ананас, моцарелла и томатная основа.",
+      "price": null,
+      "weight": null,
+      "available": false,
+      "previewOnly": true
+    },
+    {
+      "id": "sample-pizza-7",
+      "category": "pizza",
+      "name": "Овощная",
+      "description": "Сезонные овощи, томаты, оливки и сыр.",
+      "price": null,
+      "weight": null,
+      "available": false,
+      "previewOnly": true
+    },
+    {
+      "id": "sample-pizza-8",
+      "category": "pizza",
+      "name": "Карбонара",
+      "description": "Сливочная основа, бекон, сыр и ароматные травы.",
+      "price": null,
+      "weight": null,
+      "available": false,
+      "previewOnly": true
+    },
+    {
+      "id": "sample-pasta-1",
+      "category": "pasta",
+      "name": "Карбонара",
+      "description": "Спагетти, сливочный соус, бекон и тёртый сыр.",
+      "price": null,
+      "weight": null,
+      "available": false,
+      "previewOnly": true
+    },
+    {
+      "id": "sample-pasta-2",
+      "category": "pasta",
+      "name": "Болоньезе",
+      "description": "Паста с мясным томатным соусом и пармезаном.",
+      "price": null,
+      "weight": null,
+      "available": false,
+      "previewOnly": true
+    },
+    {
+      "id": "sample-pasta-3",
+      "category": "pasta",
+      "name": "Альфредо с курицей",
+      "description": "Куриное филе, паста, сливочный соус и сыр.",
+      "price": null,
+      "weight": null,
+      "available": false,
+      "previewOnly": true
+    },
+    {
+      "id": "sample-pasta-4",
+      "category": "pasta",
+      "name": "С грибами",
+      "description": "Шампиньоны, сливки, чеснок и зелень.",
+      "price": null,
+      "weight": null,
+      "available": false,
+      "previewOnly": true
+    },
+    {
+      "id": "sample-pasta-5",
+      "category": "pasta",
+      "name": "С креветками",
+      "description": "Паста, креветки, чеснок и сливочная основа.",
+      "price": null,
+      "weight": null,
+      "available": false,
+      "previewOnly": true
+    },
+    {
+      "id": "sample-pasta-6",
+      "category": "pasta",
+      "name": "Арабьята",
+      "description": "Томатный соус, чеснок и острая паприка.",
+      "price": null,
+      "weight": null,
+      "available": false,
+      "previewOnly": true
+    },
+    {
+      "id": "sample-salad-1",
+      "category": "salad",
+      "name": "Цезарь с курицей",
+      "description": "Куриное филе, листья салата, сухарики, сыр и соус.",
+      "price": null,
+      "weight": null,
+      "available": false,
+      "previewOnly": true
+    },
+    {
+      "id": "sample-salad-2",
+      "category": "salad",
+      "name": "Греческий",
+      "description": "Помидоры, огурцы, сладкий перец, оливки и рассольный сыр.",
+      "price": null,
+      "weight": null,
+      "available": false,
+      "previewOnly": true
+    },
+    {
+      "id": "sample-salad-3",
+      "category": "salad",
+      "name": "Овощной сезонный",
+      "description": "Свежие овощи, зелень и лёгкая заправка.",
+      "price": null,
+      "weight": null,
+      "available": false,
+      "previewOnly": true
+    },
+    {
+      "id": "sample-salad-4",
+      "category": "salad",
+      "name": "С тунцом",
+      "description": "Тунец, зелень, овощи и лимонная заправка.",
+      "price": null,
+      "weight": null,
+      "available": false,
+      "previewOnly": true
+    },
+    {
+      "id": "sample-salad-5",
+      "category": "salad",
+      "name": "Тёплый с курицей",
+      "description": "Курица, салатный микс, томаты и соус.",
+      "price": null,
+      "weight": null,
+      "available": false,
+      "previewOnly": true
+    },
+    {
+      "id": "sample-burger-1",
+      "category": "burger",
+      "name": "Классический чизбургер",
+      "description": "Булочка, котлета, сыр, соус, томаты и салат.",
+      "price": null,
+      "weight": null,
+      "available": false,
+      "previewOnly": true
+    },
+    {
+      "id": "sample-burger-2",
+      "category": "burger",
+      "name": "Чикен-бургер",
+      "description": "Куриное филе, овощи и фирменный соус.",
+      "price": null,
+      "weight": null,
+      "available": false,
+      "previewOnly": true
+    },
+    {
+      "id": "sample-burger-3",
+      "category": "burger",
+      "name": "Двойной бургер",
+      "description": "Две котлеты, сыр, маринованный огурец и соус.",
+      "price": null,
+      "weight": null,
+      "available": false,
+      "previewOnly": true
+    },
+    {
+      "id": "sample-burger-4",
+      "category": "burger",
+      "name": "Вегетарианский",
+      "description": "Овощная котлета, салат, томаты и соус.",
+      "price": null,
+      "weight": null,
+      "available": false,
+      "previewOnly": true
+    },
+    {
+      "id": "sample-snack-1",
+      "category": "snack",
+      "name": "Картофель фри",
+      "description": "Хрустящий картофель с солью.",
+      "price": null,
+      "weight": null,
+      "available": false,
+      "previewOnly": true
+    },
+    {
+      "id": "sample-snack-2",
+      "category": "snack",
+      "name": "Картофель по-деревенски",
+      "description": "Запечённые дольки с пряностями.",
+      "price": null,
+      "weight": null,
+      "available": false,
+      "previewOnly": true
+    },
+    {
+      "id": "sample-snack-3",
+      "category": "snack",
+      "name": "Сырные палочки",
+      "description": "Панированный сыр с соусом.",
+      "price": null,
+      "weight": null,
+      "available": false,
+      "previewOnly": true
+    },
+    {
+      "id": "sample-snack-4",
+      "category": "snack",
+      "name": "Куриные наггетсы",
+      "description": "Кусочки куриного филе в панировке.",
+      "price": null,
+      "weight": null,
+      "available": false,
+      "previewOnly": true
+    },
+    {
+      "id": "sample-snack-5",
+      "category": "snack",
+      "name": "Чесночные гренки",
+      "description": "Поджаренный хлеб с чесночным маслом.",
+      "price": null,
+      "weight": null,
+      "available": false,
+      "previewOnly": true
+    },
+    {
+      "id": "sample-dessert-1",
+      "category": "dessert",
+      "name": "Тирамису",
+      "description": "Нежный десерт с кофейными нотами и кремом.",
+      "price": null,
+      "weight": null,
+      "available": false,
+      "previewOnly": true
+    },
+    {
+      "id": "sample-dessert-2",
+      "category": "dessert",
+      "name": "Чизкейк",
+      "description": "Сливочный десерт на песочной основе.",
+      "price": null,
+      "weight": null,
+      "available": false,
+      "previewOnly": true
+    },
+    {
+      "id": "sample-dessert-3",
+      "category": "dessert",
+      "name": "Шоколадный фондан",
+      "description": "Шоколадный десерт с мягкой серединой.",
+      "price": null,
+      "weight": null,
+      "available": false,
+      "previewOnly": true
+    },
+    {
+      "id": "sample-dessert-4",
+      "category": "dessert",
+      "name": "Панакота",
+      "description": "Сливочный десерт с ягодным соусом.",
+      "price": null,
+      "weight": null,
+      "available": false,
+      "previewOnly": true
+    },
+    {
+      "id": "sample-dessert-5",
+      "category": "dessert",
+      "name": "Медовик",
+      "description": "Слоёный медовый торт со сметанным кремом.",
+      "price": null,
+      "weight": null,
+      "available": false,
+      "previewOnly": true
+    },
+    {
+      "id": "sample-drink-1",
+      "category": "drink",
+      "name": "Лимонад цитрусовый",
+      "description": "Освежающий напиток с лимонно-апельсиновыми нотами.",
+      "price": null,
+      "weight": null,
+      "available": false,
+      "previewOnly": true
+    },
+    {
+      "id": "sample-drink-2",
+      "category": "drink",
+      "name": "Морс ягодный",
+      "description": "Прохладный напиток из ягод.",
+      "price": null,
+      "weight": null,
+      "available": false,
+      "previewOnly": true
+    },
+    {
+      "id": "sample-drink-3",
+      "category": "drink",
+      "name": "Айс-ти",
+      "description": "Холодный чай с лимоном.",
+      "price": null,
+      "weight": null,
+      "available": false,
+      "previewOnly": true
+    },
+    {
+      "id": "sample-drink-4",
+      "category": "drink",
+      "name": "Капучино",
+      "description": "Кофе с молочной пеной.",
+      "price": null,
+      "weight": null,
+      "available": false,
+      "previewOnly": true
+    },
+    {
+      "id": "sample-drink-5",
+      "category": "drink",
+      "name": "Американо",
+      "description": "Чёрный кофе.",
+      "price": null,
+      "weight": null,
+      "available": false,
+      "previewOnly": true
+    },
+    {
+      "id": "sample-drink-6",
+      "category": "drink",
+      "name": "Вода",
+      "description": "Питьевая вода без газа или с газом.",
+      "price": null,
+      "weight": null,
+      "available": false,
+      "previewOnly": true
+    }
+  ]
+}
