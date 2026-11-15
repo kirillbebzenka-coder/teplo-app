@@ -33,6 +33,12 @@ nav.teplo-tabs{position:fixed;z-index:200;bottom:0;left:0;right:0;display:grid;g
 <p class="subtitle">Теплодар · просмотр заказов из Supabase</p>
 <section>
 <div class="row"><button id="refresh">Обновить заказы</button><span class="pill" id="access">Проверяем доступ…</span></div>
+<div class="row" style="margin-top:12px;gap:9px">
+  <span class="pill" id="monitorStatus" aria-live="polite">Автообновление: запуск…</span>
+  <button type="button" id="soundToggle" class="secondary" aria-pressed="false">🔕 Включить сигнал</button>
+</div>
+<p class="muted" style="font-size:13px;margin:10px 0 0">Новые заказы появляются автоматически примерно каждые 8 секунд, пока вкладка открыта. Для проверки со второго телефона войди в тот же тестовый аккаунт и оформи заказ.</p>
+<p id="newOrderAlert" role="status" aria-live="polite" hidden style="border:1px solid #79516b;border-radius:12px;padding:12px;background:#2c202e;color:#f4c1da;font-weight:750"></p>
 <p id="notice" role="status" aria-live="polite" class="muted">Подключаемся к Supabase…</p>
 </section>
 <div id="stats" class="summary"></div>
@@ -108,6 +114,53 @@ function realDispatchActions(order){
 }
 const when=date=>new Date(date).toLocaleString('ru-RU',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});
 let loading=false;
+let knownOrderIds=null;
+let soundEnabled=false;
+let signalContext=null;
+let monitorWorking=true;
+let lastSuccessfulSync=0;
+const monitorStatus=$('monitorStatus');
+function updateMonitorStatus(){
+ if(!navigator.onLine){monitorStatus.textContent='⚠️ Нет интернета';return}
+ if(document.hidden){monitorStatus.textContent='⏸ Вкладка неактивна';return}
+ if(!monitorWorking){monitorStatus.textContent='⚠️ Ошибка подключения';return}
+ monitorStatus.textContent=lastSuccessfulSync
+   ?'● Приём заказов активен · обновлено '+new Date(lastSuccessfulSync).toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit',second:'2-digit'})
+   :'● Проверяем новые заказы…';
+}
+function signalNewOrder(){
+ if(!soundEnabled||!signalContext)return;
+ try{
+  if(signalContext.state==='suspended')void signalContext.resume();
+  const t=signalContext.currentTime;
+  [0,0.17].forEach((offset)=>{
+   const oscillator=signalContext.createOscillator();
+   const gain=signalContext.createGain();
+   oscillator.type='sine';oscillator.frequency.value=offset===0?710:880;
+   gain.gain.setValueAtTime(.0001,t+offset);
+   gain.gain.exponentialRampToValueAtTime(.085,t+offset+.025);
+   gain.gain.exponentialRampToValueAtTime(.0001,t+offset+.13);
+   oscillator.connect(gain);gain.connect(signalContext.destination);
+   oscillator.start(t+offset);oscillator.stop(t+offset+.14);
+  });
+ }catch(e){console.warn('Звук уведомления недоступен',e)}
+}
+$('soundToggle').addEventListener('click',async()=>{
+ const button=$('soundToggle');
+ if(soundEnabled){
+  soundEnabled=false;button.textContent='🔕 Включить сигнал';button.setAttribute('aria-pressed','false');
+  return;
+ }
+ try{
+  signalContext=signalContext||new (window.AudioContext||window.webkitAudioContext)();
+  await signalContext.resume();
+  soundEnabled=true;button.textContent='🔔 Звук включён';button.setAttribute('aria-pressed','true');
+ }catch(e){
+  button.textContent='Звук не поддерживается';
+  button.disabled=true;
+ }
+});
+
 function metric(label,value){const block=txt('div','','metric');block.append(txt('strong',value),txt('span',label,'muted'));return block}
 function renderOrder(order,staff){
  const card=txt('article','','order');
@@ -158,7 +211,7 @@ async function load(){
    if(authError)throw authError;
    if(!user){
      $('access').textContent='Требуется вход';
-     notice.textContent='Войди в TEPLO через главную страницу, затем вернись сюда.';
+     notice.textContent='Войди в TEPLO через главную страницу, затем вернись сюда.';knownOrderIds=null;monitorWorking=false;updateMonitorStatus();
      list.replaceChildren();stats.replaceChildren();$('teamLink').hidden=true;return;
    }
    const {data:profile,error:profileError}=await db.from('profiles').select('role').eq('id',user.id).single();
@@ -185,6 +238,22 @@ async function load(){
    const {data,error}=await query;
    if(error)throw error;
    const orders=data||[];
+   const currentIds=new Set(orders.map(o=>o.id));
+   if(knownOrderIds!==null){
+     const arrivals=orders.filter(o=>!knownOrderIds.has(o.id));
+     if(arrivals.length){
+       const latest=arrivals[0];
+       const banner=$('newOrderAlert');
+       banner.hidden=false;
+       banner.textContent='🔔 Новый '+(latest.is_test?'ТЕСТОВЫЙ ':'')+'заказ '+String(latest.id).slice(0,8)+' · '+money(latest.total)
+        +(arrivals.length>1?' · новых: '+arrivals.length:'');
+       signalNewOrder();
+     }
+   }
+   knownOrderIds=currentIds;
+   monitorWorking=true;
+   lastSuccessfulSync=Date.now();
+   updateMonitorStatus();
    stats.replaceChildren(
      metric('Записей',orders.length),
      metric('Ожидают',orders.filter(o=>o.status==='pending').length),
@@ -196,11 +265,19 @@ async function load(){
    notice.textContent=staff
      ?'Показаны последние '+orders.length+' заказов, доступных по роли. Настоящие действия защищены ролями и серверным выключателем доставки; тестовые заказы остаются симуляцией.'
      :'Тестовый просмотр диспетчерской панели. Твоя роль — покупатель: доступны только твои тестовые заказы и их симулированные этапы. Другие заказы недоступны.';
- }catch(e){notice.className='error';notice.textContent='Не удалось получить заказы: '+(e?.message||String(e));stats.replaceChildren();list.replaceChildren()}
+ }catch(e){monitorWorking=false;updateMonitorStatus();notice.className='error';notice.textContent='Не удалось получить заказы: '+(e?.message||String(e));stats.replaceChildren();list.replaceChildren()}
  finally{loading=false;$('refresh').disabled=false}
 }
-$('refresh').addEventListener('click',load);
-db.auth.onAuthStateChange(()=>setTimeout(()=>{void load()},0));
+$('refresh').addEventListener('click',()=>{void load()});
+db.auth.onAuthStateChange(()=>{knownOrderIds=null;setTimeout(()=>{void load()},0)});
+document.addEventListener('visibilitychange',()=>{
+ updateMonitorStatus();
+ if(!document.hidden)void load();
+});
+window.addEventListener('online',()=>{updateMonitorStatus();void load()});
+window.addEventListener('offline',updateMonitorStatus);
+window.setInterval(()=>{if(!document.hidden&&navigator.onLine)void load()},8000);
+updateMonitorStatus();
 await load();
 </script>
 </body>
