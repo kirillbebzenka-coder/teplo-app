@@ -36,9 +36,15 @@ nav.teplo-tabs{position:fixed;z-index:200;bottom:0;left:0;right:0;display:grid;g
 <section><div class="row"><button id="refresh">Обновить задания</button><span id="access" class="chip">Проверяем вход…</span></div>
 <p id="notice" class="muted" role="status" aria-live="polite">Подключаемся…</p></section>
 <div id="stats" class="grid"></div>
+<section id="courierShift" hidden>
+<h2>Моя смена</h2>
+<p id="shiftStatus" class="muted">Проверяем смену…</p>
+<button id="shiftButton" disabled>Начать смену</button>
+<p class="muted small">Заявки могут назначать только диспетчер и администратор. Смена не включает реальную доставку.</p>
+</section>
 <section><h2>Мои задания</h2><div id="jobs"></div></section>
 <section><p class="warning"><strong>Тестовый режим.</strong> Симуляция не назначает настоящего курьера и не меняет фактический статус заказа. Никакой оплаты, готовки и доставки делать не нужно.</p>
-<p class="muted small">Для реальных курьеров отображение заданий ограничено назначением и серверными правами. Изменение реальных заказов здесь пока отключено.</p></section>
+<p class="muted small">Для реальных курьеров отображение заданий ограничено назначением и серверными правами. Настоящие статусы доступны только назначенному курьеру и только после запуска реальной доставки.</p></section>
 </main><nav class="teplo-tabs" aria-label="Разделы TEPLO"><a href="./?v=15">🛍<span>Покупатель</span></a><a href="dispatcher.html?v=15">📋<span>Диспетчер</span></a><a href="shop.html?v=17">🏪<span>Магазин</span></a><a href="courier.html?v=15" aria-current="page">🛵<span>Курьер</span></a></nav>
 <script type="module">
 import {createClient} from 'https://esm.sh/@supabase/supabase-js@2';
@@ -48,7 +54,19 @@ const node=(tag,value='',cls='')=>{const el=document.createElement(tag);el.textC
 const money=x=>new Intl.NumberFormat('uk-UA',{style:'currency',currency:'UAH'}).format(Number(x||0));
 const stateNames={pending:'Ожидает подтверждения',confirmed:'Подтверждён',preparing:'Готовится',ready_for_pickup:'Готов к выдаче',assigned:'Назначен курьер',picked_up:'Забран курьером',delivered:'Доставлен',cancelled:'Отменён'};
 const stages=['pending','confirmed','preparing','ready_for_pickup','assigned','picked_up','delivered'];
-let loading=false;
+let loading=false;let shiftActive=false;
+async function toggleShift(){
+ const b=$('shiftButton'),msg=$('shiftStatus');
+ b.disabled=true;msg.className='muted';msg.textContent='Сохраняем состояние смены…';
+ try{
+  const {error}=await db.rpc('teplo_toggle_courier_shift',{p_start:!shiftActive});
+  if(error)throw error;
+  await load();
+ }catch(e){msg.className='error';msg.textContent='Ошибка: '+(e?.message||String(e))}
+ finally{b.disabled=false}
+}
+$('shiftButton').addEventListener('click',toggleShift);
+
 function metric(label,value){const box=node('div','','stat');box.append(node('strong',value),node('span',label,'muted'));return box}
 function elementText(tag,label,value){const p=node('p');p.append(node('strong',label+' '),node('span',value));return p}
 function stageTimeline(stage){
@@ -93,7 +111,22 @@ function renderReal(o){
  const card=node('article');
  card.append(node('h3',o.shop_name_snapshot||'Заказ'),node('p','Заказ '+String(o.id).slice(0,8)+' · '+(stateNames[o.status]||o.status),'chip'),elementText('p','Куда доставить:',o.delivery_address||'—'),elementText('p','Получатель:',o.customer_name||'—'),elementText('p','Телефон:',o.customer_phone||'—'),elementText('p','Сумма:',money(o.total)));
  (o.order_items||[]).forEach(item=>card.append(node('div',item.product_name_snapshot+' × '+item.quantity,'item')));
- card.append(node('p','Пилотный просмотр: действия по реальным заказам пока недоступны.','muted'));
+ if(o.status==='assigned'||o.status==='picked_up'){
+   const newStatus=o.status==='assigned'?'picked_up':'delivered';
+   const button=node('button',newStatus==='picked_up'?'Забрал заказ':'Доставил заказ');
+   const feedback=node('p','','muted');
+   button.addEventListener('click',async()=>{
+     if(!window.confirm('Подтвердить действие с настоящим заказом?'))return;
+     button.disabled=true;feedback.textContent='Сохраняем…';
+     try{
+       const {error}=await db.rpc('set_order_status',{p_order_id:o.id,p_new_status:newStatus,p_note:''});
+       if(error)throw error;
+       feedback.className='ok';feedback.textContent='Готово';await load();
+     }catch(e){feedback.className='error';feedback.textContent=e?.message||String(e)}
+     finally{button.disabled=false}
+   });
+   card.append(button,feedback);
+ }else card.append(node('p','Действия доступны после назначения заказа диспетчером.','muted'));
  return card;
 }
 async function load(){
@@ -107,13 +140,21 @@ async function load(){
   if(!user){
    $('access').textContent='Гость';
    notice.textContent='Для просмотра заданий войди в TEPLO через страницу покупателя и вернись сюда.';
-   jobs.replaceChildren();stats.replaceChildren();return;
+   jobs.replaceChildren();stats.replaceChildren();$('courierShift').hidden=true;return;
   }
   const {data:profile,error:profileError}=await db.from('profiles').select('role').eq('id',user.id).single();
   if(profileError)throw profileError;
-  const isCourier=profile?.role==='courier';
+  const isCourier=profile?.role==='courier';$('courierShift').hidden=!isCourier;
   $('access').textContent=isCourier?'Роль: курьер':'Режим симуляции';
   if(isCourier){
+   const {data:shiftRows,error:shiftError}=await db.from('courier_shifts')
+     .select('id,started_at').eq('courier_id',user.id).is('ended_at',null).limit(1);
+   if(shiftError)throw shiftError;
+   shiftActive=Boolean(shiftRows?.length);
+   $('shiftStatus').className=shiftActive?'ok':'muted';
+   $('shiftStatus').textContent=shiftActive?'🟢 Смена открыта':'⚪ Смена закрыта';
+   $('shiftButton').textContent=shiftActive?'Завершить смену':'Начать смену';
+   $('shiftButton').disabled=false;
    const {data:assignments,error:assignmentError}=await db.from('courier_assignments')
     .select('order_id').eq('courier_id',user.id).is('released_at',null).limit(50);
    if(assignmentError)throw assignmentError;
@@ -129,7 +170,7 @@ async function load(){
    jobs.replaceChildren();
    if(!items.length)jobs.append(node('p','Назначенных заданий пока нет.','muted'));
    else items.forEach(o=>jobs.append(renderReal(o)));
-   notice.textContent='Данные настоящих назначений видны только курьеру с правами доступа. Изменение статусов пока отключено.';
+   notice.textContent='Данные настоящих назначений видны только курьеру с правами доступа. Статусы можно менять только для своих назначенных реальных заказов, когда доставка включена.';
   }else{
    const {data:orders,error}=await db.from('orders').select('id,shop_name_snapshot,subtotal,delivery_fee,total,demo_status,is_test,order_items(product_name_snapshot,quantity,unit_price_snapshot)')
      .eq('customer_id',user.id).eq('is_test',true).order('created_at',{ascending:false}).limit(10);
