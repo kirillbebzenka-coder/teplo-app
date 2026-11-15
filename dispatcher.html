@@ -24,26 +24,58 @@ button:disabled{opacity:.6}button:focus-visible,a:focus-visible{outline:3px soli
 .demo-actions{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}.secondary{background:#30415d;color:#f5f7fb}.item{padding:8px 0;border-top:1px solid var(--line)}.total{font-weight:800;color:var(--green)}
 #notice{white-space:pre-wrap}
 @media(max-width:440px){main{padding:14px}section,.order{padding:15px}.brand{font-size:26px}}
-nav.teplo-tabs{position:fixed;z-index:200;bottom:0;left:0;right:0;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;background:#101b2d;border-top:1px solid #435569;padding:8px 10px calc(9px + env(safe-area-inset-bottom));box-shadow:0 -6px 25px #050b15dd}nav.teplo-tabs a{min-width:0;display:flex;align-items:center;justify-content:center;flex-direction:column;text-align:center;gap:3px;border:1px solid transparent;border-radius:12px;padding:8px 3px;color:#d4dfea;text-decoration:none;font-weight:700;font-size:15px;line-height:1.25}nav.teplo-tabs a span{font-size:clamp(10px,2.65vw,13px)}nav.teplo-tabs a[aria-current="page"]{background:#281d2a;border-color:#79516b;color:#d89a45}main{padding-bottom:calc(120px + env(safe-area-inset-bottom))}body{min-width:300px}</style><link rel="stylesheet" href="./theme.css?v=20">
+nav.teplo-tabs{position:fixed;z-index:200;bottom:0;left:0;right:0;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;background:#101b2d;border-top:1px solid #435569;padding:8px 10px calc(9px + env(safe-area-inset-bottom));box-shadow:0 -6px 25px #050b15dd}nav.teplo-tabs a{min-width:0;display:flex;align-items:center;justify-content:center;flex-direction:column;text-align:center;gap:3px;border:1px solid transparent;border-radius:12px;padding:8px 3px;color:#d4dfea;text-decoration:none;font-weight:700;font-size:15px;line-height:1.25}nav.teplo-tabs a span{font-size:clamp(10px,2.65vw,13px)}nav.teplo-tabs a[aria-current="page"]{background:#281d2a;border-color:#79516b;color:#d89a45}main{padding-bottom:calc(120px + env(safe-area-inset-bottom))}body{min-width:300px}</style><link rel="stylesheet" href="./theme.css?v=24">
+<style>
+.filter-panel{margin:16px 0 12px}
+.filter-panel h2{font-size:22px;margin:0 0 10px}
+.filters{display:flex;gap:7px;flex-wrap:wrap}
+.filters .filter-btn{background:#222838!important;color:#d9cbd5!important;border:1px solid #514859!important;border-radius:20px!important;padding:8px 12px;min-height:38px;box-shadow:none!important}
+.filters .filter-btn.selected{background:#3a2a3b!important;border-color:#b27c9b!important;color:#f1c8dd!important}
+#list .order{margin:11px 0!important;padding:16px!important}
+#list .order h3{font-size:17px}
+#list .order .meta{font-size:12px;color:#9ca3b3}
+#list .order .warning{font-size:12px;margin:10px 0}
+#list .order .demo-actions{display:flex;flex-direction:column;align-items:stretch;gap:7px}
+#list .order .demo-actions button{width:100%;min-height:46px;font-weight:760!important}
+#list .order .demo-actions .secondary{min-height:37px;font-size:13px}
+#list .order .demo-actions .pill{align-self:flex-start}
+#list .order .order-more{margin-top:12px;border-top:1px solid #383847;padding-top:12px}
+#list .order .order-more summary{font-size:13px;color:#e4b4d0;cursor:pointer}
+#list .order .details{font-size:13px;display:block;margin:10px 0}
+#list .order .total{font-size:19px;color:#e9b887!important}
+#stats .metric{min-width:90px;flex:1}
+#stats .metric strong{font-size:24px}
+#monitorStatus{font-size:12px}
+.technical{padding:5px!important;background:transparent!important;border:0!important;box-shadow:none!important}
+.technical summary{font-size:12px;color:#9fa2b0}
+</style>
 </head>
 <body>
 <main>
 <div class="top"><div class="brand">TEPLO</div><a id="teamLink" href="team.html?v=18" hidden>⚙️ Управление сотрудниками</a></div>
-<h1>Панель диспетчера</h1>
-<p class="subtitle">Теплодар · просмотр заказов из Supabase</p>
+<h1>Заказы</h1>
+<p class="subtitle">Новые заказы и передача курьеру · Теплодар</p>
 <section>
-<div class="row"><button id="refresh">Обновить заказы</button><span class="pill" id="access">Проверяем доступ…</span></div>
+<div class="row"><span class="pill" id="access">Проверяем доступ…</span><button id="refresh" type="button" class="secondary">↻ Обновить</button></div>
 <div class="row" style="margin-top:12px;gap:9px">
   <span class="pill" id="monitorStatus" aria-live="polite">Автообновление: запуск…</span>
   <button type="button" id="soundToggle" class="secondary" aria-pressed="false">🔕 Включить сигнал</button>
 </div>
-<p class="muted" style="font-size:13px;margin:10px 0 0">Новые заказы появляются автоматически примерно каждые 8 секунд, пока вкладка открыта. Для проверки со второго телефона войди в тот же тестовый аккаунт и оформи заказ.</p>
+
 <p id="newOrderAlert" role="status" aria-live="polite" hidden style="border:1px solid #79516b;border-radius:12px;padding:12px;background:#2c202e;color:#f4c1da;font-weight:750"></p>
-<p id="notice" role="status" aria-live="polite" class="muted">Подключаемся к Supabase…</p>
+<p id="notice" role="status" aria-live="polite" class="muted">Получаем заказы…</p>
 </section>
 <div id="stats" class="summary"></div>
+<div class="filter-panel">
+  <h2>Список заказов</h2>
+  <div class="filters" role="group" aria-label="Фильтр заказов">
+    <button id="filterActive" class="filter-btn selected" type="button">В работе</button>
+    <button id="filterAll" class="filter-btn" type="button">Все</button>
+    <button id="filterDone" class="filter-btn" type="button">Завершены</button>
+  </div>
+</div>
 <div id="list"></div>
-<p class="muted">Тестовые заказы проходят только симуляцию. Настоящие статусы и назначение курьера доступны только уполномоченному диспетчеру и только при включённой доставке.</p>
+<details class="technical"><summary>О тестовом режиме</summary><p class="muted">Это симуляция: деньги не списываются, курьер не выезжает. Настоящая доставка по-прежнему выключена.</p></details>
 </main>
 <nav class="teplo-tabs" aria-label="Разделы TEPLO">
 <a href="./?v=15">🛍<span>Покупатель</span></a>
@@ -117,6 +149,8 @@ function realDispatchActions(order){
 }
 const when=date=>new Date(date).toLocaleString('ru-RU',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});
 let loading=false;
+let activeFilter='active';
+let lastOrders=[];
 let knownOrderIds=null;
 let soundEnabled=false;
 let signalContext=null;
@@ -232,11 +266,27 @@ function renderOrder(order,staff){
   info.append(txt('div','Получатель: '+(order.customer_name||'—')),txt('div','Телефон: '+(order.customer_phone||'—')),txt('div','Адрес: '+(order.delivery_address||'—')));
   details.append(info);
  }
- card.append(details);
  if(staff&&!order.is_test)card.append(realDispatchActions(order));
- (order.order_items||[]).forEach(item=>card.append(txt('div',item.product_name_snapshot+' × '+item.quantity+' · '+money(item.unit_price_snapshot),'item')));
+ const detailBox=document.createElement('details');detailBox.className='order-more';
+ const summary=document.createElement('summary');summary.textContent='Состав заказа и подробности';
+ detailBox.append(summary,details);
+ (order.order_items||[]).forEach(item=>detailBox.append(txt('div',item.product_name_snapshot+' × '+item.quantity+' · '+money(item.unit_price_snapshot),'item')));
+ card.append(detailBox);
  return card;
 }
+function renderFilteredOrders(){
+ const root=$('list');root.replaceChildren();
+ const done=o=>['delivered','cancelled'].includes(o.is_test?o.demo_status:o.status);
+ const rows=lastOrders.filter(o=>activeFilter==='all'||(activeFilter==='done'?done(o):!done(o)));
+ for(const [id,value] of [['filterActive','active'],['filterAll','all'],['filterDone','done']]){
+  const b=$(id);b.classList.toggle('selected',activeFilter===value);b.setAttribute('aria-pressed',String(activeFilter===value));
+ }
+ if(!rows.length){root.append(txt('section',activeFilter==='done'?'Завершённых заказов ещё нет.':'Здесь пока нет заказов.','muted'));return}
+ const isStaff=Boolean(window.__teploDispatcherStaff);
+ rows.forEach(o=>root.append(renderOrder(o,isStaff)));
+}
+window.__teploDispatcherStaff=false;
+[['filterActive','active'],['filterAll','all'],['filterDone','done']].forEach(([id,value])=>$(id).addEventListener('click',()=>{activeFilter=value;renderFilteredOrders()}));
 async function load(){
  if(loading)return;loading=true;$('refresh').disabled=true;
  const notice=$('notice'), list=$('list'), stats=$('stats');
@@ -251,7 +301,7 @@ async function load(){
    }
    const {data:profile,error:profileError}=await db.from('profiles').select('role').eq('id',user.id).single();
    if(profileError)throw profileError;
-   const staff=['admin','dispatcher'].includes(profile?.role);
+   const staff=['admin','dispatcher'].includes(profile?.role);window.__teploDispatcherStaff=staff;
    currentOperatorId=user.id;
    demoAssignees=[];
    demoAssignmentByOrder=new Map();
@@ -285,6 +335,7 @@ async function load(){
    const {data,error}=await query;
    if(error)throw error;
    const orders=data||[];
+   lastOrders=orders;
    const currentIds=new Set(orders.map(o=>o.id));
    if(knownOrderIds!==null){
      const arrivals=orders.filter(o=>!knownOrderIds.has(o.id));
@@ -302,16 +353,12 @@ async function load(){
    lastSuccessfulSync=Date.now();
    updateMonitorStatus();
    stats.replaceChildren(
-     metric('Записей',orders.length),
-     metric('Ожидают',orders.filter(o=>(o.is_test?o.demo_status:o.status)==='pending').length),
-     metric('Тестовых',orders.filter(o=>o.is_test).length)
+     metric('Всего',orders.length),
+     metric('Новых',orders.filter(o=>(o.is_test?o.demo_status:o.status)==='pending').length),
+     metric('В работе',orders.filter(o=>!['delivered','cancelled','pending'].includes(o.is_test?o.demo_status:o.status)).length)
    );
-   list.replaceChildren();
-   if(!orders.length)list.append(txt('section','Заказов для просмотра пока нет.','muted'));
-   else orders.forEach(order=>list.append(renderOrder(order,staff)));
-   notice.textContent=staff
-     ?'Показаны последние '+orders.length+' заказов, доступных по роли. Настоящие действия защищены ролями и серверным выключателем доставки; тестовые заказы остаются симуляцией.'
-     :'Тестовый просмотр диспетчерской панели. Твоя роль — покупатель: доступны только твои тестовые заказы и их симулированные этапы. Другие заказы недоступны.';
+   renderFilteredOrders();
+   notice.textContent=staff?'Заказы обновляются автоматически.':'Для доступа к другим заказам нужна роль диспетчера.';
  }catch(e){monitorWorking=false;updateMonitorStatus();notice.className='error';notice.textContent='Не удалось получить заказы: '+(e?.message||String(e));stats.replaceChildren();list.replaceChildren()}
  finally{loading=false;$('refresh').disabled=false}
 }
