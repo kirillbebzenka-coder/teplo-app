@@ -109,7 +109,7 @@ $('staffForm').addEventListener('submit',async ev=>{
   if(error)throw error;
   f.className='success';f.textContent='Роль сохранена. Сотрудник сможет войти со своим аккаунтом.';
   $('staffEmail').value='';await load();
- }catch(err){f.className='error';f.textContent='Не удалось сохранить: '+(err?.message||String(err))}
+ }catch(err){f.className='error';const msg=err?.message||String(err);f.textContent=msg.includes('Verified user with this email not found')?'Аккаунт не найден среди пользователей с подтверждённой почтой. Если email уже зарегистрирован, сначала подтверди его в Supabase Auth или создай отдельный тестовый аккаунт с Auto Confirm User.':('Не удалось сохранить: '+msg)}
  finally{$('save').disabled=false}
 });
 $('refresh').addEventListener('click',load);
