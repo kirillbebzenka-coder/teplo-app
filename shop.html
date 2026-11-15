@@ -33,19 +33,33 @@ nav.teplo-tabs a span{font-size:clamp(10px,2.65vw,13px)}
 nav.teplo-tabs a[aria-current=page]{background:#281d2a;border-color:#79516b;color:var(--accent)}
 button:focus-visible,a:focus-visible{outline:3px solid #fff;outline-offset:3px}
 @media(max-width:400px){main{padding:12px 12px 125px}section,article{padding:13px}}
-</style><link rel="stylesheet" href="./theme.css?v=20"></head><body>
+</style><link rel="stylesheet" href="./theme.css?v=24">
+<style>
+.shop-top{padding:12px!important}
+.shop-top .row{gap:9px}
+#notice{font-size:12px;margin:7px 0 0}
+#stats .stat strong{font-size:25px}
+#stats .stat{min-width:85px}
+#orders article{padding:16px!important;margin:12px 0!important;border:1px solid #564456!important}
+#orders article h3{font-size:17px;color:#f2e8ee}
+#orders article button{width:100%;min-height:49px;font-weight:780!important;margin-top:12px}
+#orders article .warning{font-size:12px}
+#orders article .line{font-size:14px}
+#orders article .amount{font-size:19px;color:#edbb84!important}
+.technical{background:transparent!important;border:0!important;box-shadow:none!important;padding:6px!important}
+.technical summary{font-size:12px}
+</style></head><body>
 <main>
 <header><div class="logo">TEPLO</div><span class="badge">Панель магазина</span></header>
 <h1>Заказы магазина</h1>
-<p class="muted">Приём и приготовление заказов · Теплодар</p>
-<section>
-<div class="row"><button id="refresh">Обновить</button><span class="badge" id="access">Проверяем вход…</span></div>
+<p class="muted">Принял → приготовил → передал курьеру.</p>
+<section class="shop-top">
+<div class="row"><span class="badge" id="access">Проверяем вход…</span><button id="refresh" class="secondary">↻ Обновить</button></div>
 <p id="notice" role="status" aria-live="polite" class="muted">Подключаемся к Supabase…</p>
 </section>
 <div class="stats" id="stats"></div>
 <div id="orders"></div>
-<section><p class="warning"><strong>Сейчас тест.</strong> Не готовить, не продавать и не передавать тестовые заказы курьерам.</p>
-<p class="muted">В демо-режиме доступны только твои тестовые заказы. Для реального магазина требуется сотрудник с назначенной ролью. Действия с настоящими заказами проходят серверную проверку и включаются только после запуска доставки.</p></section>
+<details class="technical"><summary>О тестовом режиме</summary><p class="muted">Сейчас действия только демонстрационные. Тестовые заказы не нужно готовить, продавать или передавать настоящим курьерам.</p></details>
 </main>
 <nav class="teplo-tabs" aria-label="Разделы TEPLO">
 <a href="./?v=17">🛍<span>Покупатель</span></a>
@@ -79,7 +93,7 @@ function display(order,isDemo){
  const top=el('div','','row');
  top.append(el('h3',(isDemo?'🧪 ТЕСТ · ':'')+(order.shop_name_snapshot||'Магазин')),
             el('span',labels[stage]||stage,'badge'));
- card.append(top,el('p','Заказ '+String(order.id).slice(0,8),'muted'));
+ card.append(top,el('p','№'+String(order.id).slice(0,8),'muted'));
  const time=el('p',new Date(order.created_at).toLocaleString('ru-RU'),'muted');
  card.append(time);
  (order.order_items||[]).forEach(item=>card.append(el('div',item.product_name_snapshot+' × '+item.quantity+' · '+money(item.unit_price_snapshot),'line')));
@@ -104,7 +118,7 @@ function display(order,isDemo){
    card.append(b,msg);
   }else card.append(el('p','Следующий этап выполняет диспетчер или курьер.','muted'));
  }else{
-  card.append(el('p','Демонстрация: ничего не готовить и не доставлять.','warning'));
+  card.append(el('p','Демо — не готовить и не доставлять.','warning'));
   const feedback=el('p','','muted');
   if(stage==='confirmed'||stage==='preparing'){
     const next=stage==='confirmed'?'preparing':'ready_for_pickup';
@@ -147,14 +161,14 @@ async function load(){
       rows=data||[];
     }
     $('access').textContent='Сотрудник магазина';
-    notice.textContent='Отображаются только заказы закреплённых за твоим аккаунтом магазинов. Для действительных заказов разрешены только этапы приготовления, если реальная доставка включена.';
+    notice.textContent='Заказы твоего магазина. Изменения разрешены только закреплённым сотрудникам.';
   }else{
     const {data,error}=await db.from('orders').select('id,shop_name_snapshot,total,status,demo_status,is_test,created_at,order_items(product_name_snapshot,quantity,unit_price_snapshot)')
       .eq('customer_id',user.id).eq('is_test',true).order('created_at',{ascending:false}).limit(30);
     if(error)throw error;
     rows=data||[];
     $('access').textContent='Демо · свои заказы';
-    notice.textContent='Это тренажёр работы магазина. Ты видишь только собственные тестовые заказы, не заказы других покупателей.';
+    notice.textContent='Показаны твои тестовые заказы. Для других магазинов нужны права сотрудника.';
   }
   list.replaceChildren();stats.replaceChildren();
   const status=o=>demo?o.demo_status:o.status;
