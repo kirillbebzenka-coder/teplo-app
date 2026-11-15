@@ -45,7 +45,7 @@ button:focus-visible,a:focus-visible{outline:3px solid #fff;outline-offset:3px}
 <div class="stats" id="stats"></div>
 <div id="orders"></div>
 <section><p class="warning"><strong>Сейчас тест.</strong> Не готовить, не продавать и не передавать тестовые заказы курьерам.</p>
-<p class="muted">В демо-режиме доступны только твои тестовые заказы. Для реального магазина потребуется отдельная учётная запись сотрудника с назначенными правами. Настоящие действия пока выключены.</p></section>
+<p class="muted">В демо-режиме доступны только твои тестовые заказы. Для реального магазина требуется сотрудник с назначенной ролью. Действия с настоящими заказами проходят серверную проверку и включаются только после запуска доставки.</p></section>
 </main>
 <nav class="teplo-tabs" aria-label="Разделы TEPLO">
 <a href="./?v=17">🛍<span>Покупатель</span></a>
@@ -88,7 +88,21 @@ function display(order,isDemo){
   card.append(el('p','Получатель: '+(order.customer_name||'—')),
               el('p','Телефон: '+(order.customer_phone||'—')),
               el('p','Адрес: '+(order.delivery_address||'—')));
-  card.append(el('p','Просмотр настоящего заказа. Изменение статуса пока отключено.','muted'));
+  const next=stage==='confirmed'?'preparing':stage==='preparing'?'ready_for_pickup':null;
+  if(next){
+   const b=el('button',next==='preparing'?'Начать приготовление':'Готов к выдаче');
+   const msg=el('p','','muted');b.onclick=async()=>{
+    if(!window.confirm('Изменить статус настоящего заказа магазина?'))return;
+    b.disabled=true;msg.textContent='Сохраняем…';
+    try{
+     const {error}=await db.rpc('set_order_status',{p_order_id:order.id,p_new_status:next,p_note:''});
+     if(error)throw error;
+     msg.className='ok';msg.textContent='Статус обновлён';await load();
+    }catch(e){msg.className='error';msg.textContent=e?.message||String(e)}
+    finally{b.disabled=false}
+   };
+   card.append(b,msg);
+  }else card.append(el('p','Следующий этап выполняет диспетчер или курьер.','muted'));
  }else{
   card.append(el('p','Демонстрация: ничего не готовить и не доставлять.','warning'));
   const feedback=el('p','','muted');
@@ -133,7 +147,7 @@ async function load(){
       rows=data||[];
     }
     $('access').textContent='Сотрудник магазина';
-    notice.textContent='Отображаются только заказы закреплённых за твоим аккаунтом магазинов. Управление настоящими заказами пока отключено.';
+    notice.textContent='Отображаются только заказы закреплённых за твоим аккаунтом магазинов. Для действительных заказов разрешены только этапы приготовления, если реальная доставка включена.';
   }else{
     const {data,error}=await db.from('orders').select('id,shop_name_snapshot,total,status,demo_status,is_test,created_at,order_items(product_name_snapshot,quantity,unit_price_snapshot)')
       .eq('customer_id',user.id).eq('is_test',true).order('created_at',{ascending:false}).limit(30);
