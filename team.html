@@ -17,6 +17,10 @@ button:disabled{opacity:.5}button:focus-visible,input:focus-visible,select:focus
 .error{color:#ffa5a5}.success{color:#c7f36b}#notice,#feedback{white-space:pre-wrap}
 .small{font-size:14px}.cards{display:grid;gap:9px}
 @media(max-width:430px){main{padding:12px}section,article{padding:13px}}
+nav.teplo-tabs{position:fixed;z-index:200;bottom:0;left:0;right:0;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;background:#101b2d;border-top:1px solid #435569;padding:8px 10px calc(9px + env(safe-area-inset-bottom))}
+nav.teplo-tabs a{min-width:0;display:flex;align-items:center;justify-content:center;flex-direction:column;text-align:center;gap:3px;border:1px solid transparent;border-radius:12px;padding:8px 3px;color:#d4dfea;text-decoration:none;font-weight:700;font-size:15px;line-height:1.25}
+nav.teplo-tabs a span{font-size:clamp(10px,2.65vw,13px)}
+main{padding-bottom:calc(125px + env(safe-area-inset-bottom))}
 </style></head><body><main>
 <div class="row"><span class="brand">TEPLO</span><a href="dispatcher.html?v=18">← Диспетчер</a></div>
 <h1>Управление командой</h1>
@@ -44,6 +48,12 @@ button:disabled{opacity:.5}button:focus-visible,input:focus-visible,select:focus
 </div>
 <section><p class="warning"><strong>Реальная доставка отключена.</strong> Роли не включают автоматически заказы, платежи или курьерские назначения.</p></section>
 </main>
+<nav class="teplo-tabs" aria-label="Разделы TEPLO">
+<a href="./?v=18">🛍<span>Покупатель</span></a>
+<a href="dispatcher.html?v=18">📋<span>Диспетчер</span></a>
+<a href="shop.html?v=18">🏪<span>Магазин</span></a>
+<a href="courier.html?v=18">🛵<span>Курьер</span></a>
+</nav>
 <script type="module">
 import {createClient} from 'https://esm.sh/@supabase/supabase-js@2';
 const db=createClient('https://bgtegxdekqsajttkhhrj.supabase.co','sb_publishable_aSOKkJ_F47sGj9e8v8uJ3g_24rlQ8XG');
