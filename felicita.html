@@ -1,0 +1,206 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0b0b10"><meta name="color-scheme" content="dark">
+<title>Фелічіта · Превью меню в TEPLO</title>
+<link rel="stylesheet" href="./theme.css?v=25">
+<style>
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}body{background:#0b0b10;color:#f3edf2;margin:0;min-width:300px}
+main{max-width:790px;margin:auto;padding:0 16px calc(150px + env(safe-area-inset-bottom))}
+.navtop{display:flex;justify-content:space-between;gap:12px;align-items:center;padding:17px 0}
+.navtop a{display:flex;gap:8px;align-items:center;text-decoration:none!important;color:#e8b3d0!important;font-size:14px;font-weight:780}
+.navtop button{min-height:36px;background:#25212e!important;color:#f0d5e5!important;border:1px solid #5a4559!important;border-radius:14px!important;padding:8px 12px}
+.cover{height:235px;position:relative;overflow:hidden;border-radius:23px;background:radial-gradient(circle at center,#755142,#211723 80%);border:1px solid #554251}
+.cover img{width:100%;height:100%;object-fit:cover;filter:brightness(.72) saturate(.86);display:block}
+.cover::after{content:"";position:absolute;inset:0;background:linear-gradient(0deg,rgba(11,9,16,.7),transparent 66%)}
+.cover-title{position:absolute;z-index:2;bottom:20px;left:22px;font-weight:850;font-size:36px;color:#fff;text-shadow:0 3px 12px #0009}
+.cover-label{position:absolute;z-index:2;top:14px;left:14px;background:#2a2131e8;border:1px solid #986985;color:#f4cee2;border-radius:11px;font-size:11px;font-weight:780;padding:8px 10px;letter-spacing:.04em}
+.restaurant-intro{padding:19px 1px}
+.restaurant-intro h1{font-size:27px;color:#f5eef2!important;letter-spacing:-.035em;margin:0 0 7px}
+.restaurant-intro p{color:#b7b4bf;margin:6px 0;font-size:14px}
+.meta-row{display:flex;flex-wrap:wrap;gap:8px;margin:17px 0 3px}
+.meta-row span{padding:8px 11px;background:#24222e;border:1px solid #393342;border-radius:12px;font-size:12px;color:#ddd2df}
+.notice{background:#231e2b!important;border:1px solid #71516a!important;padding:15px 17px!important;border-radius:16px!important;margin:5px 0 20px!important}
+.notice strong{color:#f4c7de;font-size:14px}
+.notice p{margin:6px 0 0;color:#c4b6c4;font-size:13px;line-height:1.5}
+.search{height:50px;background:#1b1c29;border:1px solid #494052;border-radius:14px;display:flex;align-items:center;gap:9px;padding:0 13px;margin-bottom:11px}
+.search input{width:100%;min-width:0;background:transparent!important;border:0!important;box-shadow:none!important;height:100%;padding:0!important;margin:0!important;font-size:15px;color:#f5edf3!important;outline:none!important}
+.search input::placeholder{color:#9994a7}
+.pills{display:flex;gap:8px;overflow:auto;scrollbar-width:none;position:sticky;z-index:35;top:0;background:linear-gradient(#0b0b10 80%,#0b0b10e7);padding:10px 0 13px;margin:0 -1px 10px}
+.pills::-webkit-scrollbar{display:none}
+.pills button{flex:0 0 auto;min-height:39px;border:1px solid #514453!important;background:#22212c!important;color:#dccddc!important;border-radius:19px!important;padding:9px 13px;font-size:13px;box-shadow:none!important;white-space:nowrap}
+.pills button.active{background:#503345!important;border-color:#b67d9d!important;color:#ffdbed!important}
+.section{margin:29px 0 32px;scroll-margin-top:78px}
+.section-header{display:flex;align-items:center;gap:12px;margin-bottom:13px}
+.section-header .symbol{width:47px;height:47px;border:1px solid #68516b;border-radius:15px;background:#2a2230;display:grid;place-items:center;font-size:25px}
+.section-header h2{margin:0;color:#f3e7ee;font-size:24px}
+.section-header span.count{font-size:12px;color:#a6a0ac}
+.item-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,315px),1fr));gap:11px}
+.menu-item{display:flex;align-items:center;gap:14px;text-align:left;background:#171b26!important;border:1px solid #373543!important;color:#f3eaf1!important;border-radius:17px!important;min-height:120px;padding:12px!important;box-shadow:none!important;width:100%;transition:border-color .2s}
+.menu-item:hover{border-color:#9b718c!important}
+.menu-item .photo{width:96px;height:96px;flex:0 0 96px;border-radius:13px;overflow:hidden;background:#2b2731;position:relative}
+.menu-item .photo img{width:100%;height:100%;object-fit:cover;filter:brightness(.85) saturate(.8);display:block}
+.menu-item .photo span{position:absolute;bottom:5px;right:5px;background:#201b28d9;border-radius:9px;font-size:15px;padding:3px 5px}
+.menu-item .copy{flex:1;min-width:0}
+.menu-item .name{font-size:15px;font-weight:770;color:#f5eaf1;line-height:1.25;display:block}
+.menu-item .desc{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;font-size:12px;color:#a7a4b3;line-height:1.45;margin:6px 0 7px}
+.menu-item .price{font-size:12px;color:#e8b783;font-weight:790}
+.menu-item .more{font-size:18px;color:#dea8c7;margin-left:auto}
+.empty{padding:22px;color:#a8a2b2;text-align:center;font-size:14px}
+#loading{text-align:center;color:#b5a9b6;padding:32px 10px}
+.sheet-backdrop{position:fixed;z-index:400;inset:0;background:#080710b8;display:flex;justify-content:center;align-items:flex-end}
+.sheet-backdrop[hidden]{display:none}
+.sheet{width:min(100%,600px);max-height:93vh;background:#171a25;border:1px solid #77536e;border-bottom:0;border-radius:24px 24px 0 0;overflow-y:auto;box-shadow:0 -15px 60px #000c}
+.sheet-handle{width:43px;height:5px;background:#6d596a;border-radius:4px;margin:10px auto}
+.sheet .photo-large{height:215px;position:relative;background:#30252e}
+.sheet .photo-large img{width:100%;height:100%;object-fit:cover;filter:brightness(.82) saturate(.85)}
+.sheet .photo-large button{position:absolute;right:13px;top:13px;border-radius:50%!important;width:42px;height:42px;padding:0!important;background:#1b1927ec!important;color:#eee!important;border:1px solid #71556e!important}
+.sheet .body{padding:19px 20px calc(30px + env(safe-area-inset-bottom))}
+.sheet .label{font-size:12px;color:#e6aece;font-weight:750;letter-spacing:.05em;text-transform:uppercase}
+.sheet h2{font-size:28px;color:#f3e9f1;margin:8px 0 12px}
+.sheet .description{font-size:16px;color:#d1c7d2;line-height:1.58}
+.sheet .property{border-top:1px solid #42404a;padding:13px 0;display:flex;justify-content:space-between;align-items:center;gap:12px;font-size:13px}
+.sheet .property strong{font-size:13px;color:#e6cfdb}
+.sheet .property span{color:#e6b37f}
+.sheet .disclaimer{font-size:12px;color:#aab0c1;margin:16px 0}
+.sheet .disabled{width:100%;height:51px;opacity:.7;cursor:not-allowed}
+.footer{padding:21px 5px;color:#8d8995;font-size:12px;text-align:center}
+.buyer-nav{position:fixed;bottom:0;left:0;right:0;z-index:200;display:grid;grid-template-columns:1fr 1fr;background:#12131bfa;border-top:1px solid #37303e;padding:8px 15px calc(10px + env(safe-area-inset-bottom))}
+.buyer-nav a{display:flex;gap:8px;align-items:center;justify-content:center;text-decoration:none!important;color:#aaa3b1!important;font-weight:760;font-size:13px;min-height:47px}
+.buyer-nav a.active{color:#f1b7d4!important;background:#382736;border-radius:12px}
+#menuCount{font-size:13px;color:#a49aaa}
+@media(max-width:430px){main{padding:0 14px 125px}.cover{height:200px}.cover-title{font-size:32px}.item-grid{grid-template-columns:1fr}.menu-item{min-height:111px}.menu-item .photo{width:88px;height:88px;flex-basis:88px}.section{margin-top:26px}}
+@media(prefers-reduced-motion:reduce){.menu-item{transition:none}}
+</style>
+</head>
+<body>
+<main>
+<header class="navtop"><a href="./?v=25">← Все рестораны</a><button id="share" type="button">↗ Поделиться</button></header>
+<div class="cover"><img alt="Иллюстративная фотография пиццы, не блюдо из меню ресторана" src="https://images.unsplash.com/photo-1574071318508-1cdbab80d002?auto=format&fit=crop&w=1400&q=80">
+<span class="cover-label">ДЕМО-ПРЕВЬЮ · НЕ ОФИЦИАЛЬНОЕ МЕНЮ</span><div class="cover-title">Фелічіта</div></div>
+<section class="restaurant-intro">
+<h1>Фелічіта</h1>
+<p>📍 Теплодар · пример оформления ресторана в TEPLO</p>
+<div class="meta-row"><span>🍕 Пицца и паста</span><span>📖 39 блюд-образцов</span><span>🔒 Заказ недоступен</span></div>
+</section>
+<section class="notice"><strong>Меню создано для демонстрации дизайна</strong><p>Это не подтверждённый ассортимент «Фелічіти». Названия, составы и фото — иллюстративные примеры; официальных цен, граммовок и наличия у нас пока нет. Оформление заказа отключено.</p></section>
+<div class="search">
+<span aria-hidden="true">⌕</span>
+<input id="query" type="search" placeholder="Найти блюдо или ингредиент" autocomplete="off" aria-label="Поиск по демонстрационному меню">
+</div>
+<div class="pills" id="categories" role="group" aria-label="Категории блюд"></div>
+<div id="menuCount" role="status">Загружаем меню…</div>
+<div id="sections"><div id="loading">Подбираем блюда…</div></div>
+<p id="empty" class="empty" hidden>Ничего не найдено. Попробуй другое слово или категорию.</p>
+<div class="footer">TEPLO · Дизайн-превью, не связанное с рестораном<br>Иллюстративные фотографии еды, не реальные блюда заведения</div>
+</main>
+<nav class="buyer-nav" aria-label="Навигация покупателя"><a href="./?v=25" class="active">🏪 Рестораны</a><a href="order.html?v=25#orders-section">🧾 Мои заказы</a></nav>
+<div id="sheetBackdrop" class="sheet-backdrop" hidden>
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="detailName">
+    <div class="sheet-handle"></div>
+    <div class="photo-large" id="detailPhoto"><button id="closeDetail" type="button" aria-label="Закрыть информацию">✕</button></div>
+    <div class="body">
+      <div class="label" id="detailCategory"></div>
+      <h2 id="detailName"></h2>
+      <p class="description" id="detailDescription"></p>
+      <div class="property"><strong>Цена</strong><span>Уточняется у ресторана</span></div>
+      <div class="property"><strong>Вес / порция</strong><span>Не подтверждено</span></div>
+      <div class="property"><strong>Доступность</strong><span>Демо-превью</span></div>
+      <p class="disclaimer">Состав здесь приведён как пример для дизайна. Перед реальным заказом ресторан должен подтвердить состав, аллергены, вес и цену блюда.</p>
+      <button class="disabled" disabled>Заказ пока недоступен</button>
+    </div>
+  </div>
+</div>
+<script type="module">
+const $=id=>document.getElementById(id);
+const photoSources={
+pizza:'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?auto=format&fit=crop&w=500&q=75',
+pasta:'https://images.unsplash.com/photo-1473093295043-cdd812d0e601?auto=format&fit=crop&w=500&q=75',
+salad:'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?auto=format&fit=crop&w=500&q=75',
+burger:'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=500&q=75',
+snack:'https://images.unsplash.com/photo-1573080496219-bb080dd4f877?auto=format&fit=crop&w=500&q=75',
+dessert:'https://images.unsplash.com/photo-1488477181946-6428a0291777?auto=format&fit=crop&w=500&q=75',
+drink:'https://images.unsplash.com/photo-1544145945-f90425340c7e?auto=format&fit=crop&w=500&q=75'
+};
+const make=(tag,text='',cls='')=>{const e=document.createElement(tag);e.textContent=String(text??'');if(cls)e.className=cls;return e};
+let groups=[],items=[],current='all',previousFocus=null;
+const backdrop=$('sheetBackdrop');
+function picture(category,alt){
+ const img=document.createElement('img');
+ img.src=photoSources[category]||photoSources.pizza;img.alt=alt;
+ img.loading='lazy';img.onerror=()=>{img.style.display='none'};
+ return img;
+}
+function showItem(item){
+ previousFocus=document.activeElement;
+ const group=groups.find(g=>g.id===item.category);
+ $('detailCategory').textContent=(group?.emoji||'🍽️')+' '+(group?.name||'Демо');
+ $('detailName').textContent=item.name;
+ $('detailDescription').textContent=item.description;
+ $('detailPhoto').querySelector('img')?.remove();
+ $('detailPhoto').prepend(picture(item.category,'Иллюстрация категории блюда — не фото ресторана'));
+ backdrop.hidden=false;document.body.style.overflow='hidden';$('closeDetail').focus();
+}
+function closeItem(){backdrop.hidden=true;document.body.style.overflow='';previousFocus?.focus()}
+$('closeDetail').onclick=closeItem;
+backdrop.addEventListener('click',e=>{if(e.target===backdrop)closeItem()});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!backdrop.hidden)closeItem()});
+function render(){
+ const q=$('query').value.trim().toLocaleLowerCase('ru');
+ const root=$('sections');root.replaceChildren();
+ const matching=items.filter(item=>(current==='all'||item.category===current)&&
+  (!q||(item.name+' '+item.description).toLocaleLowerCase('ru').includes(q)));
+ $('menuCount').textContent=matching.length+' '+(matching.length===1?'позиция':matching.length<5?'позиции':'позиций')+' в демонстрационном меню';
+ $('empty').hidden=matching.length>0;
+ for(const group of groups){
+  const found=matching.filter(item=>item.category===group.id);
+  if(!found.length)continue;
+  const section=make('section','','section');section.id='cat-'+group.id;
+  const h=make('div','','section-header');
+  h.append(make('div',group.emoji,'symbol'));
+  const title=make('div');title.append(make('h2',group.name),make('span',found.length+' позиций','count'));h.append(title);section.append(h);
+  const grid=make('div','','item-grid');
+  for(const item of found){
+   const b=make('button','','menu-item');b.type='button';
+   const pictureBox=make('div','','photo');pictureBox.append(picture(item.category,'Пример блюда категории '+group.name));
+   pictureBox.append(make('span',group.emoji));b.append(pictureBox);
+   const copy=make('div','','copy');copy.append(make('span',item.name,'name'),make('p',item.description,'desc'),make('span','Цена уточняется','price'));
+   b.append(copy,make('span','›','more'));b.onclick=()=>showItem(item);grid.append(b);
+  }
+  section.append(grid);root.append(section);
+ }
+ for(const btn of $('categories').querySelectorAll('button')){
+  const selected=btn.dataset.cat===current;
+  btn.classList.toggle('active',selected);btn.setAttribute('aria-pressed',String(selected));
+ }
+}
+function categoryButton(id,name){
+ const b=make('button',name);b.type='button';b.dataset.cat=id;
+ b.onclick=()=>{current=id;render();document.getElementById('menuCount').scrollIntoView({behavior:'smooth',block:'start'})};
+ return b;
+}
+async function start(){
+ try{
+  const result=await fetch('./felicita-preview.json?v=25',{cache:'no-store'});
+  if(!result.ok)throw Error('Не удалось загрузить демо-меню');
+  const data=await result.json();
+  if(data.recordType!=='non_official_design_preview'||data.restaurant.orderingEnabled!==false)throw Error('Некорректный тип демонстрационных данных');
+  groups=data.categories;items=data.items;
+  const root=$('categories');root.append(categoryButton('all','Все · '+items.length));
+  groups.forEach(g=>root.append(categoryButton(g.id,g.emoji+' '+g.name)));
+  render();
+ }catch(e){$('sections').replaceChildren(make('p','Не удалось открыть пример меню. Обнови страницу.','empty'));$('menuCount').textContent=e.message}
+}
+$('query').addEventListener('input',render);
+$('share').onclick=async()=>{
+ try{
+  if(navigator.share){await navigator.share({title:'Фелічіта — пример меню в TEPLO',url:location.href});return}
+  if(navigator.clipboard){await navigator.clipboard.writeText(location.href);$('share').textContent='✓ Скопировано'}
+ }catch(e){if(e.name!=='AbortError')$('share').textContent='Скопируй ссылку из адресной строки'}
+};
+await start();
+</script>
+</body>
+</html>
