@@ -1,10 +1,10 @@
 <!doctype html>
 <html lang="ru"><head><meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#0b0b10"><meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="color-scheme" content="dark">
 <title>TEPLO · Курьер</title>
 <style>
-:root{color-scheme:dark;--bg:#0b1220;--card:#142035;--line:#30415d;--white:#f3f6fb;--muted:#afbdd0;--accent:#c7f36b}
+:root{color-scheme:dark;--bg:#0b1220;--card:#142035;--line:#30415d;--white:#f3f6fb;--muted:#afbdd0;--accent:#d89a45}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--white);font:16px/1.48 system-ui,-apple-system,Arial,sans-serif}
 main{max-width:800px;margin:0 auto;padding:16px}
 header{display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap;margin:12px 0 22px}
@@ -15,21 +15,21 @@ h2{font-size:22px;margin:4px 0 13px}h3{margin:0 0 6px;font-size:20px}
 p{margin:10px 0}section,article{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:18px;margin:14px 0}
 .muted{color:var(--muted)}.warning{color:#ffd184}.ok{color:var(--accent)}.error{color:#ffa5a5}
 .row{display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap}
-button{background:var(--accent);color:#192311;border:0;border-radius:12px;font:inherit;font-weight:750;padding:13px 17px;cursor:pointer}
+button{background:var(--accent);color:#211913;border:0;border-radius:12px;font:inherit;font-weight:750;padding:13px 17px;cursor:pointer}
 button:disabled{opacity:.5;cursor:default}
 button:focus-visible,a:focus-visible{outline:3px solid white;outline-offset:3px}
-.chip{display:inline-flex;border-radius:20px;border:1px solid #556d3a;color:var(--accent);font-size:14px;padding:6px 12px}
+.chip{display:inline-flex;border-radius:20px;border:1px solid #755639;color:var(--accent);font-size:14px;padding:6px 12px}
 .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(185px,1fr));gap:12px;margin:15px 0}
 .stat{background:#0c182a;padding:12px;border:1px solid var(--line);border-radius:12px}
 .stat strong{font-size:23px;display:block}.amount{font-size:26px;color:var(--accent);font-weight:800}
 .small{font-size:14px}.item{border-top:1px solid var(--line);padding:9px 0}
 .steps{display:flex;flex-wrap:wrap;gap:7px;margin:16px 0}
 .step{background:#0c182a;border:1px solid var(--line);border-radius:11px;padding:7px 10px;font-size:13px;color:var(--muted)}
-.step.done{border-color:#51693d;color:var(--accent)}
+.step.done{border-color:#755639;color:var(--accent)}
 .step.active{border-color:var(--accent);color:var(--white);font-weight:750}
 #notice{white-space:pre-wrap}
 @media(max-width:420px){main{padding:12px}section,article{padding:14px}.brand{font-size:26px}}
-nav.teplo-tabs{position:fixed;z-index:200;bottom:0;left:0;right:0;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;background:#101b2d;border-top:1px solid #435569;padding:8px 10px calc(9px + env(safe-area-inset-bottom));box-shadow:0 -6px 25px #050b15dd}nav.teplo-tabs a{min-width:0;display:flex;align-items:center;justify-content:center;flex-direction:column;text-align:center;gap:3px;border:1px solid transparent;border-radius:12px;padding:8px 3px;color:#d4dfea;text-decoration:none;font-weight:700;font-size:15px;line-height:1.25}nav.teplo-tabs a span{font-size:clamp(10px,2.65vw,13px)}nav.teplo-tabs a[aria-current="page"]{background:#283b2b;border-color:#8ebf56;color:#c7f36b}main{padding-bottom:calc(120px + env(safe-area-inset-bottom))}body{min-width:300px}</style></head>
+nav.teplo-tabs{position:fixed;z-index:200;bottom:0;left:0;right:0;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;background:#101b2d;border-top:1px solid #435569;padding:8px 10px calc(9px + env(safe-area-inset-bottom));box-shadow:0 -6px 25px #050b15dd}nav.teplo-tabs a{min-width:0;display:flex;align-items:center;justify-content:center;flex-direction:column;text-align:center;gap:3px;border:1px solid transparent;border-radius:12px;padding:8px 3px;color:#d4dfea;text-decoration:none;font-weight:700;font-size:15px;line-height:1.25}nav.teplo-tabs a span{font-size:clamp(10px,2.65vw,13px)}nav.teplo-tabs a[aria-current="page"]{background:#281d2a;border-color:#79516b;color:#d89a45}main{padding-bottom:calc(120px + env(safe-area-inset-bottom))}body{min-width:300px}</style><link rel="stylesheet" href="./theme.css?v=20"></head>
 <body><main>
 <header><div class="brand">TEPLO</div></header>
 <h1>Курьер</h1><p class="muted">Теплодар · задания и проверка доставки</p>
