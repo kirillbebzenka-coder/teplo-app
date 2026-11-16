@@ -1,0 +1,16 @@
+/* TEPLO Pilot · tactile feedback v29 */
+button,.pilot-tap{position:relative;isolation:isolate;overflow:hidden;-webkit-tap-highlight-color:transparent;touch-action:manipulation;transition:transform 120ms cubic-bezier(.15,.9,.25,1.3),box-shadow 160ms ease,filter 120ms ease!important}
+button:focus-visible{outline:2px solid #ad78ff!important;outline-offset:3px!important}
+button:active:not(:disabled),button.is-pressed:not(:disabled){transform:scale(.954)!important;filter:brightness(1.12) saturate(1.07)!important;box-shadow:0 0 0 2px rgba(163,101,255,.65),0 0 28px rgba(160,67,255,.55)!important}
+button.is-busy{cursor:progress!important;opacity:.84!important;box-shadow:0 0 0 2px #6533aa,0 0 18px #8546cc70!important}
+button.is-busy::after{content:"";display:inline-block;margin-left:10px;width:13px;height:13px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;vertical-align:-2px;animation:teplo-spin .65s linear infinite}
+button.is-done{box-shadow:0 0 0 2px #3da76c,0 0 19px #3da76c55!important}
+.teplo-ripple{position:absolute;z-index:0;pointer-events:none;border-radius:50%;background:radial-gradient(circle,rgba(230,182,255,.55) 0%,rgba(174,97,255,.25) 50%,rgba(174,97,255,0) 73%);transform:translate(-50%,-50%) scale(.1);animation:teplo-ripple .45s ease-out forwards}
+#teplo-action-toast{position:fixed;left:50%;bottom:calc(92px + env(safe-area-inset-bottom));z-index:1000;max-width:min(450px,calc(100vw - 28px));width:max-content;min-width:220px;border:1px solid #8252cc;border-radius:15px;padding:13px 17px;background:#191122;color:#f7e9ff;box-shadow:0 10px 32px #000b,0 0 21px #7d35dd4f;font-size:14px;font-weight:680;text-align:center;line-height:1.45;transform:translate(-50%,18px) scale(.95);opacity:0;pointer-events:none;transition:opacity .17s ease,transform .17s ease}
+#teplo-action-toast.visible{transform:translate(-50%,0) scale(1);opacity:1}
+#teplo-action-toast[data-kind="success"]{border-color:#7f5ad8;color:#d6ffe5}
+#teplo-action-toast[data-kind="error"]{border-color:#ff8399;color:#ffe2e7}
+#teplo-action-toast[data-kind="progress"]{border-color:#8859de;color:#e9dcff}
+@keyframes teplo-ripple{to{transform:translate(-50%,-50%) scale(2.5);opacity:0}}
+@keyframes teplo-spin{to{transform:rotate(360deg)}}
+@media(prefers-reduced-motion:reduce){.teplo-ripple{display:none!important}button,.pilot-tap,#teplo-action-toast{transition:none!important}button.is-busy::after{animation:none!important;border-right-color:currentColor!important}}
