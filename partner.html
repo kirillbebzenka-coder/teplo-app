@@ -49,6 +49,7 @@ nav a.active{background:#37172f;color:#ffc0e7;border:1px solid #733865}
 <link rel="stylesheet" href="./neon.css?v=26">
 <link rel="stylesheet" href="./pilot-touch.css?v=29">
 <script src="./pilot-touch.js?v=29" defer></script>
+<script src="./pilot-connectivity.js?v=31" defer></script>
 </head>
 <body>
 <main>
@@ -138,6 +139,7 @@ async function loadJobs(){
     .select('id,shop_name_snapshot,order_summary,ready_in_minutes,status,created_at,delivery_address,customer_name,customer_phone')
     .eq('created_by',activeUser.id).order('created_at',{ascending:false}).limit(30);
   const {data,error}=await q;if(error)throw error;
+  window.dispatchEvent(new Event('teplo:sync-ok'));
   root.replaceChildren();
   if(!data?.length){root.append(node('p','Новая база пока пуста. После отправки и подтверждения заявки она останется здесь.','muted'));return}
   for(const job of data){
@@ -153,7 +155,7 @@ async function loadJobs(){
    }
    root.append(card);
   }
- }catch(e){root.replaceChildren(node('p','Ошибка списка: '+(e?.message||String(e)),'muted'))}
+ }catch(e){window.dispatchEvent(new Event('teplo:sync-error'));if(!root.children.length)root.append(node('p','Не удалось загрузить список. Повтори после восстановления сети.','muted'));else root.prepend(node('p','⚠️ Нет обновления списка: последняя загруженная версия может быть устаревшей.','warn'))}
  finally{fetching=false}
 }
 $('requestForm').addEventListener('submit',async ev=>{
@@ -185,10 +187,11 @@ $('requestForm').addEventListener('submit',async ev=>{
 });
 $('refresh').onclick=loadJobs;
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)void loadJobs()});
+window.addEventListener('online',()=>{void init()});
 window.setInterval(()=>{if(!document.hidden&&navigator.onLine)void loadJobs()},8000);
 db.auth.onAuthStateChange(()=>setTimeout(()=>void init(),0));
 let initializing=false;
-async function init(){if(initializing)return;initializing=true;try{await getIdentity();await loadJobs()}catch(e){$('accessMessage').textContent='Ошибка входа: '+(e?.message||String(e));$('requestForm').hidden=true}finally{initializing=false}}
+async function init(){if(initializing)return;initializing=true;try{await getIdentity();await loadJobs()}catch(e){window.dispatchEvent(new Event('teplo:sync-error'));$('accessMessage').textContent='Не удалось проверить аккаунт: '+(e?.message||String(e));if(navigator.onLine)$('requestForm').hidden=true}finally{initializing=false}}
 await init();
 </script>
 </body>
