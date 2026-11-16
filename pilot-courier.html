@@ -69,7 +69,7 @@ async function toggleShift(){
   TEPLOTouch.notify(shiftActive?'Смена завершена':'Смена открыта','success');
   await load();
  }catch(e){TEPLOTouch.notify('Не удалось сменить статус: '+(e?.message||String(e)),'error');msg.textContent='Ошибка: '+(e?.message||String(e))}
- finally{shiftBusy=false;TEPLOTouch.busy(b,false)}
+ finally{shiftBusy=false;TEPLOTouch.busy(b,false);b.textContent=shiftActive?'Завершить смену':'Начать смену';b.disabled=false}
 }
 $('shiftToggle').onclick=toggleShift;
 
