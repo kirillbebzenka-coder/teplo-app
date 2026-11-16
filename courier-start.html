@@ -54,6 +54,11 @@ nav a{flex:1;max-width:300px;text-align:center;border-radius:12px;padding:11px 6
 <section id="accountBox" hidden>
 <h2>Мой статус</h2><p id="accountEmail" class="mini"></p>
 <p id="accountRole" role="status" aria-live="polite"></p>
+<div id="nameArea" hidden>
+  <label for="courierName">Как тебя видит диспетчер</label>
+  <div class="row"><input id="courierName" maxlength="80" placeholder="Имя курьера" autocomplete="name"><button type="button" class="secondary" id="saveName">Сохранить имя</button></div>
+  <p id="nameMessage" role="status" aria-live="polite" class="mini">Можно указать имя без фамилии. Пока имя не задано, будет показан email.</p>
+</div>
 <div id="readyBox" hidden><a class="action" href="pilot-courier.html?v=33">🛵 Открыть мои доставки</a><p class="mini">Открой смену, чтобы диспетчер мог назначить тебе тестовую заявку.</p></div>
 <div id="pendingBox" hidden>
 <p>Аккаунт готов. Теперь администратор TEPLO должен назначить ему роль <strong>«Курьер»</strong> в управлении командой.</p>
@@ -93,13 +98,15 @@ async function current(){
   $('accountBox').hidden=!account;
   if(!account){window.dispatchEvent(new Event('teplo:sync-ok'));return}
   $('accountEmail').textContent=account.email||'';
-  const {data:profile,error:pe}=await db.from('profiles').select('role').eq('id',account.id).single();
+  const {data:profile,error:pe}=await db.from('profiles').select('role,full_name').eq('id',account.id).single();
   if(pe)throw pe;
   const role=profile?.role;
   const isCourier=role==='courier';
   const isAdmin=role==='admin';
   $('readyBox').hidden=!(isCourier||isAdmin);
   $('pendingBox').hidden=isCourier||isAdmin;
+  $('nameArea').hidden=!isCourier;
+  if(isCourier)$('courierName').value=profile.full_name||'';
   $('accountRole').className=isCourier||isAdmin?'success':'sub';
   $('accountRole').textContent=isCourier?'✅ Роль «Курьер» подключена. Можно начинать тестовую смену.':isAdmin?'✅ Администратор: доступен тестовый режим курьера.':'⏳ Ожидает назначения роли «Курьер».';
   window.dispatchEvent(new Event('teplo:sync-ok'));
@@ -141,6 +148,21 @@ $('loginForm').addEventListener('submit',event=>{event.preventDefault();void aut
 $('signup').onclick=()=>void auth('signup');
 $('resend').onclick=()=>void auth('resend');
 $('check').onclick=()=>void current();
+$('saveName').onclick=async()=>{
+ if(!account)return;
+ const name=$('courierName').value.trim().replace(/\s+/g,' ');
+ const msg=$('nameMessage');const b=$('saveName');
+ if(name.length<2||name.length>80){msg.textContent='Укажи имя от 2 до 80 символов.';msg.className='error';return}
+ b.disabled=true;msg.className='mini';msg.textContent='Сохраняем имя…';
+ try{
+  const {data,error}=await db.from('profiles').update({full_name:name}).eq('id',account.id).select('full_name').single();
+  if(error)throw error;
+  if(data?.full_name!==name)throw new Error('Имя не подтвердилось в базе');
+  msg.textContent='✓ Имя сохранено. Теперь диспетчер увидит его.';msg.className='success';
+  notify('Имя курьера обновлено','success');
+ }catch(err){msg.textContent='Не получилось сохранить имя: '+(err?.message||String(err));msg.className='error'}
+ finally{b.disabled=false}
+};
 $('copyEmail').onclick=async()=>{
  if(!account)return;
  try{await navigator.clipboard.writeText(account.email||'');notify('Email скопирован','success')}
