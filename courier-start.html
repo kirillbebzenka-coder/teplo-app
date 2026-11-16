@@ -80,7 +80,7 @@ nav a{flex:1;max-width:300px;text-align:center;border-radius:12px;padding:11px 6
 import {createClient} from 'https://esm.sh/@supabase/supabase-js@2';
 const db=createClient('https://bgtegxdekqsajttkhhrj.supabase.co','sb_publishable_aSOKkJ_F47sGj9e8v8uJ3g_24rlQ8XG');
 const $=id=>document.getElementById(id);
-const REDIRECT='https://kirillbebzenka-coder.github.io/teplo-app/';
+const REDIRECT='https://kirillbebzenka-coder.github.io/teplo-app/courier-start.html';
 let working=false,checking=false,account=null;
 function message(msg,kind=''){const e=$('authMessage');e.className=kind||'mini';e.textContent=msg}
 function notify(msg,kind='info'){window.TEPLOTouch?.notify?.(msg,kind)}
