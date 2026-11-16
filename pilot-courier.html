@@ -54,6 +54,38 @@ input:focus{outline:2px solid #a874ff}
 #tabbar button[aria-selected="true"]{color:#ffe0f5;background:#3b1a45;border-color:#8f4789;box-shadow:inset 0 1px 0 #ad81e0}
 #loading{min-height:100px;display:grid;place-items:center}
 @media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
+
+/* Mobile courier ergonomics only: original TEPLO palette / backgrounds unchanged. */
+#tab-jobs .order-screen-heading{margin:13px 0 2px;font-size:clamp(28px,7.4vw,38px)}
+#tab-jobs .order-screen-subtitle{font-size:15px;margin:0 0 10px;color:var(--muted)}
+#activeOrders{display:grid;gap:12px}
+#activeOrders .order-focus{padding:17px 16px;margin:10px 0 14px}
+#activeOrders .order-heading{font-size:clamp(24px,7.2vw,30px);line-height:1.17;margin:8px 0;letter-spacing:-.025em;overflow-wrap:anywhere}
+#activeOrders .order-number{font-size:14px;font-weight:800;color:var(--muted)}
+#activeOrders .order-stage{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:12px 0;font-size:16px;font-weight:800}
+#activeOrders .order-summary{font-size:18px;font-weight:650;line-height:1.45;margin:15px 0}
+#activeOrders .order-stop{border-left:3px solid var(--violet);padding:4px 0 4px 14px;margin:15px 0}
+#activeOrders .order-stop.current{border-left-width:5px}
+#activeOrders .order-stop .stop-label{display:block;font-size:13px;font-weight:850;color:#f5b8e8;letter-spacing:.035em}
+#activeOrders .order-stop .stop-address{font-size:clamp(20px,5.8vw,25px);font-weight:850;line-height:1.28;overflow-wrap:anywhere;margin:8px 0 10px}
+#activeOrders .order-stop .stop-actions{display:flex;flex-wrap:wrap;gap:8px;margin:7px 0}
+#activeOrders .order-stop .stop-actions button{min-height:45px;font-size:14px;padding:9px 14px}
+#activeOrders .order-person{padding:12px 0;border-top:1px solid var(--border);border-bottom:1px solid var(--border);margin:15px 0}
+#activeOrders .order-person .person-name{font-size:clamp(19px,5.4vw,23px);font-weight:850;margin:3px 0}
+#activeOrders .order-person .person-phone{font-size:18px;font-weight:650;overflow-wrap:anywhere;margin:2px 0}
+#activeOrders .order-person .person-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:9px}
+#activeOrders .order-person .person-actions button{min-height:45px;padding:9px 15px}
+#activeOrders .order-action{min-height:65px;font-size:19px;margin-top:17px;line-height:1.3}
+#activeOrders .order-decline{min-height:46px;margin-top:12px}
+#activeOrders .order-secondary{margin:14px 0 0}
+#activeOrders .order-secondary summary{font-size:15px;font-weight:800;cursor:pointer;padding:8px 0}
+#activeOrders .order-secondary p{font-size:15px;line-height:1.5}
+#activeOrders .order-help{font-size:15px;color:var(--muted);margin:5px 0 12px}
+#activeOrders .order-empty{padding:15px 18px;font-size:16px;line-height:1.55}
+@media(max-width:390px){
+ #activeOrders .order-focus{padding:15px 13px}
+ #activeOrders .order-stop .stop-address{font-size:21px}
+}
 </style>
 <link rel="stylesheet" href="./neon.css?v=26">
 <link rel="stylesheet" href="./pilot-touch.css?v=29">
@@ -69,20 +101,20 @@ input:focus{outline:2px solid #a874ff}
 </section>
 <div id="app" hidden>
 <section id="tab-jobs">
-<div class="row"><div><div class="mini-head">Твой рабочий день</div><h1>На маршруте</h1></div><span class="pill">🧪 Тест</span></div>
-<section class="card hero">
+<div class="row"><div><div class="mini-head">Твой рабочий день · тест</div><h1 id="orderHeaderTitle" class="order-screen-heading">Мои заказы</h1></div><span class="pill" id="workStatus">Проверяем…</span></div>
+<p id="screenState" class="muted" role="status" aria-live="polite"></p>
+<p id="alert" hidden role="status" aria-live="polite"></p>
+<div id="activeOrders"></div>
+<section id="shiftCard" class="card hero">
 <div class="row"><div><div class="mini-head">Готовность к заказам</div><div id="shiftLabel" class="big status-off">Не на смене</div></div><span id="shiftEmoji" style="font-size:31px">⚪</span></div>
 <p id="shiftHint" class="muted">Нажми, когда будешь готов получать тестовые назначения.</p>
 <button type="button" class="primary full" id="shiftButton">Начать смену</button>
 </section>
-<div class="grid">
+<div class="grid" id="dailyMetrics">
 <div class="metric"><span class="mini-head">Задания сейчас</span><strong id="activeCount">0</strong><span class="micro">Лично тебе</span></div>
 <div class="metric"><span class="mini-head">Завершено сегодня</span><strong id="todayCount">0</strong><span class="micro">Тестовых доставок</span></div>
 </div>
-<div class="row" style="margin:20px 0 7px"><h2 style="margin:0">Активный заказ</h2><button id="refresh" type="button" class="ghost">↻ Обновить</button></div>
-<p id="screenState" class="muted" role="status" aria-live="polite"></p>
-<p id="alert" hidden role="status" aria-live="polite"></p>
-<div id="activeOrders"></div>
+<button id="refresh" type="button" class="ghost full">↻ Обновить заказы</button>
 </section>
 <section id="tab-history" hidden>
 <h1>История</h1><p class="muted">Только твои тестовые доставки. Чужие заявки недоступны.</p>
@@ -155,38 +187,57 @@ async function change(job,action,btn,msg){
  finally{actionBusy=false;window.TEPLOTouch?.busy?.(btn,false);btn.textContent=old}
 }
 function renderActive(j){
- const c=create('article','','card hero');
- const top=create('div','','row'),head=create('div'),status=create('span',statuses[j.status]||j.status,'pill');
- head.append(create('div','ЗАКАЗ №'+j.id.slice(0,8).toUpperCase(),'mini-head'),create('h2',j.shop_name_snapshot||'Заведение'));
- top.append(head,status);c.append(top);
- c.append(create('p','📦 '+j.order_summary,'muted'));
- const pr=create('div','','progress');
- [['assigned','1 · Принять'],['accepted','2 · Забрать'],['picked_up','3 · Доставить']].forEach(([s,label],i)=>{
-  const v=create('span',label);
-  if(['assigned','accepted','picked_up'].indexOf(j.status)>=i)v.className='done';pr.append(v);
- });
- c.append(pr);
- if(j.status==='assigned'){
-  c.append(create('p','Новая тестовая заявка. Проверь задание и подтверди принятие.','muted'));
- }else{
-  c.append(create('p',j.status==='accepted'?'Забери заказ по адресу заведения.':'Передай заказ получателю по адресу доставки.','muted'));
+ const c=create('article','','card hero order-focus');
+ const head=create('div','','row'),info=create('div');
+ info.append(create('div','ЗАКАЗ №'+j.id.slice(0,8).toUpperCase(),'order-number'),
+             create('h2',j.shop_name_snapshot||'Заведение','order-heading'));
+ head.append(info,create('span',statuses[j.status]||j.status,'pill'));c.append(head);
+ const idx=['assigned','accepted','picked_up'].indexOf(j.status);
+ const label=['1 / 3 · Принять','2 / 3 · Забрать','3 / 3 · Доставить'][Math.max(0,idx)];
+ c.append(create('div',label,'order-stage'));
+ // Order of stops follows the courier's task. Address and recipient are always visible.
+ const stops=[
+  {label:'🏪 ЗАБРАТЬ ЗАКАЗ',address:j.shop_address_snapshot||'Адрес забора не указан',active:j.status!=='picked_up'},
+  {label:'📍 ДОСТАВИТЬ',address:j.delivery_address||'Адрес доставки не указан',active:j.status==='picked_up'}
+ ];
+ if(j.status==='picked_up')stops.reverse();
+ for(const s of stops){
+  const stop=create('div','','order-stop'+(s.active?' current':''));
+  stop.append(create('span',s.label,'stop-label'),create('p',s.address,'stop-address'));
+  const actions=create('div','','stop-actions');
+  const copyButton=create('button','Скопировать адрес','ghost');
+  copyButton.type='button';copyButton.onclick=()=>copy(s.address,'Адрес');
+  actions.append(copyButton);
+  stop.append(actions);c.append(stop);
  }
- c.append(addressBlock('🏪 ЗАБРАТЬ ИЗ ЗАВЕДЕНИЯ',j.shop_address_snapshot),addressBlock('📍 АДРЕС ДОСТАВКИ',j.delivery_address));
- const more=document.createElement('details');const summ=create('summary','Информация о заказе');
- more.append(summ,textLine('Имя: '+j.customer_name),textLine('Телефон: '+j.customer_phone),textLine('Готовность: '+(j.ready_in_minutes?'через '+j.ready_in_minutes+' мин после создания':'уже готов')));
- c.append(more);
- if(j.assigned_at)c.append(create('p','Назначено: '+formatDate(j.assigned_at),'micro'));
+ const person=create('div','','order-person');
+ person.append(create('span','👤 ПОЛУЧАТЕЛЬ','mini-head'),
+  create('p',j.customer_name||'Имя не указано','person-name'));
+ if(j.customer_phone){
+  person.append(create('p',j.customer_phone,'person-phone'));
+  const contact=create('div','','person-actions');
+  const copyPhone=create('button','Скопировать телефон','ghost');
+  copyPhone.type='button';copyPhone.onclick=()=>copy(j.customer_phone,'Телефон');
+  contact.append(copyPhone);person.append(contact);
+ }
+ c.append(person,create('p','📦 '+(j.order_summary||'Содержимое не указано'),'order-summary'));
  const feedback=create('p','','muted');feedback.setAttribute('role','status');
- const next={assigned:['accepted','✓ Принять заказ'],accepted:['picked_up','📦 Забрал из заведения'],picked_up:['delivered','✓ Доставлено получателю']}[j.status];
+ const next={assigned:['accepted','✓ Принять заказ'],accepted:['picked_up','📦 Забрал заказ'],picked_up:['delivered','✓ Заказ доставлен']}[j.status];
  if(next){
-  const btn=create('button',next[1],'primary full');btn.onclick=()=>change(j,next[0],btn,feedback);c.append(btn);
+  const btn=create('button',next[1],'primary full order-action');
+  btn.onclick=()=>change(j,next[0],btn,feedback);c.append(btn);
  }
  if(j.status==='assigned'){
-  const decline=create('button','Не могу выполнить','secondary full');
-  decline.onclick=()=>{if(window.confirm('Вернуть тестовую заявку диспетчеру?'))void change(j,'declined',decline,feedback)};
-  c.append(decline);
+  const reject=create('button','Не могу выполнить','secondary full order-decline');
+  reject.onclick=()=>{if(window.confirm('Вернуть тестовую заявку диспетчеру?'))void change(j,'declined',reject,feedback)};
+  c.append(reject);
  }
- c.append(feedback);return c;
+ const details=document.createElement('details');details.className='order-secondary';
+ details.append(create('summary','Дополнительная информация'),
+    create('p','Готовность: '+(j.ready_in_minutes?'через '+j.ready_in_minutes+' мин после оформления':'уже готово')),
+    create('p','Назначено: '+(j.assigned_at?formatDate(j.assigned_at):'время не указано')));
+ c.append(details,feedback);
+ return c;
 }
 function renderHistory(j){
  const e=create('article','','card'),top=create('div','','row');
@@ -262,13 +313,17 @@ async function load(){
   $('shiftHint').textContent=shift?(active.length?'У тебя активный заказ — сначала заверши его.':'Готов принимать новые назначения от диспетчера.'):'Открой смену, чтобы получать новые заказы.';
   $('shiftButton').textContent=shift?'Завершить смену':'Начать смену';
   $('shiftButton').disabled=Boolean(active.length&&shift);
+  $('shiftCard').hidden=active.length>0;
+  $('dailyMetrics').hidden=active.length>0;
+  $('orderHeaderTitle').textContent=active.length?(active[0].status==='assigned'?'Новый заказ':active[0].status==='accepted'?'Забери заказ':'Доставь заказ'):'Мои заказы';
+  $('workStatus').textContent=active.length?'📦 В работе':shift?'🟢 На смене':'⚪ Не на смене';
   $('activeCount').textContent=String(active.length);
   $('todayCount').textContent=String(rows.filter(j=>j.status==='delivered'&&j.delivered_at&&todayKey(j.delivered_at)===today()).length);
   $('allCount').textContent=String(rows.filter(j=>j.status==='delivered').length);
   $('shiftCount').textContent=String((shifts||[]).filter(s=>todayKey(s.started_at)===today()).length);
   if(!loaded)$('profileName').value=profile.full_name||'';
   const root=$('activeOrders');root.replaceChildren();
-  if(!active.length)root.append(create('div',shift?'Ожидаем назначение от диспетчера. Телефон можно оставить открытым — список обновляется автоматически.':'Нет активных заказов. Начни смену, чтобы диспетчер мог тебя выбрать.','card muted'));
+  if(!active.length)root.append(create('div',shift?'Пока заказов нет. Ожидаем назначение от диспетчера.':'Нет активных заказов. Начни смену, чтобы диспетчер мог тебя выбрать.','card muted order-empty'));
   for(const job of active)root.append(renderActive(job));
   const historyRoot=$('historyOrders');historyRoot.replaceChildren();
   if(!history.length)historyRoot.append(create('p','Завершённых заказов пока нет.','muted'));
