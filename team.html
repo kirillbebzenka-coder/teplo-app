@@ -22,12 +22,33 @@ nav.teplo-tabs a{min-width:0;display:flex;align-items:center;justify-content:cen
 nav.teplo-tabs a span{font-size:clamp(10px,2.65vw,13px)}
 main{padding-bottom:calc(125px + env(safe-area-inset-bottom))}
 </style><link rel="stylesheet" href="./theme.css?v=20"><link rel="stylesheet" href="./neon.css?v=26">
+<link rel="stylesheet" href="./pilot-touch.css?v=29">
+<style>
+#courierInvitation{display:grid;gap:10px}
+.invite-url{font-size:12px;color:#aca6b9;overflow-wrap:anywhere}
+.invite-button{min-height:52px;background:linear-gradient(110deg,#ff4fca,#985fff)!important;color:#130b18!important;font-weight:800}
+.instructions{margin:8px 0;padding-left:20px}
+.instructions li{padding:5px 0;color:#c9c2d1;font-size:14px}
+</style><script src="./pilot-touch.js?v=29" defer></script>
 </head><body><main>
 <div class="row"><span class="brand">TEPLO</span><a href="dispatcher.html?v=18">← Диспетчер</a></div>
 <h1>Управление командой</h1>
 <p class="muted">Администрирование ролей, магазинов и сотрудников TEPLO.</p>
 <section><div class="row"><button id="refresh">Обновить</button><span id="access" class="role">Проверяем роль…</span></div><p id="notice" class="muted" role="status" aria-live="polite">Проверяем доступ…</p></section>
 <div id="adminArea" hidden>
+<section id="courierInvitation">
+<h2>🛵 Подключить курьера</h2>
+<p class="muted">Личный аккаунт для каждого курьера. Пароли и доступ администратора передавать не нужно.</p>
+<ol class="instructions">
+<li>Отправь курьеру ссылку на регистрацию.</li>
+<li>Курьер регистрируется со своего телефона и подтверждает почту.</li>
+<li>Назначь роль «Курьер» по его email в форме ниже.</li>
+<li>Курьер открывает смену, после чего появляется доступным диспетчеру.</li>
+</ol>
+<button id="copyCourierLink" class="invite-button" type="button">📋 Скопировать приглашение курьеру</button>
+<span class="invite-url">https://kirillbebzenka-coder.github.io/teplo-app/courier-start.html?v=33</span>
+<p id="inviteFeedback" class="muted" role="status" aria-live="polite"></p>
+</section>
 <section>
 <h2>Назначить роль сотруднику</h2>
 <p class="muted">Сотрудник должен сначала самостоятельно зарегистрироваться и подтвердить email. Пароль сотрудника здесь не требуется.</p>
@@ -35,9 +56,9 @@ main{padding-bottom:calc(125px + env(safe-area-inset-bottom))}
 <label for="staffEmail">Email сотрудника</label><input id="staffEmail" type="email" required autocomplete="off" placeholder="worker@example.com" maxlength="254">
 <label for="staffRole">Роль</label>
 <select id="staffRole" required>
+<option value="courier">Курьер</option>
 <option value="dispatcher">Диспетчер</option>
 <option value="venue">Сотрудник магазина</option>
-<option value="courier">Курьер</option>
 <option value="customer">Покупатель (отозвать права сотрудника)</option>
 </select>
 <div id="shopField" hidden><label for="shopId">Магазин сотрудника</label><select id="shopId"></select></div>
@@ -45,7 +66,7 @@ main{padding-bottom:calc(125px + env(safe-area-inset-bottom))}
 <p id="feedback" role="status" aria-live="polite"></p>
 </form>
 </section>
-<section><h2>Пилот курьерской службы</h2><p class="muted">Тестируй заявки без настоящих клиентов или доставок.</p><p><a href="partner.html?v=28">Создать заявку</a> · <a href="pilot-dispatch.html?v=28">Диспетчер</a> · <a href="pilot-courier.html?v=28">Курьер</a></p></section><section><h2>Сотрудники</h2><div id="staffList" class="cards"></div></section>
+<section><h2>Пилот курьерской службы</h2><p class="muted">Тестируй заявки без настоящих клиентов или доставок.</p><p><a href="partner.html?v=33">Создать заявку</a> · <a href="pilot-dispatch.html?v=33">Диспетчер</a> · <a href="pilot-courier.html?v=33">Курьер</a></p></section><section><h2>Сотрудники</h2><div id="staffList" class="cards"></div></section>
 </div>
 <section><p class="warning"><strong>Реальная доставка отключена.</strong> Роли не включают автоматически заказы, платежи или курьерские назначения.</p></section>
 </main>
@@ -62,6 +83,12 @@ const $=id=>document.getElementById(id);
 const e=(tag,text='',cls='')=>{const n=document.createElement(tag);n.textContent=String(text??'');if(cls)n.className=cls;return n};
 const labelRole={admin:'Администратор',dispatcher:'Диспетчер',venue:'Магазин',courier:'Курьер',customer:'Покупатель'};
 let busy=false;
+const courierInvite='https://kirillbebzenka-coder.github.io/teplo-app/courier-start.html?v=33';
+$('copyCourierLink').onclick=async()=>{
+ const msg=$('inviteFeedback');
+ try{await navigator.clipboard.writeText(courierInvite);msg.textContent='✓ Ссылка скопирована. Можешь отправить её курьеру в мессенджере.';TEPLOTouch.notify('Приглашение скопировано','success')}
+ catch{msg.textContent='Скопируй ссылку ниже вручную.';window.prompt('Скопируй ссылку:',courierInvite)}
+};
 function roleField(){$('shopField').hidden=$('staffRole').value!=='venue'}
 $('staffRole').addEventListener('change',roleField);roleField();
 async function load(){
@@ -108,9 +135,9 @@ $('staffForm').addEventListener('submit',async ev=>{
  try{
   const {error}=await db.rpc('teplo_set_staff_role',{p_email:email,p_role:role,p_shop_id:shop});
   if(error)throw error;
-  f.className='success';f.textContent='Роль сохранена. Сотрудник сможет войти со своим аккаунтом.';
+  f.className='success';f.textContent='✓ Роль сохранена. Курьер сможет войти со своего телефона и открыть смену.';TEPLOTouch.notify('Роль сотрудника сохранена','success');
   $('staffEmail').value='';await load();
- }catch(err){f.className='error';const msg=err?.message||String(err);f.textContent=msg.includes('Verified user with this email not found')?'Аккаунт не найден среди пользователей с подтверждённой почтой. Если email уже зарегистрирован, сначала подтверди его в Supabase Auth или создай отдельный тестовый аккаунт с Auto Confirm User.':('Не удалось сохранить: '+msg)}
+ }catch(err){f.className='error';const msg=err?.message||String(err);f.textContent=msg.includes('Verified user with this email not found')?'Аккаунт с подтверждённой почтой не найден. Курьеру нужно зарегистрироваться по ссылке выше, подтвердить email и затем снова попробовать назначить роль.':('Не удалось сохранить: '+msg);TEPLOTouch.notify('Не удалось назначить роль','error')}
  finally{$('save').disabled=false}
 });
 $('refresh').addEventListener('click',load);
