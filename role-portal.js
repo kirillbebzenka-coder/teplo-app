@@ -21,7 +21,6 @@ const destinations={
 function applyRoleNavigation(role){
  const teamLinks=document.querySelector('footer details');
  if(teamLinks&&role!=='admin')teamLinks.hidden=true;
- if(role==='customer')return;
  const legacy=document.querySelector('nav.teplo-tabs,nav.nav-bottom,nav.buyer-nav,nav[aria-label="Рабочие разделы"],nav[aria-label="Разделы TEPLO"]');
  if(!legacy)return;
  legacy.replaceChildren();
@@ -29,7 +28,8 @@ function applyRoleNavigation(role){
  [['🏪','Ресторан','partner.html?v=35'],['📋','Диспетчер','pilot-dispatch.html?v=35'],['🛵','Курьер · тест','courier-start.html?v=35'],['⚙️','Команда','team.html?v=35']]:
  role==='dispatcher'? [['📋','Заявки','pilot-dispatch.html?v=35']]:
  role==='venue'? [['🏪','Мои заявки','partner.html?v=35']]:
- role==='courier'? [['🛵','Мои заказы','pilot-courier.html?v=35']]: [];
+ role==='courier'? [['🛵','Мои заказы','pilot-courier.html?v=35']]:
+ role==='customer'? [['🏪','Магазины','./?v=35'],['🧾','Мои заказы','order.html?v=35#orders-section']]: [];
  if(!pages.length){legacy.hidden=true;return}
  legacy.hidden=false;
  legacy.style.gridTemplateColumns='repeat('+pages.length+',minmax(0,1fr))';
@@ -46,7 +46,7 @@ function applyRoleNavigation(role){
 async function check(){
  try{
   const {data,error}=await client.auth.getUser();if(error)throw error;
-  const user=data?.user;if(!user)return;
+  const user=data?.user;if(!user){if(page==='index.html'||page==='order.html'||page==='')applyRoleNavigation('customer');return}
   const {data:profile,error:pe}=await client.from('profiles').select('role').eq('id',user.id).single();
   if(pe)throw pe;
   const role=profile?.role||'customer';
