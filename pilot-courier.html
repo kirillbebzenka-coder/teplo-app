@@ -27,7 +27,8 @@ nav a.active{background:#37152e;color:#ffc2e7}
 #alert{padding:12px;border:1px solid #a1488f;border-radius:13px;background:#291327;color:#ffc9e9}
 </style><link rel="stylesheet" href="./neon.css?v=26">
 <link rel="stylesheet" href="./pilot-touch.css?v=29">
-<script src="./pilot-touch.js?v=29" defer></script></head>
+<script src="./pilot-touch.js?v=29" defer></script>
+<script src="./pilot-connectivity.js?v=31" defer></script></head>
 <body><main>
 <header><div class="brand">TEPLO</div><a href="courier.html?v=28">Все назначения ↗</a></header>
 <h1>Мои заявки</h1>
@@ -90,6 +91,8 @@ async function load(){
      .select('id,shop_name_snapshot,order_summary,ready_in_minutes,customer_name,customer_phone,delivery_address,status,created_at')
      .eq('courier_id',activeUser.id).order('created_at',{ascending:false}).limit(60);
   if(je)throw je;
+  window.dispatchEvent(new Event('teplo:sync-ok'));
+
   const rows=jobs||[],active=rows.filter(j=>['assigned','accepted','picked_up'].includes(j.status));
   const current=new Set(active.map(j=>j.id));
   const newcomers=seen?active.filter(j=>!seen.has(j.id)):[];
@@ -102,7 +105,7 @@ async function load(){
   active.forEach(j=>root.append(makeCard(j)));
   const closed=rows.filter(j=>['delivered','cancelled'].includes(j.status));
   if(closed.length){root.append(node('h3','История · '+closed.length));closed.forEach(j=>root.append(makeCard(j)))}
- }catch(e){$('message').textContent='Ошибка: '+(e?.message||String(e))}
+ }catch(e){window.dispatchEvent(new Event('teplo:sync-error'));$('message').textContent='⚠️ Ошибка обновления: '+(e?.message||String(e))+'. Уже показанные заявки сохранены на экране.'}
  finally{busy=false;$('refresh').disabled=false}
 }
 $('refresh').onclick=load;
