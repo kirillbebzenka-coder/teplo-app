@@ -29,6 +29,13 @@ main{padding-bottom:calc(125px + env(safe-area-inset-bottom))}
 .invite-button{min-height:52px;background:linear-gradient(110deg,#ff4fca,#985fff)!important;color:#130b18!important;font-weight:800}
 .instructions{margin:8px 0;padding-left:20px}
 .instructions li{padding:5px 0;color:#c9c2d1;font-size:14px}
+.account-chip{display:inline-block;padding:4px 9px;margin:4px 7px 0 0;border:1px solid #6a496d;border-radius:15px;font-size:12px;color:#efc0ed}
+.account-chip.pending{border-color:#806042;color:#ffdcaf}
+.accounts{display:grid;gap:11px}.accounts article{margin:0}
+.accounts .ident{font-size:14px;font-weight:800;overflow-wrap:anywhere}
+.accounts .account-line{font-size:13px;color:#bfc0cc}
+.accounts .assign-account{margin-top:9px;padding:10px;background:linear-gradient(110deg,#ff4fca,#985fff)!important;color:#14091b!important}
+
 </style><script src="./pilot-touch.js?v=29" defer></script>
 </head><body><main>
 <div class="row"><span class="brand">TEPLO</span><a href="dispatcher.html?v=18">← Диспетчер</a></div>
@@ -66,7 +73,11 @@ main{padding-bottom:calc(125px + env(safe-area-inset-bottom))}
 <p id="feedback" role="status" aria-live="polite"></p>
 </form>
 </section>
-<section><h2>Пилот курьерской службы</h2><p class="muted">Тестируй заявки без настоящих клиентов или доставок.</p><p><a href="partner.html?v=33">Создать заявку</a> · <a href="pilot-dispatch.html?v=33">Диспетчер</a> · <a href="pilot-courier.html?v=33">Курьер</a></p></section><section><h2>Сотрудники</h2><div id="staffList" class="cards"></div></section>
+<section>
+<div class="row"><h2>Все зарегистрированные аккаунты</h2><span class="muted">В том числе без роли курьера</span></div>
+<p class="muted">Аккаунт ещё не подтверждён — назначения недоступны. Подтверждённый покупатель — можно назначить курьером кнопкой. Сотрудник на смене отображается ниже и в диспетчерской.</p>
+<div id="accountDirectory" class="accounts"><p class="muted">Загружаем аккаунты…</p></div>
+</section><section><h2>Пилот курьерской службы</h2><p class="muted">Тестируй заявки без настоящих клиентов или доставок.</p><p><a href="partner.html?v=33">Создать заявку</a> · <a href="pilot-dispatch.html?v=33">Диспетчер</a> · <a href="pilot-courier.html?v=33">Курьер</a></p></section><section><h2>Сотрудники</h2><div id="staffList" class="cards"></div></section>
 </div>
 <section><p class="warning"><strong>Реальная доставка отключена.</strong> Роли не включают автоматически заказы, платежи или курьерские назначения.</p></section>
 </main>
@@ -102,15 +113,45 @@ async function load(){
   if(profileError)throw profileError;
   if(profile?.role!=='admin'){$('access').textContent='Нет прав';$('adminArea').hidden=true;status.textContent='Этот раздел доступен только администратору.';return}
   $('access').textContent='Администратор';
-  const [{data:staff,error:staffError},{data:shops,error:shopsError}]=await Promise.all([
+  const [{data:staff,error:staffError},{data:shops,error:shopsError},{data:accounts,error:accountsError}]=await Promise.all([
     db.rpc('teplo_staff_directory'),
-    db.from('shops').select('id,name,is_active').eq('is_active',true).order('name')
+    db.from('shops').select('id,name,is_active').eq('is_active',true).order('name'),
+    db.rpc('teplo_admin_account_directory')
   ]);
-  if(staffError)throw staffError;if(shopsError)throw shopsError;
+  if(staffError)throw staffError;if(shopsError)throw shopsError;if(accountsError)throw accountsError;
   $('adminArea').hidden=false;
   $('shopId').replaceChildren();
   for(const shop of shops||[]){
     const option=document.createElement('option');option.value=shop.id;option.textContent=shop.name;$('shopId').append(option);
+  }
+  const accountsRoot=$('accountDirectory');accountsRoot.replaceChildren();
+  if(!accounts?.length)accountsRoot.append(e('p','Аккаунты не найдены.','muted'));
+  for(const person of accounts||[]){
+    const card=e('article');
+    card.append(e('div',person.full_name?.trim()||person.email||'Аккаунт без email','ident'));
+    if(person.full_name?.trim()&&person.email)card.append(e('div',person.email,'account-line'));
+    const row=e('div');
+    row.append(e('span',labelRole[person.role]||person.role,'account-chip'));
+    row.append(e('span',person.verified?'✓ Почта подтверждена':'⏳ Почта не подтверждена','account-chip '+(person.verified?'':'pending')));
+    if(person.role==='courier'){
+      row.append(e('span',person.on_shift?'🟢 На смене':'⚪ Не на смене','account-chip'));
+      if(person.active_jobs)row.append(e('span','📦 В работе: '+person.active_jobs,'account-chip'));
+    }
+    card.append(row);
+    if(!person.verified)card.append(e('p','Не может стать курьером до подтверждения email.','account-line'));
+    else if(person.role==='customer'){
+      const btn=e('button','Назначить курьером','assign-account');
+      btn.type='button';
+      btn.onclick=()=>{
+        $('staffEmail').value=person.email;
+        $('staffRole').value='courier';
+        roleField();
+        $('staffForm').scrollIntoView({behavior:'smooth',block:'center'});
+        $('feedback').textContent='Аккаунт выбран. Нажми «Сохранить назначение» для подтверждения роли.';
+      };
+      card.append(btn);
+    }
+    accountsRoot.append(card);
   }
   const root=$('staffList');root.replaceChildren();
   if(!staff?.length)root.append(e('p','Сотрудников пока нет.','muted'));
@@ -121,7 +162,7 @@ async function load(){
     if(member.role==='courier')card.append(e('p',member.on_shift?'🟢 На смене':'⚪ Не на смене','small'));
     root.append(card);
   }
-  status.textContent='Доступ подтверждён сервером. Сотрудников: '+(staff?.length||0);
+  status.textContent='Доступ подтверждён сервером. Аккаунтов: '+(accounts?.length||0)+' · сотрудников: '+(staff?.length||0);
  }catch(err){$('adminArea').hidden=true;status.className='error';status.textContent='Ошибка: '+(err?.message||String(err))}
  finally{$('refresh').disabled=false;busy=false}
 }
