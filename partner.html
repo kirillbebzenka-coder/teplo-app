@@ -47,6 +47,8 @@ nav a.active{background:#37172f;color:#ffc0e7;border:1px solid #733865}
 @media(min-width:700px){main{padding-top:20px}}
 </style>
 <link rel="stylesheet" href="./neon.css?v=26">
+<link rel="stylesheet" href="./pilot-touch.css?v=29">
+<script src="./pilot-touch.js?v=29" defer></script>
 </head>
 <body>
 <main>
@@ -158,9 +160,9 @@ $('requestForm').addEventListener('submit',async ev=>{
  ev.preventDefault();if(processing)return;
  const feedback=$('feedback');feedback.className='muted';
  const shop=$('shop').value;
- if(!activeShopIds.includes(shop)){feedback.textContent='Не выбрано доступное заведение';return}
+ if(!activeShopIds.includes(shop)){feedback.textContent='Не выбрано доступное заведение';TEPLOTouch.notify('Выбери заведение','error');return}
  if(!draftId)draftId=crypto.randomUUID();
- processing=true;$('send').disabled=true;feedback.textContent='Передаём заявку диспетчеру…';
+ processing=true;TEPLOTouch.busy($('send'),true,'Отправляем заявку');feedback.textContent='Передаём заявку диспетчеру…';TEPLOTouch.notify('Отправляем заявку диспетчеру…','progress');
  try{
   const {data,error}=await db.rpc('teplo_create_pilot_job',{
    p_shop_id:shop,p_customer_name:$('customer').value.trim(),
@@ -170,11 +172,12 @@ $('requestForm').addEventListener('submit',async ev=>{
   });
   if(error)throw error;
   draftId=null;feedback.className='ok';
-  feedback.textContent='✓ Тестовая заявка №'+String(data).slice(0,8)+' передана диспетчеру.';
+  feedback.textContent='✓ Тестовая заявка №'+String(data).slice(0,8)+' передана диспетчеру.';TEPLOTouch.notify('✓ Заявка сохранена! №'+String(data).slice(0,8),'success');TEPLOTouch.done($('send'));
+  $('feedback').scrollIntoView({behavior:'smooth',block:'center'});
   $('summary').value='';
   await loadJobs();
- }catch(e){feedback.className='err';feedback.textContent='Ошибка: '+(e?.message||String(e))+'. Повторная отправка не создаст дубль.'}
- finally{processing=false;$('send').disabled=false}
+ }catch(e){feedback.className='err';feedback.textContent='Ошибка: '+(e?.message||String(e))+'. Повторная отправка не создаст дубль.';TEPLOTouch.notify('Не удалось сохранить. Причина указана под кнопкой.','error');feedback.scrollIntoView({behavior:'smooth',block:'center'})}
+ finally{processing=false;TEPLOTouch.busy($('send'),false)}
 });
 $('refresh').onclick=loadJobs;
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)void loadJobs()});
