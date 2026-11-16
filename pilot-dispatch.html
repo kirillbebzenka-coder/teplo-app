@@ -42,7 +42,7 @@ nav a.active{background:#39142e;color:#ffc3e8}
 <div id="stats" class="stats"></div>
 <section><div class="row"><h2>Заявки</h2><span class="muted">Проверка каждые 8 секунд</span></div>
 <div id="list"></div></section>
-</main><nav aria-label="Рабочие разделы"><a href="partner.html?v=28">🏪 Ресторан</a><a href="pilot-dispatch.html?v=28" class="active">📋 Диспетчер</a><a href="pilot-courier.html?v=28">🛵 Курьер</a></nav>
+</main><nav aria-label="Рабочие разделы"><a href="partner.html?v=30">🏪 Ресторан</a><a href="pilot-dispatch.html?v=30" class="active">📋 Диспетчер</a><a href="pilot-courier.html?v=30">🛵 Курьер</a></nav>
 <script type="module">
 import {createClient} from 'https://esm.sh/@supabase/supabase-js@2';
 const db=createClient('https://bgtegxdekqsajttkhhrj.supabase.co','sb_publishable_aSOKkJ_F47sGj9e8v8uJ3g_24rlQ8XG');
@@ -75,8 +75,7 @@ function card(job){
  e.append(txt('p','🏪 '+job.shop_name_snapshot+' · '+new Date(job.created_at).toLocaleString('ru-RU',{hour:'2-digit',minute:'2-digit',day:'2-digit',month:'2-digit'})));
  e.append(txt('p','📦 '+job.order_summary),txt('p','⏱ Готовность: '+(job.ready_in_minutes===0?'сразу':job.ready_in_minutes+' мин')),
           txt('p','📍 '+job.delivery_address));
- const contact=document.createElement('details'),summary=document.createElement('summary');summary.textContent='Тестовые контакты';
- contact.append(summary,txt('p',job.customer_name+' · '+job.customer_phone));e.append(contact);
+ e.append(txt('p','👤 Получатель: '+job.customer_name),txt('p','☎ Телефон: '+job.customer_phone));
  const feedback=txt('p','','muted');feedback.setAttribute('role','status');
  if(job.status==='new'){
   const select=document.createElement('select');select.setAttribute('aria-label','Выбрать курьера для заявки '+job.id.slice(0,8));
@@ -120,10 +119,8 @@ async function load(){
   priorIds=ids;
   $('stats').replaceChildren(stat('Ждут назначения',rows.filter(j=>j.status==='new').length),stat('В работе',rows.filter(j=>['assigned','accepted','picked_up'].includes(j.status)).length));
   const root=$('list');root.replaceChildren();
-  if(!rows.length){root.append(txt('p','Заявок пока нет. Создай первую через экран ресторана.','muted'));return}
-  for(const j of rows.filter(j=>!['cancelled','delivered'].includes(j.status)))root.append(card(j));
-  const closed=rows.filter(j=>['cancelled','delivered'].includes(j.status));
-  if(closed.length){const details=document.createElement('details'),s=txt('summary','Завершённые и отменённые ('+closed.length+')');details.append(s);closed.forEach(j=>details.append(card(j)));root.append(details)}
+  if(!rows.length){root.append(txt('p','Заявок новой курьерской системы пока нет. Старые демо-заказы находятся в отдельном разделе.','muted'));return}
+  for(const j of rows)root.append(card(j));
  }catch(e){$('message').textContent='Ошибка: '+(e?.message||String(e))}
  finally{busy=false;$('refresh').disabled=false}
 }
