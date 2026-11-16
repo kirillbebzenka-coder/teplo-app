@@ -18,7 +18,7 @@ const destinations={
  customer:'courier-start.html?v=35'
 };
 function applyRoleNavigation(role){
- const legacy=document.querySelector('nav.teplo-tabs,nav.nav-bottom,nav.buyer-nav');
+ const legacy=document.querySelector('nav.teplo-tabs,nav.nav-bottom,nav.buyer-nav,nav[aria-label="Рабочие разделы"],nav[aria-label="Разделы TEPLO"]');
  if(!legacy)return;
  legacy.replaceChildren();
  const pages=role==='admin'?
@@ -28,6 +28,11 @@ function applyRoleNavigation(role){
  role==='courier'? [['🛵','Мои заказы','pilot-courier.html?v=35']]: [];
  if(!pages.length){legacy.hidden=true;return}
  legacy.hidden=false;
+ legacy.style.gridTemplateColumns='repeat('+pages.length+',minmax(0,1fr))';
+ if(page==='partner.html'&&role==='venue'){
+  const headerLink=document.querySelector('main>header a[href*="dispatcher"]');
+  if(headerLink)headerLink.hidden=true;
+ }
  for(const [emoji,label,href] of pages){
   const a=document.createElement('a');a.href=href;a.textContent=emoji+' '+label;
   if(location.pathname.endsWith(href.split('?')[0])){a.className='active';a.setAttribute('aria-current','page')}
