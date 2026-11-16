@@ -34,9 +34,10 @@ nav a.active{background:#37152e;color:#ffc2e7}
 <script src="./pilot-touch.js?v=29" defer></script>
 <script src="./pilot-connectivity.js?v=31" defer></script></head>
 <body><main>
-<header><div class="brand">TEPLO</div><a href="courier.html?v=28">Все назначения ↗</a></header>
+<header><div class="brand">TEPLO</div><a href="courier-start.html?v=33">Личный кабинет ↗</a></header>
 <h1>Мои заявки</h1>
 <p class="muted">Принять заказ → забрать → завершить. Диспетчер видит каждый этап.</p>
+<p class="muted">Новый курьер? <a href="courier-start.html?v=33" style="color:#ffc0e6">Регистрация и вход</a>. После подтверждения email администратор выдаёт роль.</p>
 <section>
 <div class="row"><span class="pill" id="role">Проверяем вход…</span><button type="button" id="refresh" class="secondary">↻ Обновить</button></div>
 <p class="warning">🧪 Только симуляция. Нельзя выезжать, брать деньги или использовать настоящие данные клиента.</p>
@@ -50,7 +51,7 @@ nav a.active{background:#37152e;color:#ffc2e7}
 </section>
 <section><div class="row"><h2>Назначено мне</h2><span id="count" class="pill">0</span></div><div id="jobs" aria-live="polite"></div></section>
 </main>
-<nav aria-label="Рабочие разделы"><a href="partner.html?v=32">🏪 Ресторан</a><a href="pilot-dispatch.html?v=32">📋 Диспетчер</a><a href="pilot-courier.html?v=32" class="active">🛵 Курьер</a></nav>
+<nav aria-label="Рабочие разделы"><a href="partner.html?v=33">🏪 Ресторан</a><a href="pilot-dispatch.html?v=33">📋 Диспетчер</a><a href="pilot-courier.html?v=33" class="active">🛵 Курьер</a></nav>
 <script type="module">
 import {createClient} from 'https://esm.sh/@supabase/supabase-js@2';
 const db=createClient('https://bgtegxdekqsajttkhhrj.supabase.co','sb_publishable_aSOKkJ_F47sGj9e8v8uJ3g_24rlQ8XG');
