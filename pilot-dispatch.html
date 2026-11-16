@@ -29,7 +29,9 @@ h3{font-size:17px;margin:0}
 nav{position:fixed;bottom:0;left:0;right:0;display:grid;grid-template-columns:repeat(3,1fr);gap:4px;padding:9px 12px calc(10px + env(safe-area-inset-bottom));background:#08080c;border-top:1px solid #3b2941}
 nav a{color:#cbbfcf;text-align:center;text-decoration:none;padding:12px 5px;border-radius:11px;font-size:12px;font-weight:700}
 nav a.active{background:#39142e;color:#ffc3e8}
-</style><link rel="stylesheet" href="./neon.css?v=26"></head>
+</style><link rel="stylesheet" href="./neon.css?v=26">
+<link rel="stylesheet" href="./pilot-touch.css?v=29">
+<script src="./pilot-touch.js?v=29" defer></script></head>
 <body><main>
 <header><div class="brand">TEPLO</div><a href="dispatcher.html?v=28">Старые заказы ↗</a></header>
 <h1>Курьерские заявки</h1>
@@ -50,21 +52,22 @@ let busy=false;let currentUser=null;let couriers=[];let priorIds=null;
 function stat(label,value){const e=txt('div');e.append(txt('strong',String(value)),txt('span',label,'muted'));return e}
 async function assign(job,id,button,feedback){
  if(!id){feedback.textContent='Сначала выбери курьера.';return}
- button.disabled=true;feedback.textContent='Назначаем…';
+ TEPLOTouch.busy(button,true,'Назначаем');feedback.textContent='Назначаем…';TEPLOTouch.notify('Передаём заявку курьеру…','progress');
  try{
   const {error}=await db.rpc('teplo_assign_pilot_job',{p_job_id:job.id,p_courier_id:id});
   if(error)throw error;
-  feedback.textContent='✓ Курьер назначен.';await load();
- }catch(e){feedback.textContent='Ошибка: '+(e?.message||String(e))}
- finally{button.disabled=false}
+  feedback.textContent='✓ Курьер назначен.';TEPLOTouch.notify('✓ Курьер назначен','success');TEPLOTouch.done(button);await load();
+ }catch(e){feedback.textContent='Ошибка: '+(e?.message||String(e));TEPLOTouch.notify('Не удалось назначить: '+(e?.message||String(e)),'error')}
+ finally{TEPLOTouch.busy(button,false)}
 }
 async function cancel(job,button,feedback){
  if(!confirm('Отменить тестовую заявку?'))return;
- button.disabled=true;feedback.textContent='Отменяем…';
+ TEPLOTouch.busy(button,true,'Отменяем');feedback.textContent='Отменяем…';
  try{
   const {error}=await db.rpc('teplo_cancel_pilot_job',{p_job_id:job.id});
-  if(error)throw error;await load();
- }catch(e){feedback.textContent='Ошибка: '+(e?.message||String(e));button.disabled=false}
+  if(error)throw error;TEPLOTouch.notify('Заявка отменена','success');await load();
+ }catch(e){feedback.textContent='Ошибка: '+(e?.message||String(e));TEPLOTouch.notify('Не удалось отменить','error')}
+ finally{TEPLOTouch.busy(button,false)}
 }
 function card(job){
  const e=txt('article','','job'),top=txt('div','','row'),badge=txt('span',names[job.status]||job.status,'pill');
