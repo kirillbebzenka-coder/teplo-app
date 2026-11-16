@@ -1,0 +1,188 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#050507"><meta name="color-scheme" content="dark">
+<title>TEPLO Partner · Нужен курьер</title>
+<link rel="stylesheet" href="./theme.css?v=25">
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#050507;color:#f5f7fb;min-width:300px}
+main{max-width:650px;margin:auto;padding:15px 15px calc(125px + env(safe-area-inset-bottom))}
+header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 0 17px}
+.logo{font-size:28px;font-weight:900;letter-spacing:.08em;color:#ff4fca}
+.logo span{display:block;font-size:10px;letter-spacing:.18em;color:#aeb2be}
+header a{color:#ffa1e1;text-decoration:none;font-size:14px}
+h1{font-size:clamp(29px,7vw,39px);line-height:1.14;margin:13px 0 8px}
+h2{font-size:21px;margin:0 0 12px}
+p{line-height:1.5}
+.lead{color:#adb2c4;margin:0 0 19px}
+.status-tag{display:inline-flex;color:#ffa1e1;background:#221421;border:1px solid #68325a;border-radius:30px;padding:7px 11px;font-size:12px;font-weight:780}
+section,article{border:1px solid #32303c;border-radius:19px;background:#111218;padding:18px;margin:14px 0}
+label{display:block;color:#e5e5ed;font-size:13px;font-weight:750;margin:13px 0 5px}
+input,select,textarea{display:block;width:100%;min-height:48px;padding:12px;border-radius:12px;background:#0c0d13;color:#fff;border:1px solid #333441;font:inherit}
+textarea{resize:vertical;min-height:83px}
+input:focus,select:focus,textarea:focus{outline:2px solid #985fff}
+button{font:inherit;border:0;border-radius:13px;padding:13px 16px;font-weight:780;cursor:pointer}
+button:disabled{opacity:.5}
+.primary{display:block;width:100%;margin-top:20px;min-height:54px;background:linear-gradient(110deg,#ff4fca,#985fff);color:#110917}
+.secondary{background:#201b27;color:#f0b6dd;border:1px solid #63405c}
+.row{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.muted{font-size:13px;color:#aaaebd}
+.small{font-size:12px}
+.warn{color:#ffcfdf;font-size:13px;background:#241623;border:1px solid #5d344f;border-radius:12px;padding:12px}
+.order-card{padding:14px;margin:10px 0;background:#15151e}
+.order-card strong{font-size:16px}
+.order-card p{font-size:13px;color:#bcc0cb;margin:6px 0}
+.order-card .pill{display:inline-block;background:#261a2c;border:1px solid #59415f;color:#ffa1e1;padding:5px 9px;border-radius:20px;font-size:12px}
+.order-card button{font-size:12px;padding:8px 12px;margin-top:9px}
+#feedback{white-space:pre-wrap;min-height:15px}
+#feedback.err{color:#ff9da9}
+#feedback.ok{color:#98ff6b}
+[hidden]{display:none!important}
+footer{position:fixed;left:0;right:0;bottom:0;background:#08080d;border-top:1px solid #383040;padding:8px 12px calc(9px + env(safe-area-inset-bottom))}
+nav{max-width:650px;display:grid;grid-template-columns:repeat(3,1fr);margin:auto;gap:8px}
+nav a{display:flex;align-items:center;justify-content:center;gap:5px;padding:12px 4px;border-radius:12px;text-decoration:none;color:#c6bed0;font-size:12px;font-weight:780}
+nav a.active{background:#37172f;color:#ffc0e7;border:1px solid #733865}
+@media(min-width:700px){main{padding-top:20px}}
+</style>
+<link rel="stylesheet" href="./neon.css?v=26">
+</head>
+<body>
+<main>
+<header><div class="logo">TEPLO<span>PARTNER DELIVERY</span></div><a href="dispatcher.html?v=28">Диспетчерская ↗</a></header>
+<span class="status-tag">● ТЕСТОВЫЙ РЕЖИМ</span>
+<h1>Нужен курьер?</h1>
+<p class="lead">Заполни заявку один раз. Она появится у диспетчера, который назначит курьера.</p>
+<section>
+ <div class="row"><h2>Новая заявка</h2><span id="identity" class="muted">Проверяем вход…</span></div>
+ <p class="warn">Только симуляция! Нельзя передавать реальные заказы или данные клиентов. Вводи вымышленные контакты и адреса, не отправляй курьера в поездку.</p>
+ <div id="accessMessage" class="muted"></div>
+ <form id="requestForm" hidden>
+  <label for="shop">Заведение</label>
+  <select id="shop" required></select>
+  <label for="summary">Что нужно забрать</label>
+  <textarea id="summary" maxlength="400" placeholder="Например: 2 пиццы, готовность через 15 минут" required></textarea>
+  <label for="ready">Через сколько будет готово</label>
+  <select id="ready">
+   <option value="0">Уже готово</option>
+   <option value="10">Через 10 минут</option>
+   <option value="20" selected>Через 20 минут</option>
+   <option value="30">Через 30 минут</option>
+   <option value="45">Через 45 минут</option>
+   <option value="60">Через 60 минут</option>
+  </select>
+  <label for="customer">Получатель (тестовое имя)</label>
+  <input id="customer" maxlength="90" placeholder="Тестовый клиент" value="Тестовый клиент" required>
+  <label for="phone">Телефон (тестовый)</label>
+  <input id="phone" type="tel" inputmode="tel" maxlength="22" placeholder="+380000000000" value="+380000000000" required>
+  <label for="address">Куда доставить (тестовый адрес)</label>
+  <input id="address" maxlength="240" placeholder="Тестовая улица, дом 12" value="Тестовая улица, дом 12" required>
+  <button class="primary" type="submit" id="send">🛵 Нужен курьер</button>
+ </form>
+ <p id="feedback" role="status" aria-live="polite"></p>
+</section>
+<section>
+ <div class="row"><h2>Мои заявки</h2><button class="secondary" type="button" id="refresh">↻ Обновить</button></div>
+ <div id="jobs" aria-live="polite"><p class="muted">Подключаемся…</p></div>
+</section>
+</main>
+<footer><nav aria-label="Рабочие разделы"><a class="active" href="partner.html?v=28">🏪 Заявки</a><a href="dispatcher.html?v=28">📋 Диспетчер</a><a href="courier.html?v=28">🛵 Курьер</a></nav></footer>
+<script type="module">
+import {createClient} from 'https://esm.sh/@supabase/supabase-js@2';
+const db=createClient('https://bgtegxdekqsajttkhhrj.supabase.co','sb_publishable_aSOKkJ_F47sGj9e8v8uJ3g_24rlQ8XG');
+const $=id=>document.getElementById(id);
+const node=(tag,text='',cls='')=>{const e=document.createElement(tag);e.textContent=String(text??'');if(cls)e.className=cls;return e};
+const states={new:'Новая',assigned:'Курьер назначен',accepted:'Курьер принял',picked_up:'Забрал заказ',delivered:'Завершена',cancelled:'Отменена'};
+let activeUser=null,activeShopIds=[],draftId=null,processing=false,fetching=false;
+async function getIdentity(){
+ const {data,error}=await db.auth.getUser();
+ if(error)throw error;
+ activeUser=data?.user||null;
+ if(!activeUser){
+  $('identity').textContent='Нет входа';
+  $('accessMessage').textContent='Войди в аккаунт на странице оформления TEPLO, затем возвращайся сюда.';
+  $('requestForm').hidden=true;return false;
+ }
+ const {data:profile,error:pe}=await db.from('profiles').select('role').eq('id',activeUser.id).single();
+ if(pe)throw pe;
+ $('identity').textContent=profile.role==='admin'?'Администратор':profile.role==='venue'?'Сотрудник магазина':'Нет доступа';
+ let ids=[];
+ if(profile.role==='admin'){
+  const {data,error:se}=await db.from('shops').select('id,name').eq('is_active',true).order('name');
+  if(se)throw se;
+  ids=data||[];
+ } else if(profile.role==='venue'){
+  const {data:members,error:me}=await db.from('shop_members').select('shop_id').eq('user_id',activeUser.id);
+  if(me)throw me;
+  if(members?.length){
+   const {data:shops,error:se}=await db.from('shops').select('id,name').in('id',members.map(m=>m.shop_id)).eq('is_active',true);
+   if(se)throw se;ids=shops||[];
+  }
+ }
+ activeShopIds=ids.map(s=>s.id);
+ const sel=$('shop');sel.replaceChildren();
+ ids.forEach(s=>{const o=document.createElement('option');o.value=s.id;o.textContent=s.name;sel.append(o)});
+ $('requestForm').hidden=!ids.length;
+ $('accessMessage').textContent=ids.length?'Создавай только тестовые заявки, настоящий выезд запрещён.':'Требуется роль сотрудника подключённого магазина или администратора.';
+ return ids.length>0;
+}
+async function loadJobs(){
+ if(fetching)return;fetching=true;
+ const root=$('jobs');
+ try{
+  if(!activeUser){root.replaceChildren(node('p','Войди в аккаунт.','muted'));return}
+  let q=db.from('teplo_pilot_jobs')
+    .select('id,shop_name_snapshot,order_summary,ready_in_minutes,status,created_at,delivery_address')
+    .eq('created_by',activeUser.id).order('created_at',{ascending:false}).limit(30);
+  const {data,error}=await q;if(error)throw error;
+  root.replaceChildren();
+  if(!data?.length){root.append(node('p','Пока нет заявок. Первая появится здесь.','muted'));return}
+  for(const job of data){
+   const card=node('article','','order-card');
+   const top=node('div','','row');
+   top.append(node('strong','№'+job.id.slice(0,8)),node('span',states[job.status]||job.status,'pill'));
+   card.append(top,node('p',job.shop_name_snapshot+' · '+new Date(job.created_at).toLocaleString('ru-RU',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})));
+   card.append(node('p','📦 '+job.order_summary),node('p','📍 '+job.delivery_address),node('p','Готовность: '+(job.ready_in_minutes===0?'сразу':job.ready_in_minutes+' мин')));
+   if(['new','assigned'].includes(job.status)){
+    const b=node('button','Отменить тестовую заявку','secondary');
+    b.onclick=async()=>{if(!confirm('Отменить тестовую заявку?'))return;b.disabled=true;const {error}=await db.rpc('teplo_cancel_pilot_job',{p_job_id:job.id});if(error){alert(error.message);b.disabled=false}else await loadJobs()};
+    card.append(b);
+   }
+   root.append(card);
+  }
+ }catch(e){root.replaceChildren(node('p','Ошибка списка: '+(e?.message||String(e)),'muted'))}
+ finally{fetching=false}
+}
+$('requestForm').addEventListener('submit',async ev=>{
+ ev.preventDefault();if(processing)return;
+ const feedback=$('feedback');feedback.className='muted';
+ const shop=$('shop').value;
+ if(!activeShopIds.includes(shop)){feedback.textContent='Не выбрано доступное заведение';return}
+ if(!draftId)draftId=crypto.randomUUID();
+ processing=true;$('send').disabled=true;feedback.textContent='Передаём заявку диспетчеру…';
+ try{
+  const {data,error}=await db.rpc('teplo_create_pilot_job',{
+   p_shop_id:shop,p_customer_name:$('customer').value.trim(),
+   p_customer_phone:$('phone').value.trim(),p_delivery_address:$('address').value.trim(),
+   p_order_summary:$('summary').value.trim(),p_ready_in_minutes:Number($('ready').value),
+   p_request_id:draftId
+  });
+  if(error)throw error;
+  draftId=null;feedback.className='ok';
+  feedback.textContent='✓ Тестовая заявка №'+String(data).slice(0,8)+' передана диспетчеру.';
+  $('summary').value='';
+  await loadJobs();
+ }catch(e){feedback.className='err';feedback.textContent='Ошибка: '+(e?.message||String(e))+'. Повторная отправка не создаст дубль.'}
+ finally{processing=false;$('send').disabled=false}
+});
+$('refresh').onclick=loadJobs;
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)void loadJobs()});
+window.setInterval(()=>{if(!document.hidden&&navigator.onLine)void loadJobs()},8000);
+db.auth.onAuthStateChange(()=>setTimeout(()=>void init(),0));
+let initializing=false;
+async function init(){if(initializing)return;initializing=true;try{await getIdentity();await loadJobs()}catch(e){$('accessMessage').textContent='Ошибка входа: '+(e?.message||String(e));$('requestForm').hidden=true}finally{initializing=false}}
+await init();
+</script>
+</body>
+</html>
