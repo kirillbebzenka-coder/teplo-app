@@ -22,6 +22,13 @@ select{background:#0c0d14;color:#fff;border:1px solid #493b53;width:100%;margin:
 .actions{margin:12px 0 2px}.actions button{width:100%;min-height:49px}
 .warning{font-size:12px;color:#f1b8df}
 h3{font-size:17px;margin:0}
+.courier-grid{display:grid;gap:8px;margin-top:12px}
+.courier-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:11px 12px;border:1px solid #403447;border-radius:11px;background:#15141d}
+.courier-row .name{font-weight:700}
+.courier-row .state{font-size:12px;color:#b8a2d6;text-align:right}
+.route{padding:10px 12px;border-radius:12px;background:#0b0c14;border:1px solid #393245}
+.route p{margin:6px 0}
+
 .stats{display:grid;grid-template-columns:1fr 1fr;gap:9px}
 .stats>div{padding:11px;border:1px solid #31303d;border-radius:13px;background:#161720}
 .stats strong{display:block;font-size:23px;color:#32e6ff}
@@ -41,15 +48,18 @@ nav a.active{background:#39142e;color:#ffc3e8}
 <p class="warning">🧪 Тест: никого не отправлять. Для пилота используем вымышленные контакты.</p>
 <p id="message" class="muted">Получаем задания…</p></section>
 <div id="stats" class="stats"></div>
+<section><div class="row"><h2>Доступность курьеров</h2><span class="muted">Смены и занятость</span></div>
+<p class="muted">🟢 Свободен — можно назначить. 📦 Занят — выполняет заявку. ⚪ Не на смене — недоступен.</p>
+<div id="courierRoster" class="courier-grid"><p class="muted">Загружаем команду…</p></div></section>
 <section><div class="row"><h2>Заявки</h2><span class="muted">Проверка каждые 8 секунд</span></div>
 <div id="list"></div></section>
-</main><nav aria-label="Рабочие разделы"><a href="partner.html?v=30">🏪 Ресторан</a><a href="pilot-dispatch.html?v=30" class="active">📋 Диспетчер</a><a href="pilot-courier.html?v=30">🛵 Курьер</a></nav>
+</main><nav aria-label="Рабочие разделы"><a href="partner.html?v=32">🏪 Ресторан</a><a href="pilot-dispatch.html?v=32" class="active">📋 Диспетчер</a><a href="pilot-courier.html?v=32">🛵 Курьер</a></nav>
 <script type="module">
 import {createClient} from 'https://esm.sh/@supabase/supabase-js@2';
 const db=createClient('https://bgtegxdekqsajttkhhrj.supabase.co','sb_publishable_aSOKkJ_F47sGj9e8v8uJ3g_24rlQ8XG');
 const $=id=>document.getElementById(id),txt=(tag,t='',cls='')=>{const e=document.createElement(tag);e.textContent=String(t??'');if(cls)e.className=cls;return e};
 const names={new:'Новая',assigned:'Курьер назначен',accepted:'Курьер принял',picked_up:'Курьер забрал',delivered:'Завершена',cancelled:'Отменена'};
-let busy=false;let currentUser=null;let couriers=[];let priorIds=null;
+let busy=false;let currentUser=null;let couriers=[];let priorIds=null;let availableCouriers=[];
 function stat(label,value){const e=txt('div');e.append(txt('strong',String(value)),txt('span',label,'muted'));return e}
 async function assign(job,id,button,feedback){
  if(!id){feedback.textContent='Сначала выбери курьера.';return}
@@ -74,15 +84,18 @@ function card(job){
  const e=txt('article','','job'),top=txt('div','','row'),badge=txt('span',names[job.status]||job.status,'pill');
  top.append(txt('strong','№'+job.id.slice(0,8)),badge);e.append(top);
  e.append(txt('p','🏪 '+job.shop_name_snapshot+' · '+new Date(job.created_at).toLocaleString('ru-RU',{hour:'2-digit',minute:'2-digit',day:'2-digit',month:'2-digit'})));
- e.append(txt('p','📦 '+job.order_summary),txt('p','⏱ Готовность: '+(job.ready_in_minutes===0?'сразу':job.ready_in_minutes+' мин')),
-          txt('p','📍 '+job.delivery_address));
+ e.append(txt('p','📦 '+job.order_summary),txt('p','⏱ Готовность: '+(job.ready_in_minutes===0?'сразу':job.ready_in_minutes+' мин')));
+ const route=txt('div','','route');
+ route.append(txt('p','🏪 ЗАБРАТЬ: '+(job.shop_address_snapshot||'Адрес забора не указан')),
+              txt('p','📍 ДОСТАВИТЬ: '+job.delivery_address));
+ e.append(route);
  e.append(txt('p','👤 Получатель: '+job.customer_name),txt('p','☎ Телефон: '+job.customer_phone));
  const feedback=txt('p','','muted');feedback.setAttribute('role','status');
  if(job.status==='new'){
   const select=document.createElement('select');select.setAttribute('aria-label','Выбрать курьера для заявки '+job.id.slice(0,8));
   select.append(txt('option','Выбрать курьера'));select.firstChild.value='';
-  couriers.forEach(c=>{const o=txt('option',c.name);o.value=c.id;select.append(o)});
-  const b=txt('button','🛵 Назначить курьера');b.disabled=!couriers.length;
+  availableCouriers.forEach(c=>{const o=txt('option',c.name);o.value=c.id;select.append(o)});
+  const b=txt('button','🛵 Назначить курьера');b.disabled=!availableCouriers.length;
   b.onclick=()=>assign(job,select.value,b,feedback);
   const actions=txt('div','','actions');actions.append(select,b);e.append(actions);
  }
@@ -101,26 +114,45 @@ async function load(){
  try{
   const {data,error:ae}=await db.auth.getUser();if(ae)throw ae;
   currentUser=data?.user||null;
-  if(!currentUser){$('role').textContent='Нужен вход';$('message').textContent='Войди в свой аккаунт через TEPLO, затем открой этот раздел.';$('list').replaceChildren();$('stats').replaceChildren();return}
+  if(!currentUser){$('courierRoster').replaceChildren();$('role').textContent='Нужен вход';$('message').textContent='Войди в свой аккаунт через TEPLO, затем открой этот раздел.';$('list').replaceChildren();$('stats').replaceChildren();return}
   const {data:p,error:pe}=await db.from('profiles').select('role').eq('id',currentUser.id).single();if(pe)throw pe;
-  if(!['admin','dispatcher'].includes(p.role)){$('role').textContent='Нет доступа';$('message').textContent='Нужна роль диспетчера или администратора.';$('list').replaceChildren();$('stats').replaceChildren();return}
+  if(!['admin','dispatcher'].includes(p.role)){$('courierRoster').replaceChildren();$('role').textContent='Нет доступа';$('message').textContent='Нужна роль диспетчера или администратора.';$('list').replaceChildren();$('stats').replaceChildren();return}
   $('role').textContent=p.role==='admin'?'Администратор':'Диспетчер';
-  const [{data:profiles,error:pr},{data:jobs,error:je}]=await Promise.all([
+  const [{data:profiles,error:pr},{data:jobs,error:je},{data:shifts,error:sh}]=await Promise.all([
     db.from('profiles').select('id,full_name,role').eq('role','courier').limit(50),
-    db.from('teplo_pilot_jobs').select('id,shop_name_snapshot,order_summary,ready_in_minutes,customer_name,customer_phone,delivery_address,status,courier_id,created_at')
-      .order('created_at',{ascending:false}).limit(80)
+    db.from('teplo_pilot_jobs').select('id,shop_name_snapshot,shop_address_snapshot,order_summary,ready_in_minutes,customer_name,customer_phone,delivery_address,status,courier_id,created_at')
+      .order('created_at',{ascending:false}).limit(80),
+    db.from('courier_shifts').select('courier_id').is('ended_at',null).limit(100)
   ]);
-  if(pr)throw pr;if(je)throw je;
+  if(pr)throw pr;if(je)throw je;if(sh)throw sh;
   window.dispatchEvent(new Event('teplo:sync-ok'));
 
-  couriers=(profiles||[]).map(c=>({id:c.id,name:c.full_name?.trim()||'Курьер '+c.id.slice(0,8)}));
-  if(p.role==='admin')couriers.unshift({id:currentUser.id,name:'Я сам (только тест)'});
+  
+  couriers=(profiles||[]).map(c=>({id:c.id,name:c.full_name?.trim()||'Курьер '+c.id.slice(0,8),role:c.role}));
+  if(p.role==='admin')couriers.unshift({id:currentUser.id,name:'Я сам (только тест)',role:'admin'});
   const rows=jobs||[],ids=new Set(rows.map(x=>x.id));
+  const onShift=new Set((shifts||[]).map(s=>s.courier_id));
+  const busyIds=new Set(rows.filter(j=>['assigned','accepted','picked_up'].includes(j.status) && j.courier_id).map(j=>j.courier_id));
+  availableCouriers=couriers.filter(c=>!busyIds.has(c.id)&&(c.role==='admin'||onShift.has(c.id)));
+  const roster=$('courierRoster');roster.replaceChildren();
+  if(!couriers.length)roster.append(txt('p','Нет курьеров. Добавь сотрудника с ролью «Курьер» через управление командой.','muted'));
+  for(const c of couriers){
+    const row=txt('div','','courier-row');
+    let status=busyIds.has(c.id)?'📦 Занят':c.role==='admin'?'🧪 Доступен для теста':onShift.has(c.id)?'🟢 На смене · свободен':'⚪ Не на смене';
+    row.append(txt('span',c.name,'name'),txt('span',status,'state'));roster.append(row);
+  }
+
   const fresh=priorIds?rows.filter(j=>!priorIds.has(j.id)):[];
   if(fresh.length)$('message').textContent='🔔 '+fresh.length+' новых тестовых заявок!';
   else $('message').textContent='● На связи · '+new Date().toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'});
   priorIds=ids;
-  $('stats').replaceChildren(stat('Ждут назначения',rows.filter(j=>j.status==='new').length),stat('В работе',rows.filter(j=>['assigned','accepted','picked_up'].includes(j.status)).length));
+  
+  $('stats').replaceChildren(
+    stat('Ждут назначения',rows.filter(j=>j.status==='new').length),
+    stat('В работе',rows.filter(j=>['assigned','accepted','picked_up'].includes(j.status)).length),
+    stat('Свободных курьеров',availableCouriers.length),
+    stat('Завершено (тест)',rows.filter(j=>j.status==='delivered').length)
+  );
   const root=$('list');root.replaceChildren();
   if(!rows.length){root.append(txt('p','Заявок новой курьерской системы пока нет. Старые демо-заказы находятся в отдельном разделе.','muted'));return}
   for(const j of rows)root.append(card(j));
