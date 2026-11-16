@@ -52,7 +52,7 @@ nav a.active{background:#37172f;color:#ffc0e7;border:1px solid #733865}
 </head>
 <body>
 <main>
-<header><div class="logo">TEPLO<span>PARTNER DELIVERY</span></div><a href="dispatcher.html?v=28">Диспетчерская ↗</a></header>
+<header><div class="logo">TEPLO<span>PARTNER DELIVERY</span></div><a href="pilot-dispatch.html?v=30">Диспетчерская ↗</a></header>
 <span class="status-tag">● ТЕСТОВЫЙ РЕЖИМ</span>
 <h1>Нужен курьер?</h1>
 <p class="lead">Заполни заявку один раз. Она появится у диспетчера, который назначит курьера.</p>
@@ -89,7 +89,7 @@ nav a.active{background:#37172f;color:#ffc0e7;border:1px solid #733865}
  <div id="jobs" aria-live="polite"><p class="muted">Подключаемся…</p></div>
 </section>
 </main>
-<footer><nav aria-label="Рабочие разделы"><a class="active" href="partner.html?v=28">🏪 Заявки</a><a href="dispatcher.html?v=28">📋 Диспетчер</a><a href="courier.html?v=28">🛵 Курьер</a></nav></footer>
+<footer><nav aria-label="Рабочие разделы"><a class="active" href="partner.html?v=30">🏪 Заявки</a><a href="pilot-dispatch.html?v=30">📋 Диспетчер</a><a href="pilot-courier.html?v=30">🛵 Курьер</a></nav></footer>
 <script type="module">
 import {createClient} from 'https://esm.sh/@supabase/supabase-js@2';
 const db=createClient('https://bgtegxdekqsajttkhhrj.supabase.co','sb_publishable_aSOKkJ_F47sGj9e8v8uJ3g_24rlQ8XG');
@@ -135,17 +135,17 @@ async function loadJobs(){
  try{
   if(!activeUser){root.replaceChildren(node('p','Войди в аккаунт.','muted'));return}
   let q=db.from('teplo_pilot_jobs')
-    .select('id,shop_name_snapshot,order_summary,ready_in_minutes,status,created_at,delivery_address')
+    .select('id,shop_name_snapshot,order_summary,ready_in_minutes,status,created_at,delivery_address,customer_name,customer_phone')
     .eq('created_by',activeUser.id).order('created_at',{ascending:false}).limit(30);
   const {data,error}=await q;if(error)throw error;
   root.replaceChildren();
-  if(!data?.length){root.append(node('p','Пока нет заявок. Первая появится здесь.','muted'));return}
+  if(!data?.length){root.append(node('p','Новая база пока пуста. После отправки и подтверждения заявки она останется здесь.','muted'));return}
   for(const job of data){
    const card=node('article','','order-card');
    const top=node('div','','row');
    top.append(node('strong','№'+job.id.slice(0,8)),node('span',states[job.status]||job.status,'pill'));
    card.append(top,node('p',job.shop_name_snapshot+' · '+new Date(job.created_at).toLocaleString('ru-RU',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})));
-   card.append(node('p','📦 '+job.order_summary),node('p','📍 '+job.delivery_address),node('p','Готовность: '+(job.ready_in_minutes===0?'сразу':job.ready_in_minutes+' мин')));
+   card.append(node('p','📦 '+job.order_summary),node('p','📍 '+job.delivery_address),node('p','👤 '+job.customer_name),node('p','☎ '+job.customer_phone),node('p','Готовность: '+(job.ready_in_minutes===0?'сразу':job.ready_in_minutes+' мин')));
    if(['new','assigned'].includes(job.status)){
     const b=node('button','Отменить тестовую заявку','secondary');
     b.onclick=async()=>{if(!confirm('Отменить тестовую заявку?'))return;b.disabled=true;const {error}=await db.rpc('teplo_cancel_pilot_job',{p_job_id:job.id});if(error){alert(error.message);b.disabled=false}else await loadJobs()};
@@ -171,6 +171,10 @@ $('requestForm').addEventListener('submit',async ev=>{
    p_request_id:draftId
   });
   if(error)throw error;
+  if(!data)throw new Error('Сервер не вернул номер заявки');
+  const {data:verified,error:verifyError}=await db.from('teplo_pilot_jobs').select('id').eq('id',data).maybeSingle();
+  if(verifyError)throw verifyError;
+  if(!verified)throw new Error('Заявка не найдена в базе после сохранения');
   draftId=null;feedback.className='ok';
   feedback.textContent='✓ Тестовая заявка №'+String(data).slice(0,8)+' передана диспетчеру.';TEPLOTouch.notify('✓ Заявка сохранена! №'+String(data).slice(0,8),'success');TEPLOTouch.done($('send'));
   $('feedback').scrollIntoView({behavior:'smooth',block:'center'});
