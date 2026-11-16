@@ -25,6 +25,10 @@ nav{position:fixed;bottom:0;left:0;right:0;display:grid;grid-template-columns:re
 nav a{text-align:center;text-decoration:none;font-size:12px;font-weight:750;color:#b5afbe;padding:12px 5px;border-radius:12px}
 nav a.active{background:#37152e;color:#ffc2e7}
 #alert{padding:12px;border:1px solid #a1488f;border-radius:13px;background:#291327;color:#ffc9e9}
+.route{padding:10px 12px;border:1px solid #41324b;background:#0d0c14;border-radius:13px;margin:10px 0}
+.route p{margin:7px 0}
+#shiftSection .row{margin-top:12px}
+
 </style><link rel="stylesheet" href="./neon.css?v=26">
 <link rel="stylesheet" href="./pilot-touch.css?v=29">
 <script src="./pilot-touch.js?v=29" defer></script>
@@ -39,16 +43,36 @@ nav a.active{background:#37152e;color:#ffc2e7}
 <p id="message" class="muted">Получаем заявки…</p>
 <p id="alert" hidden role="status" aria-live="polite"></p>
 </section>
+<section id="shiftSection" hidden><h2>Моя смена</h2>
+<p id="shiftState" class="muted">Проверяем доступность…</p>
+<button type="button" class="action" id="shiftToggle" disabled>Начать смену</button>
+<p class="muted">Диспетчер назначает новые заявки только курьерам на смене. Нельзя завершить смену, пока есть активные доставки.</p>
+</section>
 <section><div class="row"><h2>Назначено мне</h2><span id="count" class="pill">0</span></div><div id="jobs" aria-live="polite"></div></section>
 </main>
-<nav aria-label="Рабочие разделы"><a href="partner.html?v=30">🏪 Ресторан</a><a href="pilot-dispatch.html?v=30">📋 Диспетчер</a><a href="pilot-courier.html?v=30" class="active">🛵 Курьер</a></nav>
+<nav aria-label="Рабочие разделы"><a href="partner.html?v=32">🏪 Ресторан</a><a href="pilot-dispatch.html?v=32">📋 Диспетчер</a><a href="pilot-courier.html?v=32" class="active">🛵 Курьер</a></nav>
 <script type="module">
 import {createClient} from 'https://esm.sh/@supabase/supabase-js@2';
 const db=createClient('https://bgtegxdekqsajttkhhrj.supabase.co','sb_publishable_aSOKkJ_F47sGj9e8v8uJ3g_24rlQ8XG');
 const $=id=>document.getElementById(id);
 const node=(tag,text='',cls='')=>{const e=document.createElement(tag);e.textContent=String(text??'');if(cls)e.className=cls;return e};
 const states={new:'Новая',assigned:'Ожидает принятия',accepted:'Принята',picked_up:'Забрана',delivered:'Завершена',cancelled:'Отменена'};
-let busy=false,activeUser=null,seen=null;
+let busy=false,activeUser=null,seen=null,shiftActive=false,shiftBusy=false;
+async function toggleShift(){
+ if(shiftBusy)return;
+ shiftBusy=true;
+ const b=$('shiftToggle'),msg=$('shiftState');
+ TEPLOTouch.busy(b,true,shiftActive?'Завершаем смену':'Открываем смену');
+ try{
+  const {error}=await db.rpc('teplo_toggle_courier_shift',{p_start:!shiftActive});
+  if(error)throw error;
+  TEPLOTouch.notify(shiftActive?'Смена завершена':'Смена открыта','success');
+  await load();
+ }catch(e){TEPLOTouch.notify('Не удалось сменить статус: '+(e?.message||String(e)),'error');msg.textContent='Ошибка: '+(e?.message||String(e))}
+ finally{shiftBusy=false;TEPLOTouch.busy(b,false)}
+}
+$('shiftToggle').onclick=toggleShift;
+
 async function step(job,action,button,feedback){
  TEPLOTouch.busy(button,true,'Сохраняем');feedback.textContent='Сохраняем…';feedback.className='muted';TEPLOTouch.notify('Сохраняем действие курьера…','progress');
  try{
@@ -61,8 +85,13 @@ function makeCard(j){
  const c=node('article');
  c.append(node('h3','🛵 Заявка №'+j.id.slice(0,8)),node('p',j.shop_name_snapshot+' · '+new Date(j.created_at).toLocaleString('ru-RU',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}),'muted'));
  c.append(node('span',states[j.status]||j.status,'pill'));
- c.append(node('p','📦 '+j.order_summary),node('p','⏱ Готовность: '+(j.ready_in_minutes===0?'сразу':j.ready_in_minutes+' мин')),
-          node('p','📍 '+j.delivery_address));
+ 
+ c.append(node('p','📦 '+j.order_summary),node('p','⏱ Готовность: '+(j.ready_in_minutes===0?'сразу':j.ready_in_minutes+' мин')));
+ const route=node('div','','route');
+ route.append(node('p','🏪 ЗАБРАТЬ: '+(j.shop_address_snapshot||'Адрес забора не указан')),
+              node('p','📍 ДОСТАВИТЬ: '+j.delivery_address));
+ c.append(route);
+
  c.append(node('p','👤 Получатель: '+j.customer_name),node('p','☎ Телефон: '+j.customer_phone));
  const feedback=node('p','','muted');feedback.setAttribute('role','status');
  const next={assigned:['accepted','✓ Принять заявку'],accepted:['picked_up','📦 Забрал заказ'],picked_up:['delivered','✓ Завершить доставку']};
@@ -84,11 +113,21 @@ async function load(){
  try{
   const {data,error:ae}=await db.auth.getUser();if(ae)throw ae;
   activeUser=data?.user||null;
-  if(!activeUser){$('role').textContent='Нужен вход';$('message').textContent='Войди в аккаунт через TEPLO, чтобы получать назначения.';$('jobs').replaceChildren();return}
+  if(!activeUser){$('shiftSection').hidden=true;$('role').textContent='Нужен вход';$('message').textContent='Войди в аккаунт через TEPLO, чтобы получать назначения.';$('jobs').replaceChildren();return}
   const {data:p,error:pe}=await db.from('profiles').select('role').eq('id',activeUser.id).single();if(pe)throw pe;
-  $('role').textContent=p.role==='courier'?'Курьер':p.role==='admin'?'Администратор · тест':'Не курьер';
+  
+ $('role').textContent=p.role==='courier'?'Курьер':p.role==='admin'?'Администратор · тест':'Не курьер';
+ $('shiftSection').hidden=p.role!=='courier';
+ if(p.role==='courier'){
+  const {data:shifts,error:se}=await db.from('courier_shifts').select('id').eq('courier_id',activeUser.id).is('ended_at',null).limit(1);
+  if(se)throw se;
+  shiftActive=Boolean(shifts?.length);
+  $('shiftState').textContent=shiftActive?'🟢 На смене — доступен для назначения':'⚪ Не на смене — новые заявки не назначаются';
+  $('shiftToggle').textContent=shiftActive?'Завершить смену':'Начать смену';
+  $('shiftToggle').disabled=false;
+ }
   const {data:jobs,error:je}=await db.from('teplo_pilot_jobs')
-     .select('id,shop_name_snapshot,order_summary,ready_in_minutes,customer_name,customer_phone,delivery_address,status,created_at')
+     .select('id,shop_name_snapshot,shop_address_snapshot,order_summary,ready_in_minutes,customer_name,customer_phone,delivery_address,status,created_at')
      .eq('courier_id',activeUser.id).order('created_at',{ascending:false}).limit(60);
   if(je)throw je;
   window.dispatchEvent(new Event('teplo:sync-ok'));
@@ -101,7 +140,7 @@ async function load(){
   $('count').textContent=String(active.length);
   $('message').textContent='● На связи · '+new Date().toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'});
   const root=$('jobs');root.replaceChildren();
-  if(!rows.length){root.append(node('p','Пока нет назначений из новой системы. Диспетчер должен назначить тестовую заявку.','muted'));return}
+  if(!rows.length){root.append(node('p',p.role==='courier'?(shiftActive?'Пока назначений нет. Ты на смене, диспетчер видит твою доступность.':'Сначала открой смену. Затем диспетчер сможет назначить тебе заявку.'):'Пока нет назначений. Диспетчер должен выбрать тебя для теста.','muted'));return}
   active.forEach(j=>root.append(makeCard(j)));
   const closed=rows.filter(j=>['delivered','cancelled'].includes(j.status));
   if(closed.length){root.append(node('h3','История · '+closed.length));closed.forEach(j=>root.append(makeCard(j)))}
