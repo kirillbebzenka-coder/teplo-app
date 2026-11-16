@@ -31,7 +31,8 @@ nav a{color:#cbbfcf;text-align:center;text-decoration:none;padding:12px 5px;bord
 nav a.active{background:#39142e;color:#ffc3e8}
 </style><link rel="stylesheet" href="./neon.css?v=26">
 <link rel="stylesheet" href="./pilot-touch.css?v=29">
-<script src="./pilot-touch.js?v=29" defer></script></head>
+<script src="./pilot-touch.js?v=29" defer></script>
+<script src="./pilot-connectivity.js?v=31" defer></script></head>
 <body><main>
 <header><div class="brand">TEPLO</div><a href="dispatcher.html?v=28">Старые заказы ↗</a></header>
 <h1>Курьерские заявки</h1>
@@ -110,6 +111,8 @@ async function load(){
       .order('created_at',{ascending:false}).limit(80)
   ]);
   if(pr)throw pr;if(je)throw je;
+  window.dispatchEvent(new Event('teplo:sync-ok'));
+
   couriers=(profiles||[]).map(c=>({id:c.id,name:c.full_name?.trim()||'Курьер '+c.id.slice(0,8)}));
   if(p.role==='admin')couriers.unshift({id:currentUser.id,name:'Я сам (только тест)'});
   const rows=jobs||[],ids=new Set(rows.map(x=>x.id));
@@ -121,7 +124,7 @@ async function load(){
   const root=$('list');root.replaceChildren();
   if(!rows.length){root.append(txt('p','Заявок новой курьерской системы пока нет. Старые демо-заказы находятся в отдельном разделе.','muted'));return}
   for(const j of rows)root.append(card(j));
- }catch(e){$('message').textContent='Ошибка: '+(e?.message||String(e))}
+ }catch(e){window.dispatchEvent(new Event('teplo:sync-error'));$('message').textContent='⚠️ Ошибка обновления: '+(e?.message||String(e))+'. Уже показанные заявки сохранены на экране.'}
  finally{busy=false;$('refresh').disabled=false}
 }
 $('refresh').onclick=load;
