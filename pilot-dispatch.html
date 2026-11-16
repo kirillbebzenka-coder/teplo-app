@@ -49,11 +49,11 @@ nav a.active{background:#39142e;color:#ffc3e8}
 <p id="message" class="muted">Получаем задания…</p></section>
 <div id="stats" class="stats"></div>
 <section><div class="row"><h2>Доступность курьеров</h2><span class="muted">Смены и занятость</span></div>
-<p class="muted">🟢 Свободен — можно назначить. 📦 Занят — выполняет заявку. ⚪ Не на смене — недоступен.</p>
+<p class="muted">🟢 Свободен — можно назначить. 📦 Занят — выполняет заявку. ⚪ Не на смене — недоступен. Аккаунты без роли курьера отображаются в <a href="team.html?v=34" style="color:#ffaee9">панели команды</a>.</p>
 <div id="courierRoster" class="courier-grid"><p class="muted">Загружаем команду…</p></div></section>
-<section><div class="row"><h2>Заявки</h2><span class="muted">Проверка каждые 8 секунд</span></div>
+<section><div class="row"><h2>Заявки</h2><span class="muted">Назначать можно только новые</span></div>
 <div id="list"></div></section>
-</main><nav aria-label="Рабочие разделы"><a href="partner.html?v=32">🏪 Ресторан</a><a href="pilot-dispatch.html?v=32" class="active">📋 Диспетчер</a><a href="pilot-courier.html?v=32">🛵 Курьер</a></nav>
+</main><nav aria-label="Рабочие разделы"><a href="partner.html?v=34">🏪 Ресторан</a><a href="pilot-dispatch.html?v=34" class="active">📋 Диспетчер</a><a href="pilot-courier.html?v=34">🛵 Курьер</a></nav>
 <script type="module">
 import {createClient} from 'https://esm.sh/@supabase/supabase-js@2';
 const db=createClient('https://bgtegxdekqsajttkhhrj.supabase.co','sb_publishable_aSOKkJ_F47sGj9e8v8uJ3g_24rlQ8XG');
@@ -106,7 +106,8 @@ function card(job){
   const person=couriers.find(c=>c.id===job.courier_id);
   e.append(txt('p','Курьер: '+(person?.name||'назначен'),'muted'));
  }
- if(job.status==='delivered')e.append(txt('p','✓ Симуляция завершена','muted'));
+ if(job.status==='delivered')e.append(txt('p','✓ Симуляция завершена. Повторно назначить этот заказ нельзя.','muted'));
+ if(job.status==='cancelled')e.append(txt('p','Заказ отменён. Для назначения нужна новая заявка.','muted'));
  e.append(feedback);return e;
 }
 async function load(){
@@ -118,29 +119,38 @@ async function load(){
   const {data:p,error:pe}=await db.from('profiles').select('role').eq('id',currentUser.id).single();if(pe)throw pe;
   if(!['admin','dispatcher'].includes(p.role)){$('courierRoster').replaceChildren();$('role').textContent='Нет доступа';$('message').textContent='Нужна роль диспетчера или администратора.';$('list').replaceChildren();$('stats').replaceChildren();return}
   $('role').textContent=p.role==='admin'?'Администратор':'Диспетчер';
-  const [{data:profiles,error:pr},{data:jobs,error:je},{data:shifts,error:sh}]=await Promise.all([
-    db.from('profiles').select('id,full_name,role').eq('role','courier').limit(50),
+  const [{data:roster,error:re},{data:jobs,error:je}]=await Promise.all([
+    db.rpc('teplo_dispatch_courier_roster'),
     db.from('teplo_pilot_jobs').select('id,shop_name_snapshot,shop_address_snapshot,order_summary,ready_in_minutes,customer_name,customer_phone,delivery_address,status,courier_id,created_at')
-      .order('created_at',{ascending:false}).limit(80),
-    db.from('courier_shifts').select('courier_id').is('ended_at',null).limit(100)
+      .order('created_at',{ascending:false}).limit(80)
   ]);
-  if(pr)throw pr;if(je)throw je;if(sh)throw sh;
+  if(re)throw re;if(je)throw je;
   window.dispatchEvent(new Event('teplo:sync-ok'));
 
   
-  couriers=(profiles||[]).map(c=>({id:c.id,name:c.full_name?.trim()||'Курьер '+c.id.slice(0,8),role:c.role}));
-  if(p.role==='admin')couriers.unshift({id:currentUser.id,name:'Я сам (только тест)',role:'admin'});
   const rows=jobs||[],ids=new Set(rows.map(x=>x.id));
-  const onShift=new Set((shifts||[]).map(s=>s.courier_id));
   const busyIds=new Set(rows.filter(j=>['assigned','accepted','picked_up'].includes(j.status) && j.courier_id).map(j=>j.courier_id));
-  availableCouriers=couriers.filter(c=>!busyIds.has(c.id)&&(c.role==='admin'||onShift.has(c.id)));
-  const roster=$('courierRoster');roster.replaceChildren();
-  if(!couriers.length)roster.append(txt('p','Нет курьеров. Добавь сотрудника с ролью «Курьер» через управление командой.','muted'));
-  for(const c of couriers){
+  couriers=(roster||[]).map(x=>({
+    id:x.id,
+    name:x.full_name?.trim()||x.email||'Курьер',
+    email:x.email,
+    role:'courier',
+    onShift:x.on_shift===true,
+    activeJobs:Number(x.active_jobs||0)
+  }));
+  if(p.role==='admin')couriers.push({id:currentUser.id,name:'Я сам — тестовый курьер',email:'',role:'admin',onShift:true,activeJobs:0});
+  availableCouriers=couriers.filter(x=>!(x.activeJobs>0||busyIds.has(x.id))&&x.onShift);
+  const rootRoster=$('courierRoster');rootRoster.replaceChildren();
+  for(const x of couriers){
     const row=txt('div','','courier-row');
-    let status=busyIds.has(c.id)?'📦 Занят':c.role==='admin'?'🧪 Доступен для теста':onShift.has(c.id)?'🟢 На смене · свободен':'⚪ Не на смене';
-    row.append(txt('span',c.name,'name'),txt('span',status,'state'));roster.append(row);
+    const label=txt('div','','courier-label');
+    label.append(txt('div',x.name,'name'));
+    if(x.email && x.name!==x.email)label.append(txt('div',x.email,'muted'));
+    const unavailable=x.activeJobs>0||busyIds.has(x.id);
+    const status=unavailable?'📦 Занят · '+Math.max(x.activeJobs,1)+' в работе':x.role==='admin'?'🧪 Доступен для теста':x.onShift?'🟢 На смене · свободен':'⚪ Не на смене';
+    row.append(label,txt('span',status,'state'));rootRoster.append(row);
   }
+  if(!couriers.length)rootRoster.append(txt('p','Подтверждённых курьеров нет. Назначь роль в панели команды.','muted'));
 
   const fresh=priorIds?rows.filter(j=>!priorIds.has(j.id)):[];
   if(fresh.length)$('message').textContent='🔔 '+fresh.length+' новых тестовых заявок!';
@@ -154,7 +164,7 @@ async function load(){
     stat('Завершено (тест)',rows.filter(j=>j.status==='delivered').length)
   );
   const root=$('list');root.replaceChildren();
-  if(!rows.length){root.append(txt('p','Заявок новой курьерской системы пока нет. Старые демо-заказы находятся в отдельном разделе.','muted'));return}
+  if(!rows.length){const p=txt('p','Новых курьерских заявок пока нет.','muted');const a=txt('a','Создать тестовую заявку →');a.href='partner.html?v=34';a.style.color='#ffc1e7';root.append(p,a);return}
   for(const j of rows)root.append(card(j));
  }catch(e){window.dispatchEvent(new Event('teplo:sync-error'));$('message').textContent='⚠️ Ошибка обновления: '+(e?.message||String(e))+'. Уже показанные заявки сохранены на экране.'}
  finally{busy=false;$('refresh').disabled=false}
