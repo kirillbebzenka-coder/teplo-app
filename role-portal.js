@@ -8,7 +8,8 @@ const permissions={
  'pilot-dispatch.html':['admin','dispatcher'],
  'shop.html':['admin','venue'],
  'partner.html':['admin','venue'],
- 'courier.html':['admin','courier']
+ 'courier.html':['admin','courier'],
+ 'order.html':['admin','customer']
 };
 const destinations={
  admin:'team.html?v=35',
@@ -18,6 +19,9 @@ const destinations={
  customer:'courier-start.html?v=35'
 };
 function applyRoleNavigation(role){
+ const teamLinks=document.querySelector('footer details');
+ if(teamLinks&&role!=='admin')teamLinks.hidden=true;
+ if(role==='customer')return;
  const legacy=document.querySelector('nav.teplo-tabs,nav.nav-bottom,nav.buyer-nav,nav[aria-label="Рабочие разделы"],nav[aria-label="Разделы TEPLO"]');
  if(!legacy)return;
  legacy.replaceChildren();
