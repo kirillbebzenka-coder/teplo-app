@@ -40,7 +40,7 @@ nav a.active{background:#37152e;color:#ffc2e7}
 </section>
 <section><div class="row"><h2>Назначено мне</h2><span id="count" class="pill">0</span></div><div id="jobs" aria-live="polite"></div></section>
 </main>
-<nav aria-label="Рабочие разделы"><a href="partner.html?v=28">🏪 Ресторан</a><a href="pilot-dispatch.html?v=28">📋 Диспетчер</a><a href="pilot-courier.html?v=28" class="active">🛵 Курьер</a></nav>
+<nav aria-label="Рабочие разделы"><a href="partner.html?v=30">🏪 Ресторан</a><a href="pilot-dispatch.html?v=30">📋 Диспетчер</a><a href="pilot-courier.html?v=30" class="active">🛵 Курьер</a></nav>
 <script type="module">
 import {createClient} from 'https://esm.sh/@supabase/supabase-js@2';
 const db=createClient('https://bgtegxdekqsajttkhhrj.supabase.co','sb_publishable_aSOKkJ_F47sGj9e8v8uJ3g_24rlQ8XG');
@@ -62,7 +62,7 @@ function makeCard(j){
  c.append(node('span',states[j.status]||j.status,'pill'));
  c.append(node('p','📦 '+j.order_summary),node('p','⏱ Готовность: '+(j.ready_in_minutes===0?'сразу':j.ready_in_minutes+' мин')),
           node('p','📍 '+j.delivery_address));
- const contact=document.createElement('details'),heading=node('summary','Контакты (тест)');contact.append(heading,node('p',j.customer_name+' · '+j.customer_phone));c.append(contact);
+ c.append(node('p','👤 Получатель: '+j.customer_name),node('p','☎ Телефон: '+j.customer_phone));
  const feedback=node('p','','muted');feedback.setAttribute('role','status');
  const next={assigned:['accepted','✓ Принять заявку'],accepted:['picked_up','📦 Забрал заказ'],picked_up:['delivered','✓ Завершить доставку']};
  const action=next[j.status];
@@ -98,10 +98,10 @@ async function load(){
   $('count').textContent=String(active.length);
   $('message').textContent='● На связи · '+new Date().toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'});
   const root=$('jobs');root.replaceChildren();
-  if(!rows.length){root.append(node('p','Пока нет назначений. Диспетчер должен передать тебе заявку.','muted'));return}
+  if(!rows.length){root.append(node('p','Пока нет назначений из новой системы. Диспетчер должен назначить тестовую заявку.','muted'));return}
   active.forEach(j=>root.append(makeCard(j)));
   const closed=rows.filter(j=>['delivered','cancelled'].includes(j.status));
-  if(closed.length){const detail=document.createElement('details');detail.append(node('summary','История ('+closed.length+')'));closed.forEach(j=>detail.append(makeCard(j)));root.append(detail)}
+  if(closed.length){root.append(node('h3','История · '+closed.length));closed.forEach(j=>root.append(makeCard(j)))}
  }catch(e){$('message').textContent='Ошибка: '+(e?.message||String(e))}
  finally{busy=false;$('refresh').disabled=false}
 }
