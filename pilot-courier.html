@@ -25,7 +25,9 @@ nav{position:fixed;bottom:0;left:0;right:0;display:grid;grid-template-columns:re
 nav a{text-align:center;text-decoration:none;font-size:12px;font-weight:750;color:#b5afbe;padding:12px 5px;border-radius:12px}
 nav a.active{background:#37152e;color:#ffc2e7}
 #alert{padding:12px;border:1px solid #a1488f;border-radius:13px;background:#291327;color:#ffc9e9}
-</style><link rel="stylesheet" href="./neon.css?v=26"></head>
+</style><link rel="stylesheet" href="./neon.css?v=26">
+<link rel="stylesheet" href="./pilot-touch.css?v=29">
+<script src="./pilot-touch.js?v=29" defer></script></head>
 <body><main>
 <header><div class="brand">TEPLO</div><a href="courier.html?v=28">Все назначения ↗</a></header>
 <h1>Мои заявки</h1>
@@ -47,12 +49,12 @@ const node=(tag,text='',cls='')=>{const e=document.createElement(tag);e.textCont
 const states={new:'Новая',assigned:'Ожидает принятия',accepted:'Принята',picked_up:'Забрана',delivered:'Завершена',cancelled:'Отменена'};
 let busy=false,activeUser=null,seen=null;
 async function step(job,action,button,feedback){
- button.disabled=true;feedback.textContent='Сохраняем…';feedback.className='muted';
+ TEPLOTouch.busy(button,true,'Сохраняем');feedback.textContent='Сохраняем…';feedback.className='muted';TEPLOTouch.notify('Сохраняем действие курьера…','progress');
  try{
   const {error}=await db.rpc('teplo_pilot_courier_step',{p_job_id:job.id,p_action:action});
-  if(error)throw error;await load();
- }catch(e){feedback.textContent='Ошибка: '+(e?.message||String(e));feedback.className='warning'}
- finally{button.disabled=false}
+  if(error)throw error;TEPLOTouch.notify('✓ Статус сохранён','success');TEPLOTouch.done(button);await load();
+ }catch(e){feedback.textContent='Ошибка: '+(e?.message||String(e));feedback.className='warning';TEPLOTouch.notify('Не удалось сохранить: '+(e?.message||String(e)),'error')}
+ finally{TEPLOTouch.busy(button,false)}
 }
 function makeCard(j){
  const c=node('article');
