@@ -1,156 +1,296 @@
 <!doctype html>
-<html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#050507"><meta name="color-scheme" content="dark">
-<title>TEPLO · Курьер пилота</title>
+<html lang="ru">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#08070f"><meta name="color-scheme" content="dark">
+<title>TEPLO Rider · Моя работа</title>
 <link rel="stylesheet" href="./theme.css?v=25">
 <style>
-*{box-sizing:border-box}[hidden]{display:none!important}
-body{background:#050507;color:#f5f7fb;margin:0;min-width:300px}
-main{max-width:720px;margin:auto;padding:16px 14px 126px}
-header{display:flex;justify-content:space-between;align-items:center;gap:12px}
-.brand{font-size:30px;color:#ff4fca;font-weight:900;letter-spacing:.09em}
-h1{font-size:33px;margin:18px 0 6px}h2{font-size:21px}
-p{line-height:1.48}.muted{color:#aab1c2;font-size:13px}
-section,article{border:1px solid #343040;background:#111118;border-radius:19px;padding:16px;margin:14px 0}
-article{background:#16141e}
-article h3{font-size:19px;margin:0 0 6px}
-article p{font-size:14px}
-.pill{display:inline-block;color:#ffb5e4;background:#251827;border:1px solid #724269;border-radius:24px;padding:5px 9px;font-size:12px}
-.row{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
-button{font:inherit;font-weight:780;padding:13px;border:0;border-radius:13px;background:linear-gradient(110deg,#ff4fca,#985fff);color:#100817;cursor:pointer}
-button:disabled{opacity:.46}.secondary{background:#211a28;color:#ffa1e1;border:1px solid #694565}
-.action{width:100%;min-height:53px;margin-top:12px}
-.warning{font-size:12px;color:#f2b6de}
-#message{white-space:pre-wrap}
-nav{position:fixed;bottom:0;left:0;right:0;display:grid;grid-template-columns:repeat(3,1fr);gap:4px;padding:9px 12px calc(10px + env(safe-area-inset-bottom));background:#09080e;border-top:1px solid #33213c}
-nav a{text-align:center;text-decoration:none;font-size:12px;font-weight:750;color:#b5afbe;padding:12px 5px;border-radius:12px}
-nav a.active{background:#37152e;color:#ffc2e7}
-#alert{padding:12px;border:1px solid #a1488f;border-radius:13px;background:#291327;color:#ffc9e9}
-.route{padding:10px 12px;border:1px solid #41324b;background:#0d0c14;border-radius:13px;margin:10px 0}
-.route p{margin:7px 0}
-#shiftSection .row{margin-top:12px}
-
-</style><link rel="stylesheet" href="./neon.css?v=26">
+:root{color-scheme:dark;--bg:#08080e;--panel:#15121c;--panel2:#201827;--border:#43334c;--violet:#a874ff;--pink:#f86dcc;--muted:#b7acbf}
+*{box-sizing:border-box}body{margin:0;min-width:300px;background:var(--bg);color:#f8f1fa;font:15px/1.5 system-ui,-apple-system,sans-serif}
+[hidden]{display:none!important}main{max-width:680px;margin:auto;padding:19px 15px calc(122px + env(safe-area-inset-bottom))}
+header{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:17px}
+.brand{font-size:29px;color:var(--pink);font-weight:950;letter-spacing:.085em;line-height:1.1}
+.brand small{display:block;color:#b9a7be;font-size:10px;letter-spacing:.12em}
+.user{font-size:12px;text-align:right;max-width:48%;overflow-wrap:anywhere;color:#c9bfd0}
+h1{font-size:clamp(30px,7vw,39px);margin:13px 0 5px;letter-spacing:-.055em;line-height:1.1}
+h2{font-size:21px;margin:0 0 12px}h3{font-size:17px;margin:0 0 6px}
+p{margin:8px 0;line-height:1.5}.muted{color:var(--muted);font-size:13px}.micro{font-size:12px;color:#b8b2be}
+.card{background:var(--panel);border:1px solid var(--border);border-radius:19px;padding:17px;margin:14px 0;box-shadow:0 5px 22px #0003}
+.hero{background:radial-gradient(ellipse at 15% 0%,#402046,#1a1120 66%);border-color:#814677}
+.pill{display:inline-block;padding:6px 11px;border:1px solid #8c517f;border-radius:30px;background:#311c35;color:#ffc4e6;font-size:12px;font-weight:780}
+.row{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+.status-good{color:#a6f1cf}.status-off{color:#ffccdc}.status-work{color:#d9b9ff}
+.big{font-size:26px;font-weight:950;letter-spacing:-.04em}
+button{font:inherit;font-weight:840;border-radius:14px;border:0;padding:12px 15px;min-height:46px;cursor:pointer}
+button:disabled{opacity:.5;cursor:not-allowed}
+.primary{display:block;width:100%;min-height:56px;color:#110b15;background:linear-gradient(112deg,#fa6bce,#9e6dff);font-size:16px}
+.secondary{color:#f2c8eb;border:1px solid #744e76;background:#271d31}
+.ghost{color:#dbcae5;border:1px solid #50415c;background:#18151f}
+.full{width:100%;margin-top:12px}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:12px 0}
+.metric{padding:13px;border:1px solid #49384c;border-radius:14px;background:#1d1624}
+.metric strong{display:block;font-size:23px;letter-spacing:-.03em;color:#f8c7f0}
+.mini-head{font-size:11px;color:#bcaec8;letter-spacing:.1em;font-weight:850;text-transform:uppercase}
+.progress{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;margin:17px 0}
+.progress span{text-align:center;border-radius:9px;background:#241a29;padding:7px 5px;color:#bcaec8;font-size:11px;font-weight:750;border:1px solid #49354d}
+.progress span.done{background:#291b3a;border-color:#985fff;color:#f0d9ff}
+.stage{border-left:2px solid #8d58cc;margin:15px 0;padding:2px 0 2px 14px}
+.stage strong{font-size:12px;color:#f5b8e8;letter-spacing:.08em}
+.stage p{font-size:16px;font-weight:800;overflow-wrap:anywhere}
+.stage button{padding:9px 11px;font-size:12px;min-height:39px}
+.line{height:1px;background:#403449;margin:14px 0}
+#alert{border:1px solid #9869db;border-radius:14px;padding:13px;background:#23172f;color:#ffcff2}
+#screenState{white-space:pre-wrap}a{color:#fcb6e7}
+label{display:block;font-weight:750;margin:13px 0 6px}
+input{display:block;width:100%;background:#100e16;color:#fff;padding:13px;border:1px solid #5e4463;border-radius:12px;font:inherit;min-height:49px}
+input:focus{outline:2px solid #a874ff}
+.info-list{display:grid;gap:8px}
+.info-list p{padding:10px;border:1px solid #40344a;border-radius:12px;background:#17131d;margin:0;overflow-wrap:anywhere}
+.role-message{border:1px solid #865079;background:#281927;border-radius:17px;padding:17px}
+#tabbar{position:fixed;bottom:0;left:0;right:0;z-index:40;background:#0d0a14f5;border-top:1px solid #47354d;padding:9px 12px calc(9px + env(safe-area-inset-bottom));display:flex;justify-content:center;gap:8px}
+#tabbar button{flex:1;max-width:220px;display:flex;flex-direction:column;align-items:center;gap:3px;border:1px solid transparent;background:transparent;color:#b3a5ba;padding:9px 4px;font-size:12px;line-height:1.3}
+#tabbar button span{font-size:21px}
+#tabbar button[aria-selected="true"]{color:#ffe0f5;background:#3b1a45;border-color:#8f4789;box-shadow:inset 0 1px 0 #ad81e0}
+#loading{min-height:100px;display:grid;place-items:center}
+@media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
+</style>
+<link rel="stylesheet" href="./neon.css?v=26">
 <link rel="stylesheet" href="./pilot-touch.css?v=29">
 <script src="./pilot-touch.js?v=29" defer></script>
-<script src="./pilot-connectivity.js?v=31" defer></script></head>
+<script src="./pilot-connectivity.js?v=31" defer></script>
+</head>
 <body><main>
-<header><div class="brand">TEPLO</div><a href="courier-start.html?v=33">Личный кабинет ↗</a></header>
-<h1>Мои заявки</h1>
-<p class="muted">Принять заказ → забрать → завершить. Диспетчер видит каждый этап.</p>
-<p class="muted">Новый курьер? <a href="courier-start.html?v=33" style="color:#ffc0e6">Регистрация и вход</a>. После подтверждения email администратор выдаёт роль.</p>
-<section>
-<div class="row"><span class="pill" id="role">Проверяем вход…</span><button type="button" id="refresh" class="secondary">↻ Обновить</button></div>
-<p class="warning">🧪 Только симуляция. Нельзя выезжать, брать деньги или использовать настоящие данные клиента.</p>
-<p id="message" class="muted">Получаем заявки…</p>
+<header><div class="brand">TEPLO<small>RIDER · РАБОЧИЙ КАБИНЕТ</small></div><div id="userLabel" class="user">Проверяем аккаунт…</div></header>
+<div id="loading" class="card"><p class="muted">Проверяем доступ курьера…</p></div>
+<section id="lock" class="role-message" hidden>
+<h2>Доступ к рабочему кабинету</h2><p id="lockText">Проверяем права…</p>
+<a class="primary" style="text-align:center;text-decoration:none;padding:14px;display:block;border-radius:13px" href="courier-start.html?v=35">Войти как курьер</a>
+</section>
+<div id="app" hidden>
+<section id="tab-jobs">
+<div class="row"><div><div class="mini-head">Твой рабочий день</div><h1>На маршруте</h1></div><span class="pill">🧪 Тест</span></div>
+<section class="card hero">
+<div class="row"><div><div class="mini-head">Готовность к заказам</div><div id="shiftLabel" class="big status-off">Не на смене</div></div><span id="shiftEmoji" style="font-size:31px">⚪</span></div>
+<p id="shiftHint" class="muted">Нажми, когда будешь готов получать тестовые назначения.</p>
+<button type="button" class="primary full" id="shiftButton">Начать смену</button>
+</section>
+<div class="grid">
+<div class="metric"><span class="mini-head">Задания сейчас</span><strong id="activeCount">0</strong><span class="micro">Лично тебе</span></div>
+<div class="metric"><span class="mini-head">Завершено сегодня</span><strong id="todayCount">0</strong><span class="micro">Тестовых доставок</span></div>
+</div>
+<div class="row" style="margin:20px 0 7px"><h2 style="margin:0">Активный заказ</h2><button id="refresh" type="button" class="ghost">↻ Обновить</button></div>
+<p id="screenState" class="muted" role="status" aria-live="polite"></p>
 <p id="alert" hidden role="status" aria-live="polite"></p>
+<div id="activeOrders"></div>
 </section>
-<section id="shiftSection" hidden><h2>Моя смена</h2>
-<p id="shiftState" class="muted">Проверяем доступность…</p>
-<button type="button" class="action" id="shiftToggle" disabled>Начать смену</button>
-<p class="muted">Диспетчер назначает новые заявки только курьерам на смене. Нельзя завершить смену, пока есть активные доставки.</p>
+<section id="tab-history" hidden>
+<h1>История</h1><p class="muted">Только твои тестовые доставки. Чужие заявки недоступны.</p>
+<div class="grid">
+<div class="metric"><span class="mini-head">Всего завершено</span><strong id="allCount">0</strong></div>
+<div class="metric"><span class="mini-head">Смен сегодня</span><strong id="shiftCount">0</strong></div>
+</div>
+<div id="historyOrders" class="info-list"></div>
 </section>
-<section><div class="row"><h2>Назначено мне</h2><span id="count" class="pill">0</span></div><div id="jobs" aria-live="polite"></div></section>
+<section id="tab-profile" hidden>
+<h1>Мой профиль</h1>
+<section class="card">
+<div class="row"><div><div class="mini-head">Роль</div><h2 style="margin:4px 0">Курьер TEPLO</h2></div><span class="pill">Только свои задания</span></div>
+<p id="profileEmail" class="muted"></p>
+<label for="profileName">Имя, которое видит диспетчер</label>
+<input id="profileName" maxlength="80" autocomplete="name" placeholder="Например: Марина">
+<button id="saveProfile" type="button" class="secondary full">Сохранить имя</button>
+<p id="profileMsg" class="muted" role="status"></p>
+<div class="line"></div>
+<p class="muted">Время работы и количество доставок — тестовая статистика. Доход не рассчитывается, поскольку тарифы не подключены.</p>
+<button id="logout" type="button" class="ghost full">Выйти из аккаунта</button>
+</section>
+</section>
+</div>
 </main>
-<nav aria-label="Рабочие разделы"><a href="partner.html?v=33">🏪 Ресторан</a><a href="pilot-dispatch.html?v=33">📋 Диспетчер</a><a href="pilot-courier.html?v=33" class="active">🛵 Курьер</a></nav>
+<nav id="tabbar" aria-label="Навигация курьера" hidden>
+<button type="button" aria-selected="true" data-tab="jobs"><span>🛵</span>Заказы</button>
+<button type="button" aria-selected="false" data-tab="history"><span>🧾</span>История</button>
+<button type="button" aria-selected="false" data-tab="profile"><span>👤</span>Профиль</button>
+</nav>
 <script type="module">
 import {createClient} from 'https://esm.sh/@supabase/supabase-js@2';
 const db=createClient('https://bgtegxdekqsajttkhhrj.supabase.co','sb_publishable_aSOKkJ_F47sGj9e8v8uJ3g_24rlQ8XG');
 const $=id=>document.getElementById(id);
-const node=(tag,text='',cls='')=>{const e=document.createElement(tag);e.textContent=String(text??'');if(cls)e.className=cls;return e};
-const states={new:'Новая',assigned:'Ожидает принятия',accepted:'Принята',picked_up:'Забрана',delivered:'Завершена',cancelled:'Отменена'};
-let busy=false,activeUser=null,seen=null,shiftActive=false,shiftBusy=false;
-async function toggleShift(){
- if(shiftBusy)return;
- shiftBusy=true;
- const b=$('shiftToggle'),msg=$('shiftState');
- TEPLOTouch.busy(b,true,shiftActive?'Завершаем смену':'Открываем смену');
- try{
-  const {error}=await db.rpc('teplo_toggle_courier_shift',{p_start:!shiftActive});
-  if(error)throw error;
-  TEPLOTouch.notify(shiftActive?'Смена завершена':'Смена открыта','success');
-  await load();
- }catch(e){TEPLOTouch.notify('Не удалось сменить статус: '+(e?.message||String(e)),'error');msg.textContent='Ошибка: '+(e?.message||String(e))}
- finally{shiftBusy=false;TEPLOTouch.busy(b,false);b.textContent=shiftActive?'Завершить смену':'Начать смену';b.disabled=false}
+const create=(tag,text='',cls='')=>{const el=document.createElement(tag);el.textContent=String(text??'');if(cls)el.className=cls;return el};
+const statuses={assigned:'Новое назначение',accepted:'Принят',picked_up:'В пути',delivered:'Завершён',cancelled:'Отменён'};
+let uid=null,role='',activeName='',logged=null,shiftStarted=null,shift=false,busy=false,shiftBusy=false,actionBusy=false,loaded=false,prevIds=null;
+const formatDate=ts=>new Date(ts).toLocaleString('ru-RU',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
+const todayKey=ts=>new Date(ts).toLocaleDateString('en-CA');
+const today=()=>todayKey(Date.now());
+const time=ts=>new Date(ts).toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'});
+function toast(t,k='info'){window.TEPLOTouch?.notify?.(t,k)}
+function setTab(tab){
+ for(const t of ['jobs','history','profile'])$('tab-'+t).hidden=t!==tab;
+ document.querySelectorAll('#tabbar button').forEach(b=>b.setAttribute('aria-selected',String(b.dataset.tab===tab)));
 }
-$('shiftToggle').onclick=toggleShift;
-
-async function step(job,action,button,feedback){
- TEPLOTouch.busy(button,true,'Сохраняем');feedback.textContent='Сохраняем…';feedback.className='muted';TEPLOTouch.notify('Сохраняем действие курьера…','progress');
+document.querySelectorAll('#tabbar button').forEach(b=>b.onclick=()=>setTab(b.dataset.tab));
+function textLine(t){return create('p',t)}
+function addressBlock(title,addr){
+ const wrap=create('div','','stage'),label=create('strong',title),val=create('p',addr||'Не указан');
+ const b=create('button','Скопировать адрес','ghost');
+ b.type='button';b.onclick=()=>copy(addr||'',title);
+ wrap.append(label,val,b);return wrap;
+}
+async function copy(t,what){
+ try{await navigator.clipboard.writeText(t);toast(what+' скопирован','success')}
+ catch{window.prompt('Скопируй '+what.toLowerCase()+':',t)}
+}
+async function change(job,action,btn,msg){
+ if(actionBusy)return;actionBusy=true;
+ const old=btn.textContent;
+ window.TEPLOTouch?.busy?.(btn,true,'Сохраняем…');
+ msg.textContent='Отправляем действие серверу…';
  try{
   const {error}=await db.rpc('teplo_pilot_courier_step',{p_job_id:job.id,p_action:action});
-  if(error)throw error;TEPLOTouch.notify('✓ Статус сохранён','success');TEPLOTouch.done(button);await load();
- }catch(e){feedback.textContent='Ошибка: '+(e?.message||String(e));feedback.className='warning';TEPLOTouch.notify('Не удалось сохранить: '+(e?.message||String(e)),'error')}
- finally{TEPLOTouch.busy(button,false)}
+  if(error)throw error;
+  toast(action==='declined'?'Заявка возвращена диспетчеру':'✓ Этап сохранён','success');
+  await load();
+ }catch(e){msg.textContent='Ошибка: '+(e?.message||String(e));toast('Не удалось подтвердить действие','error')}
+ finally{actionBusy=false;window.TEPLOTouch?.busy?.(btn,false);btn.textContent=old}
 }
-function makeCard(j){
- const c=node('article');
- c.append(node('h3','🛵 Заявка №'+j.id.slice(0,8)),node('p',j.shop_name_snapshot+' · '+new Date(j.created_at).toLocaleString('ru-RU',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}),'muted'));
- c.append(node('span',states[j.status]||j.status,'pill'));
- 
- c.append(node('p','📦 '+j.order_summary),node('p','⏱ Готовность: '+(j.ready_in_minutes===0?'сразу':j.ready_in_minutes+' мин')));
- const route=node('div','','route');
- route.append(node('p','🏪 ЗАБРАТЬ: '+(j.shop_address_snapshot||'Адрес забора не указан')),
-              node('p','📍 ДОСТАВИТЬ: '+j.delivery_address));
- c.append(route);
-
- c.append(node('p','👤 Получатель: '+j.customer_name),node('p','☎ Телефон: '+j.customer_phone));
- const feedback=node('p','','muted');feedback.setAttribute('role','status');
- const next={assigned:['accepted','✓ Принять заявку'],accepted:['picked_up','📦 Забрал заказ'],picked_up:['delivered','✓ Завершить доставку']};
- const action=next[j.status];
- if(action){
-  const button=node('button',action[1],'action');button.onclick=()=>step(j,action[0],button,feedback);c.append(button);
+function renderActive(j){
+ const c=create('article','','card hero');
+ const top=create('div','','row'),head=create('div'),status=create('span',statuses[j.status]||j.status,'pill');
+ head.append(create('div','ЗАКАЗ №'+j.id.slice(0,8).toUpperCase(),'mini-head'),create('h2',j.shop_name_snapshot||'Заведение'));
+ top.append(head,status);c.append(top);
+ c.append(create('p','📦 '+j.order_summary,'muted'));
+ const pr=create('div','','progress');
+ [['assigned','1 · Принять'],['accepted','2 · Забрать'],['picked_up','3 · Доставить']].forEach(([s,label],i)=>{
+  const v=create('span',label);
+  if(['assigned','accepted','picked_up'].indexOf(j.status)>=i)v.className='done';pr.append(v);
+ });
+ c.append(pr);
+ if(j.status==='assigned'){
+  c.append(create('p','Новая тестовая заявка. Проверь задание и подтверди принятие.','muted'));
+ }else{
+  c.append(create('p',j.status==='accepted'?'Забери заказ по адресу заведения.':'Передай заказ получателю по адресу доставки.','muted'));
+ }
+ c.append(addressBlock('🏪 ЗАБРАТЬ ИЗ ЗАВЕДЕНИЯ',j.shop_address_snapshot),addressBlock('📍 АДРЕС ДОСТАВКИ',j.delivery_address));
+ const more=document.createElement('details');const summ=create('summary','Информация о заказе');
+ more.append(summ,textLine('Имя: '+j.customer_name),textLine('Телефон: '+j.customer_phone),textLine('Готовность: '+(j.ready_in_minutes?'через '+j.ready_in_minutes+' мин после создания':'уже готов')));
+ c.append(more);
+ if(j.assigned_at)c.append(create('p','Назначено: '+formatDate(j.assigned_at),'micro'));
+ const feedback=create('p','','muted');feedback.setAttribute('role','status');
+ const next={assigned:['accepted','✓ Принять заказ'],accepted:['picked_up','📦 Забрал из заведения'],picked_up:['delivered','✓ Доставлено получателю']}[j.status];
+ if(next){
+  const btn=create('button',next[1],'primary full');btn.onclick=()=>change(j,next[0],btn,feedback);c.append(btn);
  }
  if(j.status==='assigned'){
-  const decline=node('button','Не могу выполнить','secondary');decline.classList.add('action');
-  decline.onclick=()=>{if(confirm('Отклонить тестовое назначение? Оно вернётся диспетчеру.'))void step(j,'declined',decline,feedback)};
+  const decline=create('button','Не могу выполнить','secondary full');
+  decline.onclick=()=>{if(window.confirm('Вернуть тестовую заявку диспетчеру?'))void change(j,'declined',decline,feedback)};
   c.append(decline);
  }
- if(j.status==='delivered')c.append(node('p','✓ Тестовая доставка завершена','muted'));
- if(j.status==='cancelled')c.append(node('p','Заявка отменена','muted'));
  c.append(feedback);return c;
 }
-async function load(){
- if(busy)return;busy=true;$('refresh').disabled=true;
+function renderHistory(j){
+ const e=create('article','','card'),top=create('div','','row');
+ top.append(create('strong','№'+j.id.slice(0,8)+' · '+j.shop_name_snapshot),create('span',statuses[j.status]||j.status,'pill'));
+ e.append(top,create('p',formatDate(j.created_at),'micro'));
+ e.append(create('p','📦 '+j.order_summary,'muted'));
+ e.append(create('p','📍 '+j.delivery_address,'muted'));
+ return e;
+}
+async function shiftToggle(){
+ if(shiftBusy)return;shiftBusy=true;
+ const b=$('shiftButton');window.TEPLOTouch?.busy?.(b,true,shift?'Завершаем смену':'Начинаем смену');
  try{
-  const {data,error:ae}=await db.auth.getUser();if(ae)throw ae;
-  activeUser=data?.user||null;
-  if(!activeUser){$('shiftSection').hidden=true;$('role').textContent='Нужен вход';$('message').textContent='Войди в аккаунт через TEPLO, чтобы получать назначения.';$('jobs').replaceChildren();return}
-  const {data:p,error:pe}=await db.from('profiles').select('role').eq('id',activeUser.id).single();if(pe)throw pe;
-  
- $('role').textContent=p.role==='courier'?'Курьер':p.role==='admin'?'Администратор · тест':'Не курьер';
- $('shiftSection').hidden=p.role!=='courier';
- if(p.role==='courier'){
-  const {data:shifts,error:se}=await db.from('courier_shifts').select('id').eq('courier_id',activeUser.id).is('ended_at',null).limit(1);
-  if(se)throw se;
-  shiftActive=Boolean(shifts?.length);
-  $('shiftState').textContent=shiftActive?'🟢 На смене — доступен для назначения':'⚪ Не на смене — новые заявки не назначаются';
-  $('shiftToggle').textContent=shiftActive?'Завершить смену':'Начать смену';
-  $('shiftToggle').disabled=false;
- }
-  const {data:jobs,error:je}=await db.from('teplo_pilot_jobs')
-     .select('id,shop_name_snapshot,shop_address_snapshot,order_summary,ready_in_minutes,customer_name,customer_phone,delivery_address,status,created_at')
-     .eq('courier_id',activeUser.id).order('created_at',{ascending:false}).limit(60);
-  if(je)throw je;
-  window.dispatchEvent(new Event('teplo:sync-ok'));
-
+  const {error}=await db.rpc('teplo_toggle_courier_shift',{p_start:!shift});
+  if(error)throw error;
+  toast(shift?'Смена завершена':'Смена открыта','success');
+  await load();
+ }catch(e){toast('Ошибка смены: '+(e?.message||String(e)),'error')}
+ finally{shiftBusy=false;window.TEPLOTouch?.busy?.(b,false);b.textContent=shift?'Завершить смену':'Начать смену'}
+}
+$('shiftButton').onclick=shiftToggle;
+async function saveName(){
+ if(!uid)return;
+ const val=$('profileName').value.trim().replace(/\s+/g,' ');
+ const feedback=$('profileMsg'),btn=$('saveProfile');
+ if(val.length<2||val.length>80){feedback.textContent='Укажи имя длиной от 2 до 80 символов.';return}
+ btn.disabled=true;feedback.textContent='Сохраняем…';
+ try{
+  const {data,error}=await db.from('profiles').update({full_name:val}).eq('id',uid).select('full_name').single();
+  if(error)throw error;if(data?.full_name!==val)throw new Error('Имя не подтверждено');
+  activeName=val;feedback.textContent='✓ Имя сохранено';$('userLabel').textContent=val;toast('Имя обновлено','success');
+ }catch(e){feedback.textContent='Ошибка: '+(e?.message||String(e))}
+ finally{btn.disabled=false}
+}
+$('saveProfile').onclick=saveName;
+$('logout').onclick=async()=>{
+ if(!window.confirm('Завершить сеанс на этом устройстве? Активная смена останется открытой до её завершения.'))return;
+ const {error}=await db.auth.signOut();
+ if(error){toast('Ошибка выхода: '+error.message,'error');return}
+ window.location.replace('courier-start.html?v=35');
+};
+function lockPage(message){
+ $('loading').hidden=true;$('app').hidden=true;$('tabbar').hidden=true;$('lock').hidden=false;$('lockText').textContent=message;
+}
+async function load(){
+ if(busy)return;busy=true;
+ $('refresh').disabled=true;
+ try{
+  const {data:auth,error:ae}=await db.auth.getUser();if(ae)throw ae;
+  const user=auth?.user;uid=user?.id||null;
+  if(!user){lockPage('Войди под своим аккаунтом, чтобы получить доступ к рабочим заданиям.');return}
+  const {data:profile,error:pe}=await db.from('profiles').select('role,full_name').eq('id',uid).single();if(pe)throw pe;
+  role=profile?.role||'';
+  if(role!=='courier'){
+   lockPage('У этого аккаунта нет роли «Курьер». Попроси администратора назначить права в панели команды.');return;
+  }
+  activeName=profile.full_name?.trim()||user.email||'Курьер';
+  $('userLabel').textContent=activeName;$('profileEmail').textContent=user.email||'';
+  const [{data:jobs,error:je},{data:shifts,error:se}]=await Promise.all([
+   db.from('teplo_pilot_jobs')
+    .select('id,shop_name_snapshot,shop_address_snapshot,order_summary,ready_in_minutes,customer_name,customer_phone,delivery_address,status,created_at,assigned_at,accepted_at,picked_up_at,delivered_at')
+    .eq('courier_id',uid).order('created_at',{ascending:false}).limit(100),
+   db.from('courier_shifts').select('id,started_at,ended_at')
+    .eq('courier_id',uid).order('started_at',{ascending:false}).limit(70)
+  ]);
+  if(je)throw je;if(se)throw se;
   const rows=jobs||[],active=rows.filter(j=>['assigned','accepted','picked_up'].includes(j.status));
-  const current=new Set(active.map(j=>j.id));
-  const newcomers=seen?active.filter(j=>!seen.has(j.id)):[];
-  if(newcomers.length){const a=$('alert');a.hidden=false;a.textContent='🔔 Новая заявка №'+newcomers[0].id.slice(0,8)}
-  seen=current;
-  $('count').textContent=String(active.length);
-  $('message').textContent='● На связи · '+new Date().toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'});
-  const root=$('jobs');root.replaceChildren();
-  if(!rows.length){root.append(node('p',p.role==='courier'?(shiftActive?'Пока назначений нет. Ты на смене, диспетчер видит твою доступность.':'Сначала открой смену. Затем диспетчер сможет назначить тебе заявку.'):'Пока нет назначений. Диспетчер должен выбрать тебя для теста.','muted'));return}
-  active.forEach(j=>root.append(makeCard(j)));
-  const closed=rows.filter(j=>['delivered','cancelled'].includes(j.status));
-  if(closed.length){root.append(node('h3','История · '+closed.length));closed.forEach(j=>root.append(makeCard(j)))}
- }catch(e){window.dispatchEvent(new Event('teplo:sync-error'));$('message').textContent='⚠️ Ошибка обновления: '+(e?.message||String(e))+'. Уже показанные заявки сохранены на экране.'}
- finally{busy=false;$('refresh').disabled=false}
+  const history=rows.filter(j=>['delivered','cancelled'].includes(j.status));
+  shift=Boolean(shifts?.some(s=>!s.ended_at));shiftStarted=shifts?.find(s=>!s.ended_at)?.started_at||null;
+  $('shiftLabel').textContent=shift?(active.length?'Занят · на смене':'На смене'):'Не на смене';
+  $('shiftLabel').className='big '+(shift?'status-good':'status-off');
+  $('shiftEmoji').textContent=shift?'🟢':'⚪';
+  $('shiftHint').textContent=shift?(active.length?'У тебя активный заказ — сначала заверши его.':'Готов принимать новые назначения от диспетчера.'):'Открой смену, чтобы получать новые заказы.';
+  $('shiftButton').textContent=shift?'Завершить смену':'Начать смену';
+  $('shiftButton').disabled=Boolean(active.length&&shift);
+  $('activeCount').textContent=String(active.length);
+  $('todayCount').textContent=String(rows.filter(j=>j.status==='delivered'&&j.delivered_at&&todayKey(j.delivered_at)===today()).length);
+  $('allCount').textContent=String(rows.filter(j=>j.status==='delivered').length);
+  $('shiftCount').textContent=String((shifts||[]).filter(s=>todayKey(s.started_at)===today()).length);
+  if(!loaded)$('profileName').value=profile.full_name||'';
+  const root=$('activeOrders');root.replaceChildren();
+  if(!active.length)root.append(create('div',shift?'Ожидаем назначение от диспетчера. Телефон можно оставить открытым — список обновляется автоматически.':'Нет активных заказов. Начни смену, чтобы диспетчер мог тебя выбрать.','card muted'));
+  for(const job of active)root.append(renderActive(job));
+  const historyRoot=$('historyOrders');historyRoot.replaceChildren();
+  if(!history.length)historyRoot.append(create('p','Завершённых заказов пока нет.','muted'));
+  for(const job of history)historyRoot.append(renderHistory(job));
+  const nowIds=new Set(active.map(j=>j.id));
+  if(prevIds){
+    const newJobs=active.filter(j=>!prevIds.has(j.id));
+    if(newJobs.length){$('alert').hidden=false;$('alert').textContent='🔔 Новое назначение №'+newJobs[0].id.slice(0,8);toast('Новое назначение от диспетчера','success')}
+  }
+  prevIds=nowIds;
+  $('screenState').textContent='● Синхронизировано с сервером · '+time(Date.now());
+  $('loading').hidden=true;$('lock').hidden=true;$('app').hidden=false;$('tabbar').hidden=false;
+  loaded=true;window.dispatchEvent(new Event('teplo:sync-ok'));
+ }catch(e){
+  window.dispatchEvent(new Event('teplo:sync-error'));
+  if(!loaded){lockPage('Не удалось проверить доступ из-за соединения. Подключись к интернету и открой кабинет ещё раз.')}
+  else $('screenState').textContent='⚠️ Данные временно не обновляются. Последние загруженные заказы остаются на экране.';
+ }finally{busy=false;$('refresh').disabled=false}
 }
 $('refresh').onclick=load;
-document.addEventListener('visibilitychange',()=>{if(!document.hidden)void load()});
 window.addEventListener('online',()=>void load());
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)void load()});
 window.setInterval(()=>{if(!document.hidden&&navigator.onLine)void load()},8000);
 db.auth.onAuthStateChange(()=>setTimeout(()=>void load(),0));
 await load();
