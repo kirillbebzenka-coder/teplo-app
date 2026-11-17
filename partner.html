@@ -110,9 +110,9 @@ let activeUser=null,activeShopIds=[],shopAddresses=new Map(),draftId=null,proces
 const slotTime=t=>new Date(t).toLocaleTimeString('ru-RU',{timeZone:'Europe/Kyiv',hour:'2-digit',minute:'2-digit'});
 const slotDate=t=>new Date(t).toLocaleDateString('ru-RU',{timeZone:'Europe/Kyiv',day:'2-digit',month:'2-digit',weekday:'short'});
 async function loadSlots(){
- if(slotsBusy||!activeShopIds.length)return;slotsBusy=true;
+ if(slotsBusy||!activeShopIds.length||$('slotPickerHost').contains(document.activeElement))return;
+ slotsBusy=true;
  const select=$('slot'),old=select.value;
-  if($('slotPickerHost').contains(document.activeElement))return;
  try{
   const {data,error}=await db.rpc('teplo_pilot_list_slots');if(error)throw error;
   select.replaceChildren();
