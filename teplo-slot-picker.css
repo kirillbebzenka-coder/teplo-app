@@ -1,0 +1,18 @@
+/* Slot time hierarchy — use existing TEPLO black background and neon accent. */
+.teplo-slot-picker{margin:12px 0 15px;padding:13px;border:1px solid #564069;border-radius:17px;background:#101118}
+.teplo-slot-days{display:flex;gap:8px;overflow-x:auto;padding:3px 0 12px;scrollbar-width:thin}
+.teplo-slot-day{flex:0 0 auto;min-height:43px;padding:9px 12px!important;background:#1c1a25!important;color:#f0d8eb!important;border:1px solid #493b53!important;border-radius:12px;font-size:13px!important;font-weight:750!important}
+.teplo-slot-day[aria-pressed="true"]{border-color:#985fff!important;background:#3c1d43!important;color:#fff!important;box-shadow:0 0 0 1px #985fff55}
+.teplo-slot-times{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+.teplo-slot-time{display:flex;flex-direction:column;align-items:flex-start!important;justify-content:center;min-width:0;min-height:109px;padding:14px!important;border-radius:14px;background:#17151f!important;border:1px solid #44354d!important;color:#f5f7fb!important;text-align:left!important;box-shadow:none!important;gap:9px}
+.teplo-slot-time[aria-pressed="true"]{border:2px solid #ff4fca!important;background:#2b1b33!important;box-shadow:0 0 0 2px #985fff4a!important;padding:13px!important}
+.teplo-slot-hours{display:block;font-size:clamp(17px,4.4vw,23px)!important;font-weight:900!important;letter-spacing:-.04em;line-height:1.2;white-space:nowrap}
+.teplo-slot-free{font-size:13px;color:#cec5d8!important;font-weight:550!important}
+.teplo-slot-bar{width:100%;height:5px;background:#393245;border-radius:9px;overflow:hidden}
+.teplo-slot-bar>span{display:block;height:100%;background:#985fff;border-radius:9px}
+.teplo-slot-summary{margin-top:12px;border-top:1px solid #393245;padding-top:11px;color:#ffa1e1;font-size:13px;font-weight:750}
+.teplo-slot-manager-row{display:flex;align-items:center;gap:12px;min-width:0}
+.teplo-slot-manager-time{font-size:21px;font-weight:900;line-height:1.2}
+.teplo-slot-manager-free{color:#adb3c3;font-size:12px;margin-top:4px}
+.teplo-slot-manager-cap{flex:1;min-width:0}
+@media(max-width:360px){.teplo-slot-time{padding:10px!important}.teplo-slot-hours{font-size:16px!important}}
