@@ -38,9 +38,9 @@ main{max-width:1120px}
 #buyerOrderArea .buyer-steps span{height:5px;min-width:14px;flex:1;background:#393245;border-radius:4px}
 #buyerOrderArea .buyer-steps span.done{background:#985fff}
 #buyerOrderArea .buyer-steps span.issue{background:#ff4fca}
-#buyerOrderArea .buyer-filters{display:flex;gap:7px;flex-wrap:wrap;margin:8px 0 13px}
-#buyerOrderArea .buyer-filters button{background:#1c1a25;color:#ffb4e5;border:1px solid #5a3d57;padding:9px 12px;font-size:13px}
-#buyerOrderArea .buyer-filters button[aria-pressed="true"]{background:#261727;border-color:#985fff}
+#buyerOrderArea .buyer-filters,#deliveryArea .buyer-filters{display:flex;gap:7px;flex-wrap:wrap;margin:8px 0 13px}
+#buyerOrderArea .buyer-filters button,#deliveryArea .buyer-filters button{background:#1c1a25;color:#ffb4e5;border:1px solid #5a3d57;padding:9px 12px;font-size:13px}
+#buyerOrderArea .buyer-filters button[aria-pressed="true"],#deliveryArea .buyer-filters button[aria-pressed="true"]{background:#261727;border-color:#985fff}
 #buyerOrderArea .job .route{background:#0b0c14}
 #buyerOrderArea .route strong{font-size:15px}
 #buyerOrderArea .buyer-footer{border-top:1px solid #403447;padding-top:15px;margin-top:16px}
