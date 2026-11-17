@@ -40,7 +40,16 @@ async function status(){
  try{
   const reg=await registration();
   const subscription=await reg.pushManager.getSubscription();
-  if(subscription){state('На устройстве включено',true);info('Это устройство уже подписано. Нажми «Проверить», чтобы убедиться в доставке.')}
+  if(subscription){
+   try{
+    await auth();
+    const {error}=await db.rpc('teplo_push_save_subscription',{p_subscription:subscription.toJSON()});
+    if(error)throw error;
+    state('Включено',true);info('Телефон подписан. Нажми «Проверить», чтобы проверить доставку.');
+   }catch(e){
+    state('Нужен вход');info('Войди в рабочий аккаунт и обнови страницу для синхронизации push: '+(e?.message||String(e)));
+   }
+  }
   else {state('Не подключено');info('Нажми «Включить push», чтобы получать уведомления при закрытой вкладке.')}
  }catch(e){state('Ошибка');info(e?.message||String(e))}
 }
