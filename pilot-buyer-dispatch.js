@@ -6,13 +6,55 @@ const money=n=>Number(n||0).toLocaleString('ru-RU',{maximumFractionDigits:2})+' 
 const day=t=>new Date(t).toLocaleDateString('ru-RU',{timeZone:'Europe/Kyiv',day:'2-digit',month:'2-digit'});
 const clock=t=>new Date(t).toLocaleTimeString('ru-RU',{timeZone:'Europe/Kyiv',hour:'2-digit',minute:'2-digit'});
 const states={pending:'Не размещён',ordered:'Заказ размещён',confirmed:'Подтверждено',issue:'Проблема'};
-const section=el('section');section.id='buyerOrderArea';section.hidden=true;
+const section=document.getElementById('buyerOrderArea');
 const header=el('div','','row'),h2=el('h2','Заказы покупателей'),refresh=el('button','Обновить','secondary');
 refresh.type='button';header.append(h2,refresh);
-section.append(header,el('p','Оператор размещает заказ в каждом заведении, подтверждает все части и передаёт одну доставку курьерам. Только демо.','muted'));
-const root=el('div');root.id='buyerOrders';section.append(root);
-document.querySelector('#stats')?.after(section);
-let busy=false;
+section.append(header,el('p','Один заказ — одна карточка. Подтверждения заведений внутри.','muted'));
+const filters=el('div','','buyer-filters'),shell=el('div','','queue-shell');
+const root=el('div','','queue-list');root.id='buyerOrders';
+const details=el('div','','queue-detail');details.id='buyerDetails';
+shell.append(root,details);section.append(filters,shell);
+let busy=false,selectedId=null,activeFilter='work',lastSignature=null,ordersCache=[],tasksCache=[],slotsCache=[],linksCache=[];
+const filterList=[['work','В обработке'],['issue','Проблемы'],['ready','К передаче'],['sent','У курьеров'],['all','Все']];
+function orderState(order){
+ const pieces=tasksCache.filter(t=>t.order_id===order.id);
+ const link=linksCache.find(x=>x.source_order_id===order.id);
+ if(link)return ['sent',link.status==='delivered'?'Доставлен':'У курьеров'];
+ if(!pieces.length||pieces.some(t=>t.state==='issue'))return ['issue','Требует решения'];
+ if(pieces.every(t=>t.state==='confirmed'))return ['ready','Готов к передаче'];
+ return ['work',pieces.filter(t=>t.state==='confirmed').length+'/'+pieces.length+' подтверждено'];
+}
+function matches(order){const state=orderState(order)[0];return activeFilter==='all'||(activeFilter==='work'?['work','ready','issue'].includes(state):state===activeFilter)}
+function renderQueue(){
+ const visible=ordersCache.filter(matches).sort((a,b)=>{
+  const rank={issue:0,ready:1,work:2,sent:3};
+  return (rank[orderState(a)[0]]??4)-(rank[orderState(b)[0]]??4)||new Date(a.created_at)-new Date(b.created_at);
+ });
+ if(!visible.some(o=>o.id===selectedId))selectedId=visible[0]?.id||null;
+ filters.replaceChildren();
+ for(const [key,label] of filterList){
+  const count=ordersCache.filter(o=>key==='all'||(key==='work'?['work','ready','issue'].includes(orderState(o)[0]):orderState(o)[0]===key)).length;
+  const b=el('button',label+' · '+count);b.type='button';b.setAttribute('aria-pressed',String(activeFilter===key));
+  b.onclick=()=>{activeFilter=key;selectedId=null;section.dataset.mobileView='list';renderQueue()};filters.append(b);
+ }
+ root.replaceChildren();
+ window.TEPLOWorkspace?.setCount('buyers',ordersCache.filter(o=>['work','issue','ready'].includes(orderState(o)[0])).length);
+ if(!visible.length)root.append(el('p','Нет заказов по выбранному фильтру.','muted'));
+ for(const order of visible){
+  const state=orderState(order),item=el('button','','queue-entry'),top=el('span','','queue-top');
+  item.type='button';item.setAttribute('aria-current',String(order.id===selectedId));
+  top.append(el('strong','№'+order.id.slice(0,8).toUpperCase()),el('span',state[1],'queue-state'));
+  item.append(top,el('span',order.shop_name_snapshot||'Сборный заказ'),
+   el('small',order.order_items.length+' позиций · '+tasksCache.filter(t=>t.order_id===order.id).length+' заведений · '+money(order.total)));
+  item.onclick=()=>{selectedId=order.id;section.dataset.mobileView='detail';renderQueue();details.scrollIntoView({block:'start',behavior:'smooth'})};
+  root.append(item);
+ }
+ details.replaceChildren();
+ const current=ordersCache.find(o=>o.id===selectedId);
+ if(!current){details.append(el('p','Выбери заказ из списка.','muted'));return}
+ const back=el('button','← К списку','detail-back');back.onclick=()=>{section.dataset.mobileView='list';root.querySelector('[aria-current="true"]')?.focus()};
+ details.append(back,card(current,tasksCache,slotsCache,linksCache));
+}
 function card(o,tasks,slots,links){
  const c=el('article','','job'),top=el('div','','row'),pieces=tasks.filter(t=>t.order_id===o.id);
  const linked=links.find(l=>l.source_order_id===o.id);
@@ -90,16 +132,16 @@ async function load(){
    db.from('teplo_pilot_jobs').select('id,source_order_id,status').not('source_order_id','is',null).limit(100)
   ]);
   if(oe)throw oe;if(te)throw te;if(se)throw se;if(le)throw le;
-  root.replaceChildren();
-  if(!orders?.length)root.append(el('p','Пока заказов покупателей нет.','muted'));
-  else for(const o of orders)root.append(card(o,tasks||[],slots||[],links||[]));
+  ordersCache=orders||[];tasksCache=tasks||[];slotsCache=slots||[];linksCache=links||[];
+  const signature=JSON.stringify({o:ordersCache.map(o=>[o.id,o.total]),t:tasksCache.map(t=>[t.order_id,t.shop_id,t.state,t.operator_note]),j:linksCache.map(j=>[j.id,j.status]),s:slotsCache.map(x=>[x.id,x.booked,x.capacity,x.is_open])});
+  if(signature!==lastSignature){lastSignature=signature;renderQueue()}
  }catch(e){const p=el('p','Не удалось загрузить заказы: '+(e?.message||String(e)),'warning');root.prepend(p)}
  finally{busy=false;refresh.disabled=false}
 }
-refresh.onclick=()=>void load();
+refresh.onclick=()=>{lastSignature=null;void load()};
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)void load()});
 window.addEventListener('online',()=>void load());
-window.addEventListener('teplo:buyer-handoff',()=>void load());
+window.addEventListener('teplo:buyer-handoff',()=>{lastSignature=null;void load()});
 setInterval(()=>{if(!document.hidden&&navigator.onLine)void load()},8000);
 db.auth.onAuthStateChange(()=>setTimeout(()=>void load(),0));
 void load();
