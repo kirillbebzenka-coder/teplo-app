@@ -57,7 +57,7 @@ nav a.active{background:#39142e;color:#ffc3e8}
 <p class="warning">🧪 Тест: никого не отправлять. Для пилота используем вымышленные контакты.</p>
 <p id="message" class="muted">Получаем задания…</p></section>
 <div id="stats" class="stats"></div>
-<section><div class="row"><h2>🕒 Временные слоты</h2><span class="muted">Время по Киеву · 4 места по умолчанию</span></div><p class="muted">Диспетчер может изменить количество заказов в слоте и открыть или закрыть приём.</p><div id="slotManager" class="courier-grid"><p class="muted">Загружаем расписание…</p></div></section>
+<section><div class="row"><h2>🕒 Временные слоты</h2><span class="muted">Время по Киеву · 4 места по умолчанию</span></div><p class="muted">Диспетчер может изменить количество заказов в слоте и открыть или закрыть приём.</p><label for="slotDayFilter" class="muted">Дата расписания</label><select id="slotDayFilter" aria-label="Выбрать день слотов"></select><div id="slotManager" class="courier-grid"><p class="muted">Загружаем расписание…</p></div></section>
 <section><div class="row"><h2>Доступность курьеров</h2><span class="muted">Смены и занятость</span></div>
 <p class="muted">🟢 Свободен — 0/2 заказа. 🟣 В работе — 1/2, можно назначить ещё один. 📦 Лимит — 2/2, новые заявки недоступны. ⚪ Не на смене — недоступен. Аккаунты без роли курьера отображаются в <a href="team.html?v=34" style="color:#ffaee9">панели команды</a>.</p>
 <div id="courierRoster" class="courier-grid"><p class="muted">Загружаем команду…</p></div></section>
@@ -84,9 +84,10 @@ const db=createClient('https://bgtegxdekqsajttkhhrj.supabase.co','sb_publishable
 const $=id=>document.getElementById(id),txt=(tag,t='',cls='')=>{const e=document.createElement(tag);e.textContent=String(t??'');if(cls)e.className=cls;return e};
 const uah=n=>Number(n||0).toLocaleString('ru-RU',{maximumFractionDigits:2})+' ₴';
 const names={new:'Новая',assigned:'Курьер назначен',accepted:'Курьер принял',picked_up:'Курьер забрал',delivered:'Завершена',cancelled:'Отменена'};
-let busy=false;let currentUser=null;let couriers=[];let availableCouriers=[],slots=[];
+let busy=false;let currentUser=null;let couriers=[];let availableCouriers=[],slots=[],selectedSlotDate='';
 const slotDay=t=>new Date(t).toLocaleDateString('ru-RU',{timeZone:'Europe/Kyiv',day:'2-digit',month:'2-digit',weekday:'short'});
 const slotClock=t=>new Date(t).toLocaleTimeString('ru-RU',{timeZone:'Europe/Kyiv',hour:'2-digit',minute:'2-digit'});
+const slotDateKey=t=>new Intl.DateTimeFormat('en-CA',{timeZone:'Europe/Kyiv',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date(t));
 let noticeUser=null,announcedRequests=new Set(),incomingQueue=[],incomingShowing=null,focusBeforeIncoming=null;
 function displayIncoming(){
  if(incomingShowing||!incomingQueue.length)return;
@@ -134,8 +135,13 @@ function alertForIncoming(rows){
  }
 }
 function renderSlots(){
- const root=$('slotManager');root.replaceChildren();
- for(const slot of slots.filter(x=>new Date(x.slot_start).getTime()<Date.now()+36*3600000)){
+ const root=$('slotManager'),picker=$('slotDayFilter');root.replaceChildren();
+ const days=[...new Map(slots.map(s=>[slotDateKey(s.slot_start),s.slot_start])).entries()];
+ if(!days.some(x=>x[0]===selectedSlotDate))selectedSlotDate=days[0]?.[0]||'';
+ picker.replaceChildren();
+ for(const [key,start] of days){const option=txt('option',slotDay(start));option.value=key;picker.append(option)}
+ picker.value=selectedSlotDate;
+ for(const slot of slots.filter(x=>slotDateKey(x.slot_start)===selectedSlotDate)){
   const card=txt('div','','courier-row');
   const info=txt('div');info.append(txt('div',slotDay(slot.slot_start)+' · '+slotClock(slot.slot_start)+'–'+slotClock(slot.slot_end),'name'),txt('div','Занято '+slot.booked+'/'+slot.capacity+(slot.is_open?' · открыт':' · закрыт'),'muted'));
   const actions=txt('div','','actions'),selector=document.createElement('select');
@@ -157,8 +163,9 @@ function renderSlots(){
   save.onclick=()=>change(Number(selector.value),slot.is_open);
   actions.append(selector,save,toggle,msg);card.append(info,actions);root.append(card);
  }
- if(!root.children.length)root.append(txt('p','Нет ближайших слотов.','muted'));
+ if(!root.children.length)root.append(txt('p','Нет доступных слотов на этот день.','muted'));
 }
+$('slotDayFilter').addEventListener('change',e=>{selectedSlotDate=e.target.value;renderSlots()});
 async function release(job,btn,feedback){
  if(!confirm('Вернуть ещё не забранный тестовый заказ в общую очередь?'))return;
  btn.disabled=true;
