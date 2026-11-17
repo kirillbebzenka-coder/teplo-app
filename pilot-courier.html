@@ -183,7 +183,7 @@ const formatDate=ts=>new Date(ts).toLocaleString('ru-RU',{day:'2-digit',month:'2
 const todayKey=ts=>new Date(ts).toLocaleDateString('en-CA');
 const today=()=>todayKey(Date.now());
 const uah=n=>Number(n||0).toLocaleString('ru-RU',{minimumFractionDigits:0,maximumFractionDigits:2})+' ₴';
-let earnedByJob=new Map();
+let earnedByJob=new Map(),stopsByJob=new Map();
 let claiming=false;
 const slotDate=t=>new Date(t).toLocaleDateString('ru-RU',{timeZone:'Europe/Kyiv',day:'2-digit',month:'2-digit'});
 const slotClock=t=>new Date(t).toLocaleTimeString('ru-RU',{timeZone:'Europe/Kyiv',hour:'2-digit',minute:'2-digit'});
@@ -203,7 +203,7 @@ function displayNextIncoming(){
  $('incomingCaption').textContent=j.noticeKind==='open'?'Заявка появилась в общем слоте. Её может взять любой свободный курьер.':'Диспетчер назначил тебе тестовую доставку.';
  $('incomingOpen').textContent=j.noticeKind==='open'?'Посмотреть в очереди':'Открыть заказ';
  $('incomingShop').textContent=j.shop_name_snapshot||'Заведение';
- $('incomingPickup').textContent=j.shop_address_snapshot||'Адрес забора не указан';
+ $('incomingPickup').textContent=(stopsByJob.get(j.id)||[]).map((stop,i)=>(i+1)+'. '+stop.shop_name_snapshot+' — '+stop.shop_address_snapshot).join(' · ')||j.shop_address_snapshot||'Адрес забора не указан';
  $('incomingDropoff').textContent=j.delivery_address||'Адрес доставки не указан';
  $('incomingReward').textContent=uah(j.courier_reward_uah);
  $('incomingOverlay').hidden=false;
@@ -326,8 +326,9 @@ function renderActive(j){
  c.append(create('div',label,'order-stage'));
  c.append(create('p','Стоимость: '+uah(j.delivery_fee_uah)+' · Начисление: '+uah(j.courier_reward_uah),'order-summary'));
  // Order of stops follows the courier's task. Address and recipient are always visible.
+ const pickups=stopsByJob.get(j.id)||[];
  const stops=[
-  {label:'ТОЧКА ЗАБОРА',address:j.shop_address_snapshot||'Адрес забора не указан',active:j.status!=='picked_up'},
+  ...(pickups.length?pickups.map((p,i)=>({label:'ТОЧКА ЗАБОРА '+(i+1)+' · '+p.shop_name_snapshot,address:p.shop_address_snapshot||'Адрес не указан',active:j.status!=='picked_up'})):[{label:'ТОЧКА ЗАБОРА',address:j.shop_address_snapshot||'Адрес забора не указан',active:j.status!=='picked_up'}]),
   {label:'АДРЕС ДОСТАВКИ',address:j.delivery_address||'Адрес доставки не указан',active:j.status==='picked_up'}
  ];
  if(j.status==='picked_up')stops.reverse();
@@ -352,7 +353,7 @@ function renderActive(j){
  }
  c.append(person,create('p','Состав: '+(j.order_summary||'Содержимое не указано'),'order-summary'));
  const feedback=create('p','','muted');feedback.setAttribute('role','status');
- const next={assigned:['accepted','Принять заказ'],accepted:['picked_up','Подтвердить забор'],picked_up:['delivered','Подтвердить доставку']}[j.status];
+ const next={assigned:['accepted','Принять заказ'],accepted:['picked_up',pickups.length>1?'Все точки забраны':'Подтвердить забор'],picked_up:['delivered','Подтвердить доставку']}[j.status];
  if(next){
   const btn=create('button',next[1],'primary full order-action');
   btn.onclick=()=>change(j,next[0],btn,feedback);c.append(btn);
@@ -441,6 +442,10 @@ async function load(){
   if(je)throw je;if(se)throw se;if(ee)throw ee;if(openError)throw openError;
   earnedByJob=new Map((earnings||[]).map(e=>[e.job_id,Number(e.amount_uah)]));
   const rows=jobs||[],active=rows.filter(j=>['assigned','accepted','picked_up'].includes(j.status));
+  const {data:stopRows,error:stopError}=active.length?await db.from('teplo_pilot_job_stops').select('job_id,stop_number,shop_name_snapshot,shop_address_snapshot').in('job_id',active.map(j=>j.id)).order('stop_number'): {data:[],error:null};
+  if(stopError)throw stopError;
+  stopsByJob=new Map();
+  for(const stop of stopRows||[]){const list=stopsByJob.get(stop.job_id)||[];list.push(stop);stopsByJob.set(stop.job_id,list)}
   const history=rows.filter(j=>['delivered','cancelled'].includes(j.status));
   shift=Boolean(shifts?.some(s=>!s.ended_at));shiftStarted=shifts?.find(s=>!s.ended_at)?.started_at||null;
   $('shiftLabel').textContent=shift?(active.length?'Занят · на смене':'На смене'):'Не на смене';
