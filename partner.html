@@ -65,6 +65,7 @@ nav a.active{background:#37172f;color:#ffc0e7;border:1px solid #733865}
   <label for="shop">Заведение</label>
   <select id="shop" required></select>
   <p id="pickupAddress" class="muted" aria-live="polite">🏪 Откуда забрать: выбери заведение</p>
+  <p id="pilotFee" class="muted">🧪 Проверяем расчётную стоимость доставки…</p>
   <label for="summary">Что нужно забрать</label>
   <textarea id="summary" maxlength="400" placeholder="Например: 2 пиццы, готовность через 15 минут" required></textarea>
   <label for="ready">Через сколько будет готово</label>
@@ -97,6 +98,7 @@ import {createClient} from 'https://esm.sh/@supabase/supabase-js@2';
 const db=createClient('https://bgtegxdekqsajttkhhrj.supabase.co','sb_publishable_aSOKkJ_F47sGj9e8v8uJ3g_24rlQ8XG');
 const $=id=>document.getElementById(id);
 const node=(tag,text='',cls='')=>{const e=document.createElement(tag);e.textContent=String(text??'');if(cls)e.className=cls;return e};
+const uah=n=>Number(n||0).toLocaleString('ru-RU',{maximumFractionDigits:2})+' ₴';
 const states={new:'Новая',assigned:'Курьер назначен',accepted:'Курьер принял',picked_up:'Забрал заказ',delivered:'Завершена',cancelled:'Отменена'};
 let activeUser=null,activeShopIds=[],shopAddresses=new Map(),draftId=null,processing=false,fetching=false;
 async function getIdentity(){
@@ -126,6 +128,7 @@ async function getIdentity(){
  }
  activeShopIds=ids.map(s=>s.id);
  shopAddresses=new Map(ids.map(s=>[s.id,s.address||'Адрес заведения не указан']));
+  if(ids.length){const {data:pricing,error:priceError}=await db.from('teplo_pilot_pricing').select('delivery_fee_uah').eq('id',1).single();if(priceError)throw priceError;$('pilotFee').textContent='🧪 Расчётная стоимость доставки: '+uah(pricing.delivery_fee_uah)+' · без оплаты';}
  const sel=$('shop');sel.replaceChildren();
  ids.forEach(s=>{const o=document.createElement('option');o.value=s.id;o.textContent=s.name;sel.append(o)});
  updatePickup();
@@ -139,7 +142,7 @@ async function loadJobs(){
  try{
   if(!activeUser){root.replaceChildren(node('p','Войди в аккаунт.','muted'));return}
   let q=db.from('teplo_pilot_jobs')
-    .select('id,shop_name_snapshot,shop_address_snapshot,order_summary,ready_in_minutes,status,created_at,delivery_address,customer_name,customer_phone')
+    .select('id,shop_name_snapshot,shop_address_snapshot,order_summary,ready_in_minutes,status,created_at,delivery_address,customer_name,customer_phone,delivery_fee_uah')
     .eq('created_by',activeUser.id).order('created_at',{ascending:false}).limit(30);
   const {data,error}=await q;if(error)throw error;
   window.dispatchEvent(new Event('teplo:sync-ok'));
@@ -150,7 +153,7 @@ async function loadJobs(){
    const top=node('div','','row');
    top.append(node('strong','№'+job.id.slice(0,8)),node('span',states[job.status]||job.status,'pill'));
    card.append(top,node('p',job.shop_name_snapshot+' · '+new Date(job.created_at).toLocaleString('ru-RU',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})));
-   card.append(node('p','📦 '+job.order_summary),node('p','🏪 Забрать: '+(job.shop_address_snapshot||'Адрес забора не указан')),node('p','📍 Доставить: '+job.delivery_address),node('p','👤 '+job.customer_name),node('p','☎ '+job.customer_phone),node('p','Готовность: '+(job.ready_in_minutes===0?'сразу':job.ready_in_minutes+' мин')));
+   card.append(node('p','🧪 Стоимость доставки: '+uah(job.delivery_fee_uah)+' (без оплаты)'),node('p','📦 '+job.order_summary),node('p','🏪 Забрать: '+(job.shop_address_snapshot||'Адрес забора не указан')),node('p','📍 Доставить: '+job.delivery_address),node('p','👤 '+job.customer_name),node('p','☎ '+job.customer_phone),node('p','Готовность: '+(job.ready_in_minutes===0?'сразу':job.ready_in_minutes+' мин')));
    if(['new','assigned'].includes(job.status)){
     const b=node('button','Отменить тестовую заявку','secondary');
     b.onclick=async()=>{if(!confirm('Отменить тестовую заявку?'))return;b.disabled=true;const {error}=await db.rpc('teplo_cancel_pilot_job',{p_job_id:job.id});if(error){alert(error.message);b.disabled=false}else await loadJobs()};
