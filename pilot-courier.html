@@ -264,6 +264,7 @@ async function change(job,action,btn,msg){
 function renderActive(j){
  const c=create('article','','card hero order-focus');
  c.dataset.jobId=j.id;
+ c.setAttribute('aria-label','Заказ №'+j.id.slice(0,8).toUpperCase());
  const head=create('div','','row'),info=create('div');
  info.append(create('div','ЗАКАЗ №'+j.id.slice(0,8).toUpperCase(),'order-number'),
              create('h2',j.shop_name_snapshot||'Заведение','order-heading'));
@@ -392,12 +393,12 @@ async function load(){
   $('shiftLabel').textContent=shift?(active.length?'Занят · на смене':'На смене'):'Не на смене';
   $('shiftLabel').className='big '+(shift?'status-good':'status-off');
   $('shiftEmoji').textContent=shift?'🟢':'⚪';
-  $('shiftHint').textContent=shift?(active.length?'У тебя активный заказ — сначала заверши его.':'Готов принимать новые назначения от диспетчера.'):'Открой смену, чтобы получать новые заказы.';
+  $('shiftHint').textContent=shift?(active.length?'В работе '+active.length+' из 2 возможных заказов. Заверши оба перед окончанием смены.':'Готов принимать до двух назначений от диспетчера.'):'Открой смену, чтобы получать новые заказы.';
   $('shiftButton').textContent=shift?'Завершить смену':'Начать смену';
   $('shiftButton').disabled=role==='admin'||Boolean(active.length&&shift);
   $('shiftCard').hidden=role==='admin'||active.length>0;
   $('dailyMetrics').hidden=active.length>0;
-  $('orderHeaderTitle').textContent=active.length?(active[0].status==='assigned'?'Новый заказ':active[0].status==='accepted'?'Забери заказ':'Доставь заказ'):'Мои заказы';
+  $('orderHeaderTitle').textContent=active.length>1?'Мои заказы · '+active.length+'/2':active.length?(active[0].status==='assigned'?'Новый заказ':active[0].status==='accepted'?'Забери заказ':'Доставь заказ'):'Мои заказы';
   $('workStatus').textContent=active.length?'📦 В работе':role==='admin'?'🧪 Тест курьера':shift?'🟢 На смене':'⚪ Не на смене';
   $('activeCount').textContent=String(active.length);
   const earnedTotal=(earnings||[]).reduce((sum,e)=>sum+Number(e.amount_uah||0),0);
