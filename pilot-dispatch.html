@@ -58,6 +58,7 @@ nav a.active{background:#39142e;color:#ffc3e8}
 import {createClient} from 'https://esm.sh/@supabase/supabase-js@2';
 const db=createClient('https://bgtegxdekqsajttkhhrj.supabase.co','sb_publishable_aSOKkJ_F47sGj9e8v8uJ3g_24rlQ8XG');
 const $=id=>document.getElementById(id),txt=(tag,t='',cls='')=>{const e=document.createElement(tag);e.textContent=String(t??'');if(cls)e.className=cls;return e};
+const uah=n=>Number(n||0).toLocaleString('ru-RU',{maximumFractionDigits:2})+' ₴';
 const names={new:'Новая',assigned:'Курьер назначен',accepted:'Курьер принял',picked_up:'Курьер забрал',delivered:'Завершена',cancelled:'Отменена'};
 let busy=false;let currentUser=null;let couriers=[];let priorIds=null;let availableCouriers=[];
 function stat(label,value){const e=txt('div');e.append(txt('strong',String(value)),txt('span',label,'muted'));return e}
@@ -85,6 +86,7 @@ function card(job){
  top.append(txt('strong','№'+job.id.slice(0,8)),badge);e.append(top);
  e.append(txt('p','🏪 '+job.shop_name_snapshot+' · '+new Date(job.created_at).toLocaleString('ru-RU',{hour:'2-digit',minute:'2-digit',day:'2-digit',month:'2-digit'})));
  e.append(txt('p','📦 '+job.order_summary),txt('p','⏱ Готовность: '+(job.ready_in_minutes===0?'сразу':job.ready_in_minutes+' мин')));
+ e.append(txt('p','🧪 Доставка: '+uah(job.delivery_fee_uah)+' · Курьеру после доставки: '+uah(job.courier_reward_uah)));
  const route=txt('div','','route');
  route.append(txt('p','🏪 ЗАБРАТЬ: '+(job.shop_address_snapshot||'Адрес забора не указан')),
               txt('p','📍 ДОСТАВИТЬ: '+job.delivery_address));
@@ -121,7 +123,7 @@ async function load(){
   $('role').textContent=p.role==='admin'?'Администратор':'Диспетчер';
   const [{data:roster,error:re},{data:jobs,error:je}]=await Promise.all([
     db.rpc('teplo_dispatch_courier_roster'),
-    db.from('teplo_pilot_jobs').select('id,shop_name_snapshot,shop_address_snapshot,order_summary,ready_in_minutes,customer_name,customer_phone,delivery_address,status,courier_id,created_at')
+    db.from('teplo_pilot_jobs').select('id,shop_name_snapshot,shop_address_snapshot,order_summary,ready_in_minutes,customer_name,customer_phone,delivery_address,status,courier_id,created_at,delivery_fee_uah,courier_reward_uah')
       .order('created_at',{ascending:false}).limit(80)
   ]);
   if(re)throw re;if(je)throw je;
