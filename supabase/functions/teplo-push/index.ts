@@ -66,6 +66,10 @@ async function sendTo(ids:string[],payload:{title:string,body:string,url:string,
 async function handleEvent(evt:{type?:string,id?:string}){
  if(typeof evt.id!=="string"||!/^[a-f0-9-]{36}$/i.test(evt.id))return answer({error:"Invalid job id"},400);
  const type=evt.type;
+ if(type==="bootstrap"){
+  const {publicKey}=await vapid();
+  return answer({configured:true,vapidPublicKeyLength:publicKey.length});
+ }
  let recipients:string[]=[];
  let payload={title:"TEPLO · Новый заказ",body:"Открой рабочий кабинет",url:"/teplo-app/pilot-dispatch.html?v=49",tag:"teplo-order-"+evt.id};
  if(type==="buyer_order"){
