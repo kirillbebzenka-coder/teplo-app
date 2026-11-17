@@ -102,9 +102,12 @@ function displayIncoming(){
  if(incomingShowing||!incomingQueue.length)return;
  const j=incomingQueue.shift();
  incomingShowing=j;focusBeforeIncoming=document.activeElement;
- $('incomingTitle').textContent='Новая заявка №'+j.id.slice(0,8).toUpperCase();
- $('incomingShop').textContent=j.shop_name_snapshot||'Заведение';
- $('incomingPickup').textContent=j.shop_address_snapshot||'Адрес забора не указан';
+ const buyer=j.noticeKind==='buyer';
+ $('incomingTitle').textContent=(buyer?'Заказ покупателя №':'Новая заявка №')+j.id.slice(0,8).toUpperCase();
+ $('incomingCaption').textContent=buyer?'Поступил заказ покупателя. Начни обработку заведений.':'Новая заявка ожидает назначения.';
+ $('incomingOpen').textContent=buyer?'Открыть заказ':'Открыть заявку';
+ $('incomingShop').textContent=j.shop_name_snapshot||'Сборный заказ TEPLO';
+ $('incomingPickup').textContent=j.noticeKind==='buyer'?'Несколько заведений — смотри состав внутри заказа':j.shop_address_snapshot||'Адрес забора не указан';
  $('incomingDropoff').textContent=j.delivery_address||'Адрес доставки не указан';
  $('incomingPrice').textContent=uah(j.delivery_fee_uah);
  $('incomingOverlay').hidden=false;$('incomingOpen').focus();
@@ -118,7 +121,10 @@ function closeIncoming(){
 }
 $('incomingLater').onclick=closeIncoming;
 $('incomingOpen').onclick=()=>{
- const id=incomingShowing?.id;closeIncoming();
+ const job=incomingShowing;const id=job?.id;closeIncoming();
+ if(job?.noticeKind==='buyer'){
+  window.TEPLOWorkspace?.show('buyers');window.TEPLOBuyerOrders?.open(id);return;
+ }
  window.TEPLOWorkspace?.show('calls');selectedCallId=id;callFilter='active';renderCallQueue();
  $('deliveryArea').dataset.mobileView='detail';
  $('deliveryDetail').scrollIntoView({behavior:'smooth',block:'start'});
@@ -134,8 +140,8 @@ document.addEventListener('keydown',e=>{
 });
 function alertForIncoming(rows){
  const pending=rows.filter(j=>j.status==='new');
- incomingQueue=incomingQueue.filter(j=>pending.some(x=>x.id===j.id));
- if(incomingShowing&&!pending.some(x=>x.id===incomingShowing.id))closeIncoming();
+ incomingQueue=incomingQueue.filter(j=>j.noticeKind==='buyer'||pending.some(x=>x.id===j.id));
+ if(incomingShowing?.noticeKind!=='buyer'&&incomingShowing&&!pending.some(x=>x.id===incomingShowing.id))closeIncoming();
  const fresh=pending.filter(j=>!announcedRequests.has(j.id));
  for(const job of fresh){announcedRequests.add(job.id);incomingQueue.push(job)}
  if(fresh.length){
@@ -143,6 +149,11 @@ function alertForIncoming(rows){
   displayIncoming();
  }
 }
+window.TEPLODispatcherAlert={buyer(order){
+ if(!order?.id)return;
+ incomingQueue.push({...order,noticeKind:'buyer',delivery_fee_uah:order.delivery_fee});
+ displayIncoming();
+}};
 function renderSlots(){
  const root=$('slotManager'),picker=$('slotDayFilter');root.replaceChildren();
  const days=[...new Map(slots.map(s=>[slotDateKey(s.slot_start),s.slot_start])).entries()];
