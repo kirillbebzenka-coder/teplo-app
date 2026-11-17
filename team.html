@@ -43,6 +43,7 @@ main{padding-bottom:calc(125px + env(safe-area-inset-bottom))}
 <p class="muted">Администрирование ролей, магазинов и сотрудников TEPLO.</p>
 <section><div class="row"><button id="refresh">Обновить</button><span id="access" class="role">Проверяем роль…</span></div><p id="notice" class="muted" role="status" aria-live="polite">Проверяем доступ…</p></section>
 <div id="adminArea" hidden>
+<section id="pilotPricing"><h2>🧪 Тестовые тарифы</h2><p class="muted">Расчётные суммы для пилота. Никаких платежей или настоящих обязательств.</p><form id="pricingForm"><label for="deliveryPrice">Стоимость доставки, грн</label><input id="deliveryPrice" type="number" step="0.01" min="1" max="5000" required><label for="courierPrice">Курьеру за доставленный заказ, грн</label><input id="courierPrice" type="number" step="0.01" min="1" max="5000" required><button type="submit" id="savePricing" class="invite-button">Сохранить тестовый тариф</button><p id="pricingFeedback" class="muted" role="status"></p></form><p class="muted">Новый тариф применяется к будущим заявкам; суммы созданных заказов не меняются.</p></section>
 <section id="courierInvitation">
 <h2>🛵 Подключить курьера</h2>
 <p class="muted">Личный аккаунт для каждого курьера. Пароли и доступ администратора передавать не нужно.</p>
@@ -120,6 +121,10 @@ async function load(){
   ]);
   if(staffError)throw staffError;if(shopsError)throw shopsError;if(accountsError)throw accountsError;
   $('adminArea').hidden=false;
+  const {data:pricing,error:pricingError}=await db.from('teplo_pilot_pricing').select('delivery_fee_uah,courier_reward_uah').eq('id',1).single();
+  if(pricingError)throw pricingError;
+  if(document.activeElement!==$('deliveryPrice'))$('deliveryPrice').value=pricing.delivery_fee_uah;
+  if(document.activeElement!==$('courierPrice'))$('courierPrice').value=pricing.courier_reward_uah;
   $('shopId').replaceChildren();
   for(const shop of shops||[]){
     const option=document.createElement('option');option.value=shop.id;option.textContent=shop.name;$('shopId').append(option);
@@ -166,6 +171,15 @@ async function load(){
  }catch(err){$('adminArea').hidden=true;status.className='error';status.textContent='Ошибка: '+(err?.message||String(err))}
  finally{$('refresh').disabled=false;busy=false}
 }
+$('pricingForm').addEventListener('submit',async ev=>{
+ ev.preventDefault();
+ const fee=Number($('deliveryPrice').value),reward=Number($('courierPrice').value),msg=$('pricingFeedback'),btn=$('savePricing');
+ if(!Number.isFinite(fee)||!Number.isFinite(reward)||fee<1||fee>5000||reward<1||reward>fee){msg.textContent='Проверь суммы: 1–5000 грн, вознаграждение не выше цены доставки.';return}
+ btn.disabled=true;msg.textContent='Сохраняем тариф…';
+ try{const {error}=await db.rpc('teplo_set_pilot_pricing',{p_delivery_fee_uah:fee,p_courier_reward_uah:reward});if(error)throw error;msg.textContent='✓ Тестовый тариф сохранён для новых заказов.';TEPLOTouch.notify('Тариф сохранён','success');}
+ catch(e){msg.textContent='Ошибка: '+(e?.message||String(e));}
+ finally{btn.disabled=false}
+});
 $('staffForm').addEventListener('submit',async ev=>{
  ev.preventDefault();
  const email=$('staffEmail').value.trim(),role=$('staffRole').value,shop=role==='venue'?$('shopId').value:null;
