@@ -57,6 +57,7 @@ nav a.active{background:#39142e;color:#ffc3e8}
 <p class="warning">🧪 Тест: никого не отправлять. Для пилота используем вымышленные контакты.</p>
 <p id="message" class="muted">Получаем задания…</p></section>
 <div id="stats" class="stats"></div>
+<section><div class="row"><h2>🕒 Временные слоты</h2><span class="muted">Время по Киеву · 4 места по умолчанию</span></div><p class="muted">Диспетчер может изменить количество заказов в слоте и открыть или закрыть приём.</p><div id="slotManager" class="courier-grid"><p class="muted">Загружаем расписание…</p></div></section>
 <section><div class="row"><h2>Доступность курьеров</h2><span class="muted">Смены и занятость</span></div>
 <p class="muted">🟢 Свободен — 0/2 заказа. 🟣 В работе — 1/2, можно назначить ещё один. 📦 Лимит — 2/2, новые заявки недоступны. ⚪ Не на смене — недоступен. Аккаунты без роли курьера отображаются в <a href="team.html?v=34" style="color:#ffaee9">панели команды</a>.</p>
 <div id="courierRoster" class="courier-grid"><p class="muted">Загружаем команду…</p></div></section>
@@ -83,7 +84,9 @@ const db=createClient('https://bgtegxdekqsajttkhhrj.supabase.co','sb_publishable
 const $=id=>document.getElementById(id),txt=(tag,t='',cls='')=>{const e=document.createElement(tag);e.textContent=String(t??'');if(cls)e.className=cls;return e};
 const uah=n=>Number(n||0).toLocaleString('ru-RU',{maximumFractionDigits:2})+' ₴';
 const names={new:'Новая',assigned:'Курьер назначен',accepted:'Курьер принял',picked_up:'Курьер забрал',delivered:'Завершена',cancelled:'Отменена'};
-let busy=false;let currentUser=null;let couriers=[];let availableCouriers=[];
+let busy=false;let currentUser=null;let couriers=[];let availableCouriers=[],slots=[];
+const slotDay=t=>new Date(t).toLocaleDateString('ru-RU',{timeZone:'Europe/Kyiv',day:'2-digit',month:'2-digit',weekday:'short'});
+const slotClock=t=>new Date(t).toLocaleTimeString('ru-RU',{timeZone:'Europe/Kyiv',hour:'2-digit',minute:'2-digit'});
 let noticeUser=null,announcedRequests=new Set(),incomingQueue=[],incomingShowing=null,focusBeforeIncoming=null;
 function displayIncoming(){
  if(incomingShowing||!incomingQueue.length)return;
@@ -130,6 +133,48 @@ function alertForIncoming(rows){
   displayIncoming();
  }
 }
+function renderSlots(){
+ const root=$('slotManager');root.replaceChildren();
+ for(const slot of slots.filter(x=>new Date(x.slot_start).getTime()<Date.now()+36*3600000)){
+  const card=txt('div','','courier-row');
+  const info=txt('div');info.append(txt('div',slotDay(slot.slot_start)+' · '+slotClock(slot.slot_start)+'–'+slotClock(slot.slot_end),'name'),txt('div','Занято '+slot.booked+'/'+slot.capacity+(slot.is_open?' · открыт':' · закрыт'),'muted'));
+  const actions=txt('div','','actions'),selector=document.createElement('select');
+  selector.setAttribute('aria-label','Вместимость слота '+slotDay(slot.slot_start));
+  for(let n=1;n<=12;n++){const option=txt('option',String(n)+' мест');option.value=n;selector.append(option)}
+  if(slot.capacity>12){const option=txt('option',slot.capacity+' мест');option.value=slot.capacity;selector.append(option)}
+  selector.value=String(slot.capacity);
+  const toggle=txt('button',slot.is_open?'Закрыть слот':'Открыть слот','secondary');
+  const save=txt('button','Сохранить места','secondary');
+  const msg=txt('p','','muted');
+  async function change(capacity,open){
+   toggle.disabled=true;save.disabled=true;
+   try{const {error}=await db.rpc('teplo_pilot_manage_slot',{p_slot_id:slot.id,p_capacity:capacity,p_is_open:open});
+    if(error)throw error;TEPLOTouch.notify('Слот обновлён','success');await load();
+   }catch(e){msg.textContent='Ошибка: '+(e?.message||String(e))}
+   finally{toggle.disabled=false;save.disabled=false}
+  }
+  toggle.onclick=()=>change(Number(selector.value),!slot.is_open);
+  save.onclick=()=>change(Number(selector.value),slot.is_open);
+  actions.append(selector,save,toggle,msg);card.append(info,actions);root.append(card);
+ }
+ if(!root.children.length)root.append(txt('p','Нет ближайших слотов.','muted'));
+}
+async function release(job,btn,feedback){
+ if(!confirm('Вернуть ещё не забранный тестовый заказ в общую очередь?'))return;
+ btn.disabled=true;
+ try{const {error}=await db.rpc('teplo_pilot_release_job',{p_job_id:job.id});
+ if(error)throw error;TEPLOTouch.notify('Заказ возвращён в очередь','success');await load()}
+ catch(e){feedback.textContent='Ошибка: '+(e?.message||String(e))}
+ finally{btn.disabled=false}
+}
+async function move(job,target,btn,feedback){
+ if(!target){feedback.textContent='Выбери слот';return}
+ btn.disabled=true;
+ try{const {error}=await db.rpc('teplo_pilot_move_job',{p_job_id:job.id,p_slot_id:target});
+ if(error)throw error;TEPLOTouch.notify('Заказ перенесён','success');await load()}
+ catch(e){feedback.textContent='Ошибка: '+(e?.message||String(e))}
+ finally{btn.disabled=false}
+}
 function stat(label,value){const e=txt('div');e.append(txt('strong',String(value)),txt('span',label,'muted'));return e}
 async function assign(job,id,button,feedback){
  if(!id){feedback.textContent='Сначала выбери курьера.';return}
@@ -157,6 +202,7 @@ function card(job){
  e.append(txt('p','🏪 '+job.shop_name_snapshot+' · '+new Date(job.created_at).toLocaleString('ru-RU',{hour:'2-digit',minute:'2-digit',day:'2-digit',month:'2-digit'})));
  e.append(txt('p','📦 '+job.order_summary),txt('p','⏱ Готовность: '+(job.ready_in_minutes===0?'сразу':job.ready_in_minutes+' мин')));
  e.append(txt('p','🧪 Доставка: '+uah(job.delivery_fee_uah)+' · Курьеру после доставки: '+uah(job.courier_reward_uah)));
+ if(job.slot_id){const slot=slots.find(x=>x.id===job.slot_id);if(slot)e.append(txt('p','🕒 '+slotDay(slot.slot_start)+' · '+slotClock(slot.slot_start)+'–'+slotClock(slot.slot_end)+' · '+slot.booked+'/'+slot.capacity,'muted'))}else e.append(txt('p','🕒 Старая заявка без слота','muted'));
  const route=txt('div','','route');
  route.append(txt('p','🏪 ЗАБРАТЬ: '+(job.shop_address_snapshot||'Адрес забора не указан')),
               txt('p','📍 ДОСТАВИТЬ: '+job.delivery_address));
@@ -170,6 +216,18 @@ function card(job){
   const b=txt('button','🛵 Назначить курьера');b.disabled=!availableCouriers.length;
   b.onclick=()=>assign(job,select.value,b,feedback);
   const actions=txt('div','','actions');actions.append(select,b);e.append(actions);
+ }
+ if(['assigned','accepted'].includes(job.status)){
+  const b=txt('button','↩ Вернуть в очередь','secondary');b.onclick=()=>release(job,b,feedback);e.append(b);
+ }
+ if(job.status==='new'){
+  const selector=document.createElement('select');selector.setAttribute('aria-label','Новый слот для заказа '+job.id.slice(0,8));
+  const first=txt('option','Перенести в другой слот');first.value='';selector.append(first);
+  for(const slot of slots.filter(s=>s.is_open&&s.booked<s.capacity)){
+   const opt=txt('option',slotDay(slot.slot_start)+' · '+slotClock(slot.slot_start)+' · '+slot.booked+'/'+slot.capacity);opt.value=slot.id;selector.append(opt)
+  }
+  const moveButton=txt('button','Перенести','secondary');moveButton.onclick=()=>move(job,selector.value,moveButton,feedback);
+  const controls=txt('div','','actions');controls.append(selector,moveButton);e.append(controls);
  }
  if(['new','assigned'].includes(job.status)){
   const b=txt('button','Отменить заявку','secondary');b.onclick=()=>cancel(job,b,feedback);e.append(b);
@@ -192,13 +250,15 @@ async function load(){
   const {data:p,error:pe}=await db.from('profiles').select('role').eq('id',currentUser.id).single();if(pe)throw pe;
   if(!['admin','dispatcher'].includes(p.role)){$('courierRoster').replaceChildren();$('role').textContent='Нет доступа';$('message').textContent='Нужна роль диспетчера или администратора.';$('list').replaceChildren();$('stats').replaceChildren();return}
   $('role').textContent=p.role==='admin'?'Администратор':'Диспетчер';
-  const [{data:roster,error:re},{data:jobs,error:je},{count:adminActive,error:adminCountError}]=await Promise.all([
+  const [{data:roster,error:re},{data:jobs,error:je},{count:adminActive,error:adminCountError},{data:slotRows,error:slotError}]=await Promise.all([
     db.rpc('teplo_dispatch_courier_roster'),
-    db.from('teplo_pilot_jobs').select('id,shop_name_snapshot,shop_address_snapshot,order_summary,ready_in_minutes,customer_name,customer_phone,delivery_address,status,courier_id,created_at,delivery_fee_uah,courier_reward_uah')
+    db.from('teplo_pilot_jobs').select('id,slot_id,shop_name_snapshot,shop_address_snapshot,order_summary,ready_in_minutes,customer_name,customer_phone,delivery_address,status,courier_id,created_at,delivery_fee_uah,courier_reward_uah')
       .order('created_at',{ascending:false}).limit(80),
-    db.from('teplo_pilot_jobs').select('id',{count:'exact',head:true}).eq('courier_id',currentUser.id).in('status',['assigned','accepted','picked_up'])
+    db.from('teplo_pilot_jobs').select('id',{count:'exact',head:true}).eq('courier_id',currentUser.id).in('status',['assigned','accepted','picked_up']),
+    db.rpc('teplo_pilot_list_slots')
   ]);
-  if(re)throw re;if(je)throw je;if(adminCountError)throw adminCountError;
+  if(re)throw re;if(je)throw je;if(adminCountError)throw adminCountError;if(slotError)throw slotError;
+  slots=slotRows||[];renderSlots();
   window.dispatchEvent(new Event('teplo:sync-ok'));
 
   
