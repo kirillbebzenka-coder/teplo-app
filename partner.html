@@ -65,6 +65,9 @@ nav a.active{background:#37172f;color:#ffc0e7;border:1px solid #733865}
   <label for="shop">Заведение</label>
   <select id="shop" required></select>
   <p id="pickupAddress" class="muted" aria-live="polite">🏪 Откуда забрать: выбери заведение</p>
+  <label for="slot">Время доставки · слот (до 4 заказов)</label>
+  <select id="slot" required><option value="">Загружаем слоты…</option></select>
+  <p id="slotHint" class="muted">Время по Киеву · доступные места обновляются автоматически.</p>
   <p id="pilotFee" class="muted">🧪 Проверяем расчётную стоимость доставки…</p>
   <label for="summary">Что нужно забрать</label>
   <textarea id="summary" maxlength="400" placeholder="Например: 2 пиццы, готовность через 15 минут" required></textarea>
@@ -100,7 +103,26 @@ const $=id=>document.getElementById(id);
 const node=(tag,text='',cls='')=>{const e=document.createElement(tag);e.textContent=String(text??'');if(cls)e.className=cls;return e};
 const uah=n=>Number(n||0).toLocaleString('ru-RU',{maximumFractionDigits:2})+' ₴';
 const states={new:'Новая',assigned:'Курьер назначен',accepted:'Курьер принял',picked_up:'Забрал заказ',delivered:'Завершена',cancelled:'Отменена'};
-let activeUser=null,activeShopIds=[],shopAddresses=new Map(),draftId=null,processing=false,fetching=false;
+let activeUser=null,activeShopIds=[],shopAddresses=new Map(),draftId=null,processing=false,fetching=false,slotsBusy=false;
+const slotTime=t=>new Date(t).toLocaleTimeString('ru-RU',{timeZone:'Europe/Kyiv',hour:'2-digit',minute:'2-digit'});
+const slotDate=t=>new Date(t).toLocaleDateString('ru-RU',{timeZone:'Europe/Kyiv',day:'2-digit',month:'2-digit',weekday:'short'});
+async function loadSlots(){
+ if(slotsBusy||!activeShopIds.length)return;slotsBusy=true;
+ const select=$('slot'),old=select.value;
+ try{
+  const {data,error}=await db.rpc('teplo_pilot_list_slots');if(error)throw error;
+  select.replaceChildren();
+  const available=(data||[]).filter(s=>s.is_open&&Number(s.booked)<Number(s.capacity));
+  for(const s of available){
+   const option=node('option',slotDate(s.slot_start)+' · '+slotTime(s.slot_start)+'–'+slotTime(s.slot_end)+' · '+s.booked+'/'+s.capacity+' заказов');
+   option.value=s.id;select.append(option);
+  }
+  if(available.some(s=>s.id===old))select.value=old;
+  if(!available.length){const option=node('option','Нет свободных слотов');option.value='';select.append(option)}
+  $('slotHint').textContent=available.length?'Выбери доступное время. Время по Киеву; занятость проверяется сервером.':'Свободных слотов сейчас нет. Обратись к диспетчеру.';
+ }catch(e){$('slotHint').textContent='Не удалось обновить слоты: '+(e?.message||String(e))}
+ finally{slotsBusy=false}
+}
 async function getIdentity(){
  const {data,error}=await db.auth.getUser();
  if(error)throw error;
@@ -134,6 +156,7 @@ async function getIdentity(){
  updatePickup();
  $('requestForm').hidden=!ids.length;
  $('accessMessage').textContent=ids.length?'Создавай только тестовые заявки, настоящий выезд запрещён.':'Требуется роль сотрудника подключённого магазина или администратора.';
+ if(ids.length)await loadSlots();
  return ids.length>0;
 }
 async function loadJobs(){
@@ -142,7 +165,7 @@ async function loadJobs(){
  try{
   if(!activeUser){root.replaceChildren(node('p','Войди в аккаунт.','muted'));return}
   let q=db.from('teplo_pilot_jobs')
-    .select('id,shop_name_snapshot,shop_address_snapshot,order_summary,ready_in_minutes,status,created_at,delivery_address,customer_name,customer_phone,delivery_fee_uah')
+    .select('id,slot_id,shop_name_snapshot,shop_address_snapshot,order_summary,ready_in_minutes,status,created_at,delivery_address,customer_name,customer_phone,delivery_fee_uah')
     .eq('created_by',activeUser.id).order('created_at',{ascending:false}).limit(30);
   const {data,error}=await q;if(error)throw error;
   window.dispatchEvent(new Event('teplo:sync-ok'));
@@ -153,6 +176,7 @@ async function loadJobs(){
    const top=node('div','','row');
    top.append(node('strong','№'+job.id.slice(0,8)),node('span',states[job.status]||job.status,'pill'));
    card.append(top,node('p',job.shop_name_snapshot+' · '+new Date(job.created_at).toLocaleString('ru-RU',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})));
+   card.append(node('p',job.slot_id?'🕒 Записан в выбранный слот':'🕒 Старая заявка · без слота','muted'));
    card.append(node('p','🧪 Стоимость доставки: '+uah(job.delivery_fee_uah)+' (без оплаты)'),node('p','📦 '+job.order_summary),node('p','🏪 Забрать: '+(job.shop_address_snapshot||'Адрес забора не указан')),node('p','📍 Доставить: '+job.delivery_address),node('p','👤 '+job.customer_name),node('p','☎ '+job.customer_phone),node('p','Готовность: '+(job.ready_in_minutes===0?'сразу':job.ready_in_minutes+' мин')));
    if(['new','assigned'].includes(job.status)){
     const b=node('button','Отменить тестовую заявку','secondary');
@@ -171,6 +195,7 @@ $('requestForm').addEventListener('submit',async ev=>{
  const feedback=$('feedback');feedback.className='muted';
  const shop=$('shop').value;
  if(!activeShopIds.includes(shop)){feedback.textContent='Не выбрано доступное заведение';TEPLOTouch.notify('Выбери заведение','error');return}
+ if(!$('slot').value){feedback.textContent='Выбери свободный временной слот';return}
  if(!draftId)draftId=crypto.randomUUID();
  processing=true;TEPLOTouch.busy($('send'),true,'Отправляем заявку');feedback.textContent='Передаём заявку диспетчеру…';TEPLOTouch.notify('Отправляем заявку диспетчеру…','progress');
  try{
@@ -178,7 +203,7 @@ $('requestForm').addEventListener('submit',async ev=>{
    p_shop_id:shop,p_customer_name:$('customer').value.trim(),
    p_customer_phone:$('phone').value.trim(),p_delivery_address:$('address').value.trim(),
    p_order_summary:$('summary').value.trim(),p_ready_in_minutes:Number($('ready').value),
-   p_request_id:draftId
+   p_request_id:draftId,p_slot_id:$('slot').value
   });
   if(error)throw error;
   if(!data)throw new Error('Сервер не вернул номер заявки');
@@ -189,14 +214,14 @@ $('requestForm').addEventListener('submit',async ev=>{
   feedback.textContent='✓ Тестовая заявка №'+String(data).slice(0,8)+' передана диспетчеру.';TEPLOTouch.notify('✓ Заявка сохранена! №'+String(data).slice(0,8),'success');TEPLOTouch.done($('send'));
   $('feedback').scrollIntoView({behavior:'smooth',block:'center'});
   $('summary').value='';
-  await loadJobs();
+  await loadJobs();await loadSlots();
  }catch(e){feedback.className='err';feedback.textContent='Ошибка: '+(e?.message||String(e))+'. Повторная отправка не создаст дубль.';TEPLOTouch.notify('Не удалось сохранить. Причина указана под кнопкой.','error');feedback.scrollIntoView({behavior:'smooth',block:'center'})}
  finally{processing=false;TEPLOTouch.busy($('send'),false)}
 });
 $('refresh').onclick=loadJobs;
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)void loadJobs()});
 window.addEventListener('online',()=>{void init()});
-window.setInterval(()=>{if(!document.hidden&&navigator.onLine)void loadJobs()},8000);
+window.setInterval(()=>{if(!document.hidden&&navigator.onLine){void loadJobs();void loadSlots()}},8000);
 db.auth.onAuthStateChange(()=>setTimeout(()=>void init(),0));
 let initializing=false;
 async function init(){if(initializing)return;initializing=true;try{await getIdentity();await loadJobs()}catch(e){window.dispatchEvent(new Event('teplo:sync-error'));$('accessMessage').textContent='Не удалось проверить аккаунт: '+(e?.message||String(e));if(navigator.onLine)$('requestForm').hidden=true}finally{initializing=false}}
