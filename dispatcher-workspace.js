@@ -46,7 +46,8 @@
    get active(){return active},
    setCount(id,n){const b=document.getElementById('workspace-count-'+id);if(b)b.textContent=String(Math.max(0,Number(n)||0))}
   };
-  show('buyers');
+  const requested=new URLSearchParams(window.location.search).get('tab');
+  show(tabs.some(t=>t.id===requested)?requested:'buyers');
  }
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});
  else init();
