@@ -48,7 +48,9 @@ nav a.active{background:#37172f;color:#ffc0e7;border:1px solid #733865}
 </style>
 <link rel="stylesheet" href="./neon.css?v=26">
 <link rel="stylesheet" href="./pilot-touch.css?v=29">
+<link rel="stylesheet" href="./teplo-slot-picker.css?v=48">
 <script src="./pilot-touch.js?v=29" defer></script>
+<script src="./teplo-slot-picker.js?v=48" defer></script>
 <script src="./pilot-connectivity.js?v=31" defer></script>
 <script type="module" src="./role-portal.js?v=35"></script><script src="./pilot-ui-icons.js?v=45" defer></script>
 </head>
@@ -67,7 +69,7 @@ nav a.active{background:#37172f;color:#ffc0e7;border:1px solid #733865}
   <select id="shop" required></select>
   <p id="pickupAddress" class="muted" aria-live="polite">Точка забора: выбери заведение</p>
   <label for="slot">Время доставки · слот (до 4 заказов)</label>
-  <select id="slot" required><option value="">Загружаем слоты…</option></select>
+  <select id="slot" required hidden aria-label="Выбранный временной слот"><option value="">Загружаем слоты…</option></select><div id="slotPickerHost"></div>
   <p id="slotHint" class="muted">Время по Киеву · доступные места обновляются автоматически.</p>
   <p id="pilotFee" class="muted">Загружаем стоимость доставки…</p>
   <label for="summary">Состав заказа</label>
@@ -110,6 +112,7 @@ const slotDate=t=>new Date(t).toLocaleDateString('ru-RU',{timeZone:'Europe/Kyiv'
 async function loadSlots(){
  if(slotsBusy||!activeShopIds.length)return;slotsBusy=true;
  const select=$('slot'),old=select.value;
+  if($('slotPickerHost').contains(document.activeElement))return;
  try{
   const {data,error}=await db.rpc('teplo_pilot_list_slots');if(error)throw error;
   select.replaceChildren();
@@ -119,6 +122,8 @@ async function loadSlots(){
    option.value=s.id;select.append(option);
   }
   if(available.some(s=>s.id===old))select.value=old;
+  const picker=TEPLOSlotPicker.create(available,{value:select.value,onChange:id=>{select.value=id;select.dispatchEvent(new Event('change'))}});
+  $('slotPickerHost').replaceChildren(picker.element);
   if(!available.length){const option=node('option','Нет свободных слотов');option.value='';select.append(option)}
   $('slotHint').textContent=available.length?'Выбери доступное время. Время по Киеву; занятость проверяется сервером.':'Свободных слотов сейчас нет. Обратись к диспетчеру.';
  }catch(e){$('slotHint').textContent='Не удалось обновить слоты: '+(e?.message||String(e))}
