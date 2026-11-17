@@ -186,7 +186,7 @@ let earnedByJob=new Map();
 let claiming=false;
 const slotDate=t=>new Date(t).toLocaleDateString('ru-RU',{timeZone:'Europe/Kyiv',day:'2-digit',month:'2-digit'});
 const slotClock=t=>new Date(t).toLocaleTimeString('ru-RU',{timeZone:'Europe/Kyiv',hour:'2-digit',minute:'2-digit'});
-let noticeUser=null,announcedAssignments=new Set(),incomingQueue=[],incomingShowing=null,focusBeforeIncoming=null;
+let noticeUser=null,announcedAssignments=new Set(),announcedOpenJobs=new Set(),incomingQueue=[],incomingShowing=null,focusBeforeIncoming=null;
 const time=ts=>new Date(ts).toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'});
 function toast(t,k='info'){window.TEPLOTouch?.notify?.(t,k)}
 function setTab(tab){
@@ -198,7 +198,9 @@ function displayNextIncoming(){
  if(incomingShowing||!incomingQueue.length)return;
  const j=incomingQueue.shift();
  incomingShowing=j;focusBeforeIncoming=document.activeElement;
- $('incomingTitle').textContent='Новый заказ №'+j.id.slice(0,8).toUpperCase();
+ $('incomingTitle').textContent=(j.noticeKind==='open'?'Свободный заказ №':'Новый заказ №')+j.id.slice(0,8).toUpperCase();
+ $('incomingCaption').textContent=j.noticeKind==='open'?'Заявка появилась в общем слоте. Её может взять любой свободный курьер.':'Диспетчер назначил тебе тестовую доставку.';
+ $('incomingOpen').textContent=j.noticeKind==='open'?'Посмотреть в очереди':'Открыть заказ';
  $('incomingShop').textContent=j.shop_name_snapshot||'Заведение';
  $('incomingPickup').textContent=j.shop_address_snapshot||'Адрес забора не указан';
  $('incomingDropoff').textContent=j.delivery_address||'Адрес доставки не указан';
@@ -215,10 +217,11 @@ function closeIncoming(){
 }
 $('incomingLater').onclick=closeIncoming;
 $('incomingOpen').onclick=()=>{
- const id=incomingShowing?.id;closeIncoming();setTab('jobs');
- const card=[...$('activeOrders').children].find(el=>el.dataset.jobId===id);
+ const job=incomingShowing;closeIncoming();setTab('jobs');
+ const root=job?.noticeKind==='open'?$('slotBoardJobs'):$('activeOrders');
+ const card=[...root.querySelectorAll('[data-job-id]')].find(el=>el.dataset.jobId===job?.id);
  card?.scrollIntoView({behavior:'smooth',block:'start'});
- card?.querySelector('.order-action')?.focus({preventScroll:true});
+ card?.querySelector('button.primary')?.focus({preventScroll:true});
 };
 document.addEventListener('keydown',e=>{
  if($('incomingOverlay').hidden)return;
@@ -231,15 +234,27 @@ document.addEventListener('keydown',e=>{
 });
 function alertForIncoming(active){
  const assigned=active.filter(j=>j.status==='assigned');
- incomingQueue=incomingQueue.filter(j=>assigned.some(x=>x.id===j.id));
- if(incomingShowing&&!assigned.some(x=>x.id===incomingShowing.id))closeIncoming();
+ incomingQueue=incomingQueue.filter(j=>j.noticeKind==='open'||assigned.some(x=>x.id===j.id));
+ if(incomingShowing?.noticeKind!=='open'&&incomingShowing&&!assigned.some(x=>x.id===incomingShowing.id))closeIncoming();
  const fresh=assigned.filter(j=>!announcedAssignments.has(j.id));
- for(const job of fresh){announcedAssignments.add(job.id);incomingQueue.push(job)}
+ for(const job of fresh){announcedAssignments.add(job.id);incomingQueue.push({...job,noticeKind:'assigned'})}
  if(fresh.length){
   $('alert').hidden=false;
   $('alert').textContent='🔔 Назначен новый заказ №'+fresh[0].id.slice(0,8).toUpperCase();
   displayNextIncoming();
  }else if(!assigned.length){$('alert').hidden=true}
+}
+function alertForOpenQueue(free){
+ const visibleIds=new Set(free.map(j=>j.id));
+ incomingQueue=incomingQueue.filter(j=>j.noticeKind!=='open'||visibleIds.has(j.id));
+ if(incomingShowing?.noticeKind==='open'&&!visibleIds.has(incomingShowing.id))closeIncoming();
+ const fresh=free.filter(j=>!announcedOpenJobs.has(j.id));
+ for(const j of fresh)announcedOpenJobs.add(j.id);
+ if(fresh.length){
+  const first=fresh[0];incomingQueue.push({...first,noticeKind:'open'});
+  toast('🔔 '+fresh.length+' свободных заказов появилось в слотах','success');
+  displayNextIncoming();
+ }
 }
 function renderSlotBoard(free,activeCount){
  const box=$('slotBoard'),root=$('slotBoardJobs');
@@ -250,6 +265,7 @@ function renderSlotBoard(free,activeCount){
  for(const j of free){
   if(lastSlot!==j.slot_id){lastSlot=j.slot_id;const group=create('h3','🕒 '+slotDate(j.slot_start)+' · '+slotClock(j.slot_start)+'–'+slotClock(j.slot_end));root.append(group)}
   const item=create('article','','card'),head=create('div','','row');
+  item.dataset.jobId=j.id;
   head.append(create('strong','№'+j.id.slice(0,8).toUpperCase()),create('span',slotDate(j.slot_start)+' · '+slotClock(j.slot_start)+'–'+slotClock(j.slot_end),'pill'));
   item.append(head,create('h3',j.shop_name_snapshot||'Заведение'),
    create('p','🏪 Забрать: '+(j.shop_address_snapshot||'Адрес не указан')),
@@ -402,7 +418,7 @@ async function load(){
  try{
   const {data:auth,error:ae}=await db.auth.getUser();if(ae)throw ae;
   const user=auth?.user;uid=user?.id||null;
-  if(uid!==noticeUser){noticeUser=uid;announcedAssignments=new Set();incomingQueue=[];if(incomingShowing)closeIncoming();}
+  if(uid!==noticeUser){noticeUser=uid;announcedAssignments=new Set();announcedOpenJobs=new Set();incomingQueue=[];if(incomingShowing)closeIncoming();}
   if(!user){lockPage('Войди под своим аккаунтом, чтобы получить доступ к рабочим заданиям.');return}
   const {data:profile,error:pe}=await db.from('profiles').select('role,full_name').eq('id',uid).single();if(pe)throw pe;
   role=profile?.role||'';
@@ -453,6 +469,7 @@ async function load(){
   if(!history.length)historyRoot.append(create('p','Завершённых заказов пока нет.','muted'));
   for(const job of history)historyRoot.append(renderHistory(job));
   alertForIncoming(active);
+  alertForOpenQueue(openJobs||[]);
   $('screenState').textContent='● Синхронизировано с сервером · '+time(Date.now());
   $('loading').hidden=true;$('lock').hidden=true;$('app').hidden=false;$('tabbar').hidden=false;
   loaded=true;window.dispatchEvent(new Event('teplo:sync-ok'));
