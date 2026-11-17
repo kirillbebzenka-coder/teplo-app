@@ -48,8 +48,10 @@ nav a.active{background:#39142e;color:#ffc3e8}
 </style><link rel="stylesheet" href="./neon.css?v=26">
 <link rel="stylesheet" href="./pilot-touch.css?v=29">
 <link rel="stylesheet" href="./dispatcher-workspace.css?v=47">
+<link rel="stylesheet" href="./teplo-slot-picker.css?v=48">
 <script src="./pilot-touch.js?v=29" defer></script>
 <script src="./dispatcher-workspace.js?v=47" defer></script>
+<script src="./teplo-slot-picker.js?v=48" defer></script>
 <script src="./pilot-connectivity.js?v=31" defer></script><script type="module" src="./role-portal.js?v=35"></script><script src="./pilot-ui-icons.js?v=45" defer></script>
 </head>
 <body><main>
@@ -150,7 +152,7 @@ function renderSlots(){
  picker.value=selectedSlotDate;
  for(const slot of slots.filter(x=>slotDateKey(x.slot_start)===selectedSlotDate)){
   const card=txt('div','','courier-row');
-  const info=txt('div');info.append(txt('div',slotDay(slot.slot_start)+' · '+slotClock(slot.slot_start)+'–'+slotClock(slot.slot_end),'name'),txt('div','Занято '+slot.booked+'/'+slot.capacity+(slot.is_open?' · открыт':' · закрыт'),'muted'));
+  const info=txt('div','','teplo-slot-manager-cap');info.append(txt('div',slotClock(slot.slot_start)+' – '+slotClock(slot.slot_end),'teplo-slot-manager-time'),txt('div','Свободно '+Math.max(0,slot.capacity-slot.booked)+' из '+slot.capacity+' · '+(slot.is_open?'Приём открыт':'Приём закрыт'),'teplo-slot-manager-free'));
   const actions=txt('div','','actions'),selector=document.createElement('select');
   selector.setAttribute('aria-label','Вместимость слота '+slotDay(slot.slot_start));
   for(let n=1;n<=12;n++){const option=txt('option',String(n)+' мест');option.value=n;selector.append(option)}
