@@ -246,7 +246,9 @@ function renderSlotBoard(free,activeCount){
  box.hidden=false;root.replaceChildren();$('slotBoardCount').textContent=String(free.length);
  $('slotBoardHint').textContent='Свободные слоты по Киеву · в работе '+activeCount+'/2 · выбери до '+Math.max(0,2-activeCount)+' заказов';
  if(!free.length){root.append(create('p','Пока свободных заказов нет. Новые заявки появятся здесь автоматически.','muted'));return}
+ let lastSlot='';
  for(const j of free){
+  if(lastSlot!==j.slot_id){lastSlot=j.slot_id;const group=create('h3','🕒 '+slotDate(j.slot_start)+' · '+slotClock(j.slot_start)+'–'+slotClock(j.slot_end));root.append(group)}
   const item=create('article','','card'),head=create('div','','row');
   head.append(create('strong','№'+j.id.slice(0,8).toUpperCase()),create('span',slotDate(j.slot_start)+' · '+slotClock(j.slot_start)+'–'+slotClock(j.slot_end),'pill'));
   item.append(head,create('h3',j.shop_name_snapshot||'Заведение'),
@@ -261,7 +263,7 @@ function renderSlotBoard(free,activeCount){
    try{
     const {error}=await db.rpc('teplo_pilot_claim_job',{p_job_id:j.id});
     if(error)throw error;
-    toast('Заказ закреплён за тобой','success');await load();
+    claiming=false;toast('Заказ закреплён за тобой','success');await load();
    }catch(e){msg.textContent='Не удалось взять: '+(e?.message||String(e));toast('Заказ недоступен','error');}
    finally{claiming=false}
   };
