@@ -14,7 +14,7 @@ const filters=el('div','','buyer-filters'),shell=el('div','','queue-shell');
 const root=el('div','','queue-list');root.id='buyerOrders';
 const details=el('div','','queue-detail');details.id='buyerDetails';
 shell.append(root,details);section.append(filters,shell);
-let busy=false,selectedId=null,activeFilter='work',lastSignature=null,ordersCache=[],tasksCache=[],slotsCache=[],linksCache=[];
+let busy=false,selectedId=null,activeFilter='work',lastSignature=null,seenBuyerIds=null,ordersCache=[],tasksCache=[],slotsCache=[],linksCache=[];
 const filterList=[['work','В обработке'],['issue','Проблемы'],['ready','К передаче'],['sent','У курьеров'],['all','Все']];
 function orderState(order){
  const pieces=tasksCache.filter(t=>t.order_id===order.id);
@@ -135,12 +135,21 @@ async function load(){
   ]);
   if(oe)throw oe;if(te)throw te;if(se)throw se;if(le)throw le;
   ordersCache=orders||[];tasksCache=tasks||[];slotsCache=slots||[];linksCache=links||[];
+  const nextIds=new Set(ordersCache.map(o=>o.id));
+  if(seenBuyerIds!==null){
+   for(const order of ordersCache.filter(o=>!seenBuyerIds.has(o.id)))window.TEPLODispatcherAlert?.buyer(order);
+  }
+  seenBuyerIds=nextIds;
   const signature=JSON.stringify({o:ordersCache.map(o=>[o.id,o.total]),t:tasksCache.map(t=>[t.order_id,t.shop_id,t.state,t.operator_note]),j:linksCache.map(j=>[j.id,j.status]),s:slotsCache.map(x=>[x.id,x.booked,x.capacity,x.is_open])});
   const editing=details.contains(document.activeElement)&&['INPUT','SELECT','TEXTAREA'].includes(document.activeElement?.tagName);
   if(signature!==lastSignature&&!editing){lastSignature=signature;renderQueue()}
  }catch(e){const p=el('p','Не удалось загрузить заказы: '+(e?.message||String(e)),'warning');root.prepend(p)}
  finally{busy=false;refresh.disabled=false}
 }
+window.TEPLOBuyerOrders={open(id){
+ selectedId=id;activeFilter='all';section.dataset.mobileView='detail';renderQueue();
+ details.scrollIntoView({block:'start',behavior:'smooth'});
+}};
 refresh.onclick=()=>{lastSignature=null;void load()};
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)void load()});
 window.addEventListener('online',()=>void load());
