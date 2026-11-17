@@ -23,6 +23,7 @@ nav.teplo-tabs a span{font-size:clamp(10px,2.65vw,13px)}
 main{padding-bottom:calc(125px + env(safe-area-inset-bottom))}
 </style><link rel="stylesheet" href="./theme.css?v=20"><link rel="stylesheet" href="./neon.css?v=26">
 <link rel="stylesheet" href="./pilot-touch.css?v=29">
+<link rel="stylesheet" href="./team-polish.css?v=54"><script src="./pilot-ui-icons.js?v=54" defer></script>
 <style>
 #courierInvitation{display:grid;gap:10px}
 .invite-url{font-size:12px;color:#aca6b9;overflow-wrap:anywhere}
@@ -38,14 +39,14 @@ main{padding-bottom:calc(125px + env(safe-area-inset-bottom))}
 
 </style><script src="./pilot-touch.js?v=29" defer></script>
 <script type="module" src="./role-portal.js?v=35"></script></head><body><main>
-<div class="row"><span class="brand">TEPLO</span><a href="dispatcher.html?v=18">← Диспетчер</a></div>
+<div class="row"><span class="brand">TEPLO</span><a href="pilot-dispatch.html?v=54">← Диспетчер</a></div>
 <h1>Управление командой</h1>
 <p class="muted">Администрирование ролей, магазинов и сотрудников TEPLO.</p>
 <section><div class="row"><button id="refresh">Обновить</button><span id="access" class="role">Проверяем роль…</span></div><p id="notice" class="muted" role="status" aria-live="polite">Проверяем доступ…</p></section>
 <div id="adminArea" hidden>
-<section id="pilotPricing"><h2>🧪 Тестовые тарифы</h2><p class="muted">Расчётные суммы для пилота. Никаких платежей или настоящих обязательств.</p><form id="pricingForm"><label for="deliveryPrice">Стоимость доставки, грн</label><input id="deliveryPrice" type="number" step="0.01" min="1" max="5000" required><label for="courierPrice">Курьеру за доставленный заказ, грн</label><input id="courierPrice" type="number" step="0.01" min="1" max="5000" required><button type="submit" id="savePricing" class="invite-button">Сохранить тестовый тариф</button><p id="pricingFeedback" class="muted" role="status"></p></form><p class="muted">Новый тариф применяется к будущим заявкам; суммы созданных заказов не меняются.</p></section>
+<section id="pilotPricing"><h2>Тестовые тарифы</h2><p class="muted">Расчётные суммы для пилота. Никаких платежей или настоящих обязательств.</p><form id="pricingForm"><label for="deliveryPrice">Стоимость доставки, грн</label><input id="deliveryPrice" type="number" step="0.01" min="1" max="5000" required><label for="courierPrice">Курьеру за доставленный заказ, грн</label><input id="courierPrice" type="number" step="0.01" min="1" max="5000" required><button type="submit" id="savePricing" class="invite-button">Сохранить тестовый тариф</button><p id="pricingFeedback" class="muted" role="status"></p></form><p class="muted">Новый тариф применяется к будущим заявкам; суммы созданных заказов не меняются.</p></section>
 <section id="courierInvitation">
-<h2>🛵 Подключить курьера</h2>
+<h2>Подключить курьера</h2>
 <p class="muted">Личный аккаунт для каждого курьера. Пароли и доступ администратора передавать не нужно.</p>
 <ol class="instructions">
 <li>Отправь курьеру ссылку на регистрацию.</li>
@@ -53,7 +54,7 @@ main{padding-bottom:calc(125px + env(safe-area-inset-bottom))}
 <li>Назначь роль «Курьер» по его email в форме ниже.</li>
 <li>Курьер открывает смену, после чего появляется доступным диспетчеру.</li>
 </ol>
-<button id="copyCourierLink" class="invite-button" type="button">📋 Скопировать приглашение курьеру</button>
+<button id="copyCourierLink" class="invite-button" type="button">Скопировать приглашение</button>
 <span class="invite-url">https://kirillbebzenka-coder.github.io/teplo-app/courier-start.html?v=33</span>
 <p id="inviteFeedback" class="muted" role="status" aria-live="polite"></p>
 </section>
@@ -78,15 +79,15 @@ main{padding-bottom:calc(125px + env(safe-area-inset-bottom))}
 <div class="row"><h2>Все зарегистрированные аккаунты</h2><span class="muted">В том числе без роли курьера</span></div>
 <p class="muted">Аккаунт ещё не подтверждён — назначения недоступны. Подтверждённый покупатель — можно назначить курьером кнопкой. Сотрудник на смене отображается ниже и в диспетчерской.</p>
 <div id="accountDirectory" class="accounts"><p class="muted">Загружаем аккаунты…</p></div>
-</section><section><h2>Пилот курьерской службы</h2><p class="muted">Тестируй заявки без настоящих клиентов или доставок. Администратор может открыть кабинет курьера для самотестирования, не меняя роль.</p><p><a href="partner.html?v=33">Создать заявку</a> · <a href="pilot-dispatch.html?v=33">Диспетчер</a> · <a href="pilot-courier.html?v=33">Курьер</a></p></section><section><h2>Сотрудники</h2><div id="staffList" class="cards"></div></section>
+</section><section><h2>Пилот курьерской службы</h2><p class="muted">Тестируй заявки без настоящих клиентов или доставок. Администратор может открыть кабинет курьера для самотестирования, не меняя роль.</p><p><a href="partner.html?v=54">Создать заявку</a> · <a href="pilot-dispatch.html?v=54">Диспетчер</a> · <a href="pilot-courier.html?v=54">Курьер</a></p></section><section><h2>Сотрудники</h2><div id="staffList" class="cards"></div></section>
 </div>
 <section><p class="warning"><strong>Реальная доставка отключена.</strong> Роли не включают автоматически заказы, платежи или курьерские назначения.</p></section>
 </main>
 <nav class="teplo-tabs" aria-label="Разделы TEPLO">
-<a href="./?v=18">🛍<span>Покупатель</span></a>
-<a href="dispatcher.html?v=18">📋<span>Диспетчер</span></a>
-<a href="shop.html?v=18">🏪<span>Магазин</span></a>
-<a href="courier.html?v=18">🛵<span>Курьер</span></a>
+<a href="./?v=54"><span data-teplo-icon="store"></span><span>Покупатель</span></a>
+<a href="pilot-dispatch.html?v=54"><span data-teplo-icon="clipboard"></span><span>Диспетчер</span></a>
+<a href="partner.html?v=54"><span data-teplo-icon="store"></span><span>Ресторан</span></a>
+<a href="pilot-courier.html?v=54"><span data-teplo-icon="bike"></span><span>Курьер</span></a>
 </nav>
 <script type="module">
 import {createClient} from 'https://esm.sh/@supabase/supabase-js@2';
@@ -98,7 +99,7 @@ let busy=false;
 const courierInvite='https://kirillbebzenka-coder.github.io/teplo-app/courier-start.html?v=33';
 $('copyCourierLink').onclick=async()=>{
  const msg=$('inviteFeedback');
- try{await navigator.clipboard.writeText(courierInvite);msg.textContent='✓ Ссылка скопирована. Можешь отправить её курьеру в мессенджере.';TEPLOTouch.notify('Приглашение скопировано','success')}
+ try{await navigator.clipboard.writeText(courierInvite);msg.textContent='Ссылка скопирована. Можешь отправить её курьеру.';TEPLOTouch.notify('Приглашение скопировано','success')}
  catch{msg.textContent='Скопируй ссылку ниже вручную.';window.prompt('Скопируй ссылку:',courierInvite)}
 };
 function roleField(){$('shopField').hidden=$('staffRole').value!=='venue'}
@@ -137,10 +138,10 @@ async function load(){
     if(person.full_name?.trim()&&person.email)card.append(e('div',person.email,'account-line'));
     const row=e('div');
     row.append(e('span',labelRole[person.role]||person.role,'account-chip'));
-    row.append(e('span',person.verified?'✓ Почта подтверждена':'⏳ Почта не подтверждена','account-chip '+(person.verified?'':'pending')));
+    row.append(e('span',person.verified?'Почта подтверждена':'Почта не подтверждена','account-chip '+(person.verified?'':'pending')));
     if(person.role==='courier'){
-      row.append(e('span',person.on_shift?'🟢 На смене':'⚪ Не на смене','account-chip'));
-      if(person.active_jobs)row.append(e('span','📦 В работе: '+person.active_jobs,'account-chip'));
+      row.append(e('span',person.on_shift?'На смене':'Не на смене','account-chip'));
+      if(person.active_jobs)row.append(e('span','В работе: '+person.active_jobs,'account-chip'));
     }
     card.append(row);
     if(!person.verified)card.append(e('p','Не может стать курьером до подтверждения email.','account-line'));
@@ -164,7 +165,7 @@ async function load(){
     const card=e('article');
     card.append(e('strong',member.email),e('p',labelRole[member.role]||member.role,'role'));
     if(member.shop_name)card.append(e('p','Магазин: '+member.shop_name,'small'));
-    if(member.role==='courier')card.append(e('p',member.on_shift?'🟢 На смене':'⚪ Не на смене','small'));
+    if(member.role==='courier')card.append(e('p',member.on_shift?'На смене':'Не на смене','small'));
     root.append(card);
   }
   status.textContent='Доступ подтверждён сервером. Аккаунтов: '+(accounts?.length||0)+' · сотрудников: '+(staff?.length||0);
@@ -176,7 +177,7 @@ $('pricingForm').addEventListener('submit',async ev=>{
  const fee=Number($('deliveryPrice').value),reward=Number($('courierPrice').value),msg=$('pricingFeedback'),btn=$('savePricing');
  if(!Number.isFinite(fee)||!Number.isFinite(reward)||fee<1||fee>5000||reward<1||reward>fee){msg.textContent='Проверь суммы: 1–5000 грн, вознаграждение не выше цены доставки.';return}
  btn.disabled=true;msg.textContent='Сохраняем тариф…';
- try{const {error}=await db.rpc('teplo_set_pilot_pricing',{p_delivery_fee_uah:fee,p_courier_reward_uah:reward});if(error)throw error;msg.textContent='✓ Тестовый тариф сохранён для новых заказов.';TEPLOTouch.notify('Тариф сохранён','success');}
+ try{const {error}=await db.rpc('teplo_set_pilot_pricing',{p_delivery_fee_uah:fee,p_courier_reward_uah:reward});if(error)throw error;msg.textContent='Тестовый тариф сохранён для новых заказов.';TEPLOTouch.notify('Тариф сохранён','success');}
  catch(e){msg.textContent='Ошибка: '+(e?.message||String(e));}
  finally{btn.disabled=false}
 });
@@ -190,7 +191,7 @@ $('staffForm').addEventListener('submit',async ev=>{
  try{
   const {error}=await db.rpc('teplo_set_staff_role',{p_email:email,p_role:role,p_shop_id:shop});
   if(error)throw error;
-  f.className='success';f.textContent='✓ Роль сохранена. Курьер сможет войти со своего телефона и открыть смену.';TEPLOTouch.notify('Роль сотрудника сохранена','success');
+  f.className='success';f.textContent='Роль сохранена. Курьер сможет войти со своего телефона и открыть смену.';TEPLOTouch.notify('Роль сотрудника сохранена','success');
   $('staffEmail').value='';await load();
  }catch(err){f.className='error';const msg=err?.message||String(err);f.textContent=msg.includes('Verified user with this email not found')?'Аккаунт с подтверждённой почтой не найден. Курьеру нужно зарегистрироваться по ссылке выше, подтвердить email и затем снова попробовать назначить роль.':('Не удалось сохранить: '+msg);TEPLOTouch.notify('Не удалось назначить роль','error')}
  finally{$('save').disabled=false}
