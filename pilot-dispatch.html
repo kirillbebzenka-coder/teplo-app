@@ -111,7 +111,7 @@ function displayIncoming(){
  $('incomingDropoff').textContent=j.delivery_address||'Адрес доставки не указан';
  $('incomingPrice').textContent=uah(j.delivery_fee_uah);
  $('incomingOverlay').hidden=false;$('incomingOpen').focus();
- try{if(!matchMedia('(prefers-reduced-motion: reduce)').matches)navigator.vibrate?.([170,80,170])}catch{}
+ try{if(!matchMedia('(prefers-reduced-motion: reduce)').matches)navigator.vibrate?.([290,120,380,130,330])}catch{}
 }
 function closeIncoming(){
  $('incomingOverlay').hidden=true;incomingShowing=null;
