@@ -115,6 +115,7 @@ input:focus{outline:2px solid #a874ff}
 <p id="screenState" class="muted" role="status" aria-live="polite"></p>
 <p id="alert" hidden role="status" aria-live="polite"></p>
 <div id="activeOrders"></div>
+<section id="slotBoard" class="card" hidden><div class="row"><h2>📋 Свободные заказы по слотам</h2><span id="slotBoardCount" class="pill">0</span></div><p id="slotBoardHint" class="muted">Выбирай заказ сам. Максимум два одновременно; оплата только тестовая.</p><div id="slotBoardJobs" class="info-list"></div></section>
 <section id="incomeSummary" class="card" aria-label="Будущие начисления" hidden><div class="mini-head">🧪 Тестовые начисления · не реальные деньги</div><div class="grid"><div class="metric"><span class="mini-head">Начислено за доставки</span><strong id="earnedTotal">0 ₴</strong></div><div class="metric"><span class="mini-head">Ожидается за заказ</span><strong id="pendingReward">0 ₴</strong></div></div><p class="muted">Сумма начисляется только после завершения тестовой доставки. Выплаты пока не производятся.</p></section>
 <section id="shiftCard" class="card hero">
 <div class="row"><div><div class="mini-head">Готовность к заказам</div><div id="shiftLabel" class="big status-off">Не на смене</div></div><span id="shiftEmoji" style="font-size:31px">⚪</span></div>
@@ -182,6 +183,9 @@ const todayKey=ts=>new Date(ts).toLocaleDateString('en-CA');
 const today=()=>todayKey(Date.now());
 const uah=n=>Number(n||0).toLocaleString('ru-RU',{minimumFractionDigits:0,maximumFractionDigits:2})+' ₴';
 let earnedByJob=new Map();
+let claiming=false;
+const slotDate=t=>new Date(t).toLocaleDateString('ru-RU',{timeZone:'Europe/Kyiv',day:'2-digit',month:'2-digit'});
+const slotClock=t=>new Date(t).toLocaleTimeString('ru-RU',{timeZone:'Europe/Kyiv',hour:'2-digit',minute:'2-digit'});
 let noticeUser=null,announcedAssignments=new Set(),incomingQueue=[],incomingShowing=null,focusBeforeIncoming=null;
 const time=ts=>new Date(ts).toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'});
 function toast(t,k='info'){window.TEPLOTouch?.notify?.(t,k)}
@@ -236,6 +240,35 @@ function alertForIncoming(active){
   $('alert').textContent='🔔 Назначен новый заказ №'+fresh[0].id.slice(0,8).toUpperCase();
   displayNextIncoming();
  }else if(!assigned.length){$('alert').hidden=true}
+}
+function renderSlotBoard(free,activeCount){
+ const box=$('slotBoard'),root=$('slotBoardJobs');
+ box.hidden=false;root.replaceChildren();$('slotBoardCount').textContent=String(free.length);
+ $('slotBoardHint').textContent='Свободные слоты по Киеву · в работе '+activeCount+'/2 · выбери до '+Math.max(0,2-activeCount)+' заказов';
+ if(!free.length){root.append(create('p','Пока свободных заказов нет. Новые заявки появятся здесь автоматически.','muted'));return}
+ for(const j of free){
+  const item=create('article','','card'),head=create('div','','row');
+  head.append(create('strong','№'+j.id.slice(0,8).toUpperCase()),create('span',slotDate(j.slot_start)+' · '+slotClock(j.slot_start)+'–'+slotClock(j.slot_end),'pill'));
+  item.append(head,create('h3',j.shop_name_snapshot||'Заведение'),
+   create('p','🏪 Забрать: '+(j.shop_address_snapshot||'Адрес не указан')),
+   create('p','📍 Доставить: '+j.delivery_address),
+   create('p','📦 '+(j.order_summary||'Тестовый заказ')),
+   create('p','🧪 Заработок: '+uah(j.courier_reward_uah),'big'));
+  const msg=create('p','','muted'),button=create('button','🛵 Взять в работу','primary full');
+  button.type='button';button.disabled=activeCount>=2||claiming||(!shift&&role!=='admin');
+  button.onclick=async()=>{
+   if(claiming)return;claiming=true;button.disabled=true;msg.textContent='Закрепляем заказ…';
+   try{
+    const {error}=await db.rpc('teplo_pilot_claim_job',{p_job_id:j.id});
+    if(error)throw error;
+    toast('Заказ закреплён за тобой','success');await load();
+   }catch(e){msg.textContent='Не удалось взять: '+(e?.message||String(e));toast('Заказ недоступен','error');}
+   finally{claiming=false}
+  };
+  if(activeCount>=2)msg.textContent='Лимит 2/2 — заверши один из текущих заказов.';
+  else if(!shift&&role!=='admin')msg.textContent='Начни смену, чтобы брать заявки.';
+  item.append(button,msg);root.append(item);
+ }
 }
 function textLine(t){return create('p',t)}
 function addressBlock(title,addr){
@@ -377,15 +410,16 @@ async function load(){
   $('profileRoleTitle').textContent=role==='admin'?'Администратор · тест курьера':'Курьер TEPLO';
    activeName=profile.full_name?.trim()||user.email||'Курьер';
   $('userLabel').textContent=activeName;$('profileEmail').textContent=user.email||'';
-  const [{data:jobs,error:je},{data:shifts,error:se},{data:earnings,error:ee}]=await Promise.all([
+  const [{data:jobs,error:je},{data:shifts,error:se},{data:earnings,error:ee},{data:openJobs,error:openError}]=await Promise.all([
    db.from('teplo_pilot_jobs')
     .select('id,shop_name_snapshot,shop_address_snapshot,order_summary,ready_in_minutes,customer_name,customer_phone,delivery_address,status,created_at,assigned_at,accepted_at,picked_up_at,delivered_at,delivery_fee_uah,courier_reward_uah')
     .eq('courier_id',uid).order('created_at',{ascending:false}).limit(100),
    db.from('courier_shifts').select('id,started_at,ended_at')
     .eq('courier_id',uid).order('started_at',{ascending:false}).limit(70),
-   db.from('teplo_pilot_earnings').select('job_id,amount_uah,recorded_at').eq('courier_id',uid).limit(1000)
+   db.from('teplo_pilot_earnings').select('job_id,amount_uah,recorded_at').eq('courier_id',uid).limit(1000),
+   db.rpc('teplo_pilot_open_jobs')
   ]);
-  if(je)throw je;if(se)throw se;if(ee)throw ee;
+  if(je)throw je;if(se)throw se;if(ee)throw ee;if(openError)throw openError;
   earnedByJob=new Map((earnings||[]).map(e=>[e.job_id,Number(e.amount_uah)]));
   const rows=jobs||[],active=rows.filter(j=>['assigned','accepted','picked_up'].includes(j.status));
   const history=rows.filter(j=>['delivered','cancelled'].includes(j.status));
@@ -410,8 +444,9 @@ async function load(){
   $('shiftCount').textContent=String((shifts||[]).filter(s=>todayKey(s.started_at)===today()).length);
   if(!loaded)$('profileName').value=profile.full_name||'';
   const root=$('activeOrders');root.replaceChildren();
-  if(!active.length)root.append(create('div',role==='admin'?'Нет активного тестового заказа. Открой диспетчерскую и назначь новую тестовую заявку себе.':shift?'Пока заказов нет. Ожидаем назначение от диспетчера.':'Нет активных заказов. Начни смену, чтобы диспетчер мог тебя выбрать.','card muted order-empty'));
+  if(!active.length)root.append(create('div',role==='admin'?'Выбери свободную заявку из слотов ниже. Диспетчер тоже может назначить вручную.':shift?'Выбирай свободные заказы в расписании ниже.':'Начни смену, чтобы брать свободные заказы из слотов.','card muted order-empty'));
   for(const job of active)root.append(renderActive(job));
+  renderSlotBoard(openJobs||[],active.length);
   const historyRoot=$('historyOrders');historyRoot.replaceChildren();
   if(!history.length)historyRoot.append(create('p','Завершённых заказов пока нет.','muted'));
   for(const job of history)historyRoot.append(renderHistory(job));
