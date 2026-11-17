@@ -105,6 +105,7 @@ input:focus{outline:2px solid #a874ff}
 <p id="screenState" class="muted" role="status" aria-live="polite"></p>
 <p id="alert" hidden role="status" aria-live="polite"></p>
 <div id="activeOrders"></div>
+<section id="incomeSummary" class="card" aria-label="Будущие начисления" hidden><div class="mini-head">🧪 Тестовые начисления · не реальные деньги</div><div class="grid"><div class="metric"><span class="mini-head">Начислено за доставки</span><strong id="earnedTotal">0 ₴</strong></div><div class="metric"><span class="mini-head">Ожидается за заказ</span><strong id="pendingReward">0 ₴</strong></div></div><p class="muted">Сумма начисляется только после завершения тестовой доставки. Выплаты пока не производятся.</p></section>
 <section id="shiftCard" class="card hero">
 <div class="row"><div><div class="mini-head">Готовность к заказам</div><div id="shiftLabel" class="big status-off">Не на смене</div></div><span id="shiftEmoji" style="font-size:31px">⚪</span></div>
 <p id="shiftHint" class="muted">Нажми, когда будешь готов получать тестовые назначения.</p>
@@ -122,6 +123,7 @@ input:focus{outline:2px solid #a874ff}
 <div class="metric"><span class="mini-head">Всего завершено</span><strong id="allCount">0</strong></div>
 <div class="metric"><span class="mini-head">Смен сегодня</span><strong id="shiftCount">0</strong></div>
 </div>
+<div class="card"><div class="mini-head">Тестовый заработок · без выплат</div><div id="historyEarnings" class="big">0 ₴</div><p class="muted">Только доставки, завершённые после включения финансового учёта.</p></div>
 <div id="historyOrders" class="info-list"></div>
 </section>
 <section id="tab-profile" hidden>
@@ -134,7 +136,7 @@ input:focus{outline:2px solid #a874ff}
 <button id="saveProfile" type="button" class="secondary full">Сохранить имя</button>
 <p id="profileMsg" class="muted" role="status"></p>
 <div class="line"></div>
-<p class="muted">Время работы и количество доставок — тестовая статистика. Доход не рассчитывается, поскольку тарифы не подключены.</p>
+<p class="muted">Все суммы — тестовые расчётные начисления, не деньги к выплате. Настоящие платежи и тарифы отключены.</p>
 <button id="logout" type="button" class="ghost full">Выйти из аккаунта</button>
 </section>
 </section>
@@ -155,6 +157,8 @@ let uid=null,role='',activeName='',logged=null,shiftStarted=null,shift=false,bus
 const formatDate=ts=>new Date(ts).toLocaleString('ru-RU',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
 const todayKey=ts=>new Date(ts).toLocaleDateString('en-CA');
 const today=()=>todayKey(Date.now());
+const uah=n=>Number(n||0).toLocaleString('ru-RU',{minimumFractionDigits:0,maximumFractionDigits:2})+' ₴';
+let earnedByJob=new Map();
 const time=ts=>new Date(ts).toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'});
 function toast(t,k='info'){window.TEPLOTouch?.notify?.(t,k)}
 function setTab(tab){
@@ -195,6 +199,7 @@ function renderActive(j){
  const idx=['assigned','accepted','picked_up'].indexOf(j.status);
  const label=['1 / 3 · Принять','2 / 3 · Забрать','3 / 3 · Доставить'][Math.max(0,idx)];
  c.append(create('div',label,'order-stage'));
+ c.append(create('p','🧪 За доставку: '+uah(j.delivery_fee_uah)+' · Твой будущий заработок: '+uah(j.courier_reward_uah),'order-summary'));
  // Order of stops follows the courier's task. Address and recipient are always visible.
  const stops=[
   {label:'🏪 ЗАБРАТЬ ЗАКАЗ',address:j.shop_address_snapshot||'Адрес забора не указан',active:j.status!=='picked_up'},
@@ -245,6 +250,7 @@ function renderHistory(j){
  e.append(top,create('p',formatDate(j.created_at),'micro'));
  e.append(create('p','📦 '+j.order_summary,'muted'));
  e.append(create('p','📍 '+j.delivery_address,'muted'));
+ e.append(create('p',earnedByJob.has(j.id)?'🧪 Начислено: '+uah(earnedByJob.get(j.id)):'🧪 Начисления нет (старый тестовый заказ)','muted'));
  return e;
 }
 async function shiftToggle(){
@@ -297,14 +303,16 @@ async function load(){
   $('profileRoleTitle').textContent=role==='admin'?'Администратор · тест курьера':'Курьер TEPLO';
    activeName=profile.full_name?.trim()||user.email||'Курьер';
   $('userLabel').textContent=activeName;$('profileEmail').textContent=user.email||'';
-  const [{data:jobs,error:je},{data:shifts,error:se}]=await Promise.all([
+  const [{data:jobs,error:je},{data:shifts,error:se},{data:earnings,error:ee}]=await Promise.all([
    db.from('teplo_pilot_jobs')
-    .select('id,shop_name_snapshot,shop_address_snapshot,order_summary,ready_in_minutes,customer_name,customer_phone,delivery_address,status,created_at,assigned_at,accepted_at,picked_up_at,delivered_at')
+    .select('id,shop_name_snapshot,shop_address_snapshot,order_summary,ready_in_minutes,customer_name,customer_phone,delivery_address,status,created_at,assigned_at,accepted_at,picked_up_at,delivered_at,delivery_fee_uah,courier_reward_uah')
     .eq('courier_id',uid).order('created_at',{ascending:false}).limit(100),
    db.from('courier_shifts').select('id,started_at,ended_at')
-    .eq('courier_id',uid).order('started_at',{ascending:false}).limit(70)
+    .eq('courier_id',uid).order('started_at',{ascending:false}).limit(70),
+   db.from('teplo_pilot_earnings').select('job_id,amount_uah,recorded_at').eq('courier_id',uid).limit(1000)
   ]);
-  if(je)throw je;if(se)throw se;
+  if(je)throw je;if(se)throw se;if(ee)throw ee;
+  earnedByJob=new Map((earnings||[]).map(e=>[e.job_id,Number(e.amount_uah)]));
   const rows=jobs||[],active=rows.filter(j=>['assigned','accepted','picked_up'].includes(j.status));
   const history=rows.filter(j=>['delivered','cancelled'].includes(j.status));
   shift=Boolean(shifts?.some(s=>!s.ended_at));shiftStarted=shifts?.find(s=>!s.ended_at)?.started_at||null;
@@ -319,6 +327,10 @@ async function load(){
   $('orderHeaderTitle').textContent=active.length?(active[0].status==='assigned'?'Новый заказ':active[0].status==='accepted'?'Забери заказ':'Доставь заказ'):'Мои заказы';
   $('workStatus').textContent=active.length?'📦 В работе':role==='admin'?'🧪 Тест курьера':shift?'🟢 На смене':'⚪ Не на смене';
   $('activeCount').textContent=String(active.length);
+  const earnedTotal=(earnings||[]).reduce((sum,e)=>sum+Number(e.amount_uah||0),0);
+  $('earnedTotal').textContent=uah(earnedTotal);$('historyEarnings').textContent=uah(earnedTotal);
+  $('pendingReward').textContent=uah(active.reduce((sum,j)=>sum+Number(j.courier_reward_uah||0),0));
+  $('incomeSummary').hidden=false;
   $('todayCount').textContent=String(rows.filter(j=>j.status==='delivered'&&j.delivered_at&&todayKey(j.delivered_at)===today()).length);
   $('allCount').textContent=String(rows.filter(j=>j.status==='delivered').length);
   $('shiftCount').textContent=String((shifts||[]).filter(s=>todayKey(s.started_at)===today()).length);
