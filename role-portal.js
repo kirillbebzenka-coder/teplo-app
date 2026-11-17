@@ -25,7 +25,7 @@ function applyRoleNavigation(role){
  if(!legacy)return;
  legacy.replaceChildren();
  const pages=role==='admin'?
- [['🏪','Ресторан','partner.html?v=35'],['📋','Диспетчер','pilot-dispatch.html?v=35'],['🛵','Курьер · тест','courier-start.html?v=35'],['⚙️','Команда','team.html?v=35']]:
+ [['🏪','Ресторан','partner.html?v=35'],['📋','Диспетчер','pilot-dispatch.html?v=35'],['🛵','Курьер · тест','pilot-courier.html?v=39'],['⚙️','Команда','team.html?v=35']]:
  role==='dispatcher'? [['📋','Заявки','pilot-dispatch.html?v=35']]:
  role==='venue'? [['🏪','Мои заявки','partner.html?v=35']]:
  role==='courier'? [['🛵','Мои заказы','pilot-courier.html?v=35']]:
