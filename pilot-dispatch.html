@@ -36,6 +36,15 @@ h3{font-size:17px;margin:0}
 nav{position:fixed;bottom:0;left:0;right:0;display:grid;grid-template-columns:repeat(3,1fr);gap:4px;padding:9px 12px calc(10px + env(safe-area-inset-bottom));background:#08080c;border-top:1px solid #3b2941}
 nav a{color:#cbbfcf;text-align:center;text-decoration:none;padding:12px 5px;border-radius:11px;font-size:12px;font-weight:700}
 nav a.active{background:#39142e;color:#ffc3e8}
+
+/* Incoming pilot requests: existing TEPLO colors and visual language. */
+#incomingOverlay{position:fixed;inset:0;z-index:100;display:flex;align-items:center;justify-content:center;padding:16px;background:#050507e8}
+#incomingDialog{width:min(100%,520px);max-height:calc(100dvh - 32px);overflow-y:auto;border-color:#985fff;padding:21px}
+#incomingDialog h2{font-size:clamp(28px,8vw,36px);margin:12px 0;line-height:1.14}
+#incomingDialog .incoming-place{padding:2px 0 2px 13px;border-left:3px solid #985fff;margin:12px 0}
+#incomingDialog .incoming-place p{font-weight:850;font-size:clamp(18px,5.2vw,22px);overflow-wrap:anywhere;margin:5px 0}
+#incomingDialog .incoming-amount{font-size:27px;font-weight:900}
+#incomingDialog button{display:block;width:100%;min-height:58px;font-size:17px;margin-top:10px}
 </style><link rel="stylesheet" href="./neon.css?v=26">
 <link rel="stylesheet" href="./pilot-touch.css?v=29">
 <script src="./pilot-touch.js?v=29" defer></script>
@@ -53,14 +62,74 @@ nav a.active{background:#39142e;color:#ffc3e8}
 <div id="courierRoster" class="courier-grid"><p class="muted">Загружаем команду…</p></div></section>
 <section><div class="row"><h2>Заявки</h2><span class="muted">Назначать можно только новые</span></div>
 <div id="list"></div></section>
-</main><nav aria-label="Рабочие разделы"><a href="partner.html?v=34">🏪 Ресторан</a><a href="pilot-dispatch.html?v=34" class="active">📋 Диспетчер</a><a href="pilot-courier.html?v=34">🛵 Курьер</a></nav>
+</main><div id="incomingOverlay" hidden>
+<article id="incomingDialog" class="job" role="alertdialog" aria-modal="true" aria-labelledby="incomingTitle" aria-describedby="incomingCaption">
+<span class="pill">🔔 НОВАЯ ЗАЯВКА · ТЕСТ</span>
+<h2 id="incomingTitle">Ресторан вызвал курьера</h2>
+<p id="incomingCaption" class="muted">Новая заявка ожидает назначения.</p>
+<h3 id="incomingShop"></h3>
+<div class="incoming-place"><span class="muted">🏪 ЗАБРАТЬ</span><p id="incomingPickup"></p></div>
+<div class="incoming-place"><span class="muted">📍 ДОСТАВИТЬ</span><p id="incomingDropoff"></p></div>
+<span class="muted">Стоимость доставки · тест</span>
+<p class="incoming-amount" id="incomingPrice"></p>
+<button id="incomingOpen" type="button">Открыть заявку</button>
+<button id="incomingLater" type="button" class="secondary">Позже</button>
+</article>
+</div>
+<nav aria-label="Рабочие разделы"><a href="partner.html?v=34">🏪 Ресторан</a><a href="pilot-dispatch.html?v=34" class="active">📋 Диспетчер</a><a href="pilot-courier.html?v=34">🛵 Курьер</a></nav>
 <script type="module">
 import {createClient} from 'https://esm.sh/@supabase/supabase-js@2';
 const db=createClient('https://bgtegxdekqsajttkhhrj.supabase.co','sb_publishable_aSOKkJ_F47sGj9e8v8uJ3g_24rlQ8XG');
 const $=id=>document.getElementById(id),txt=(tag,t='',cls='')=>{const e=document.createElement(tag);e.textContent=String(t??'');if(cls)e.className=cls;return e};
 const uah=n=>Number(n||0).toLocaleString('ru-RU',{maximumFractionDigits:2})+' ₴';
 const names={new:'Новая',assigned:'Курьер назначен',accepted:'Курьер принял',picked_up:'Курьер забрал',delivered:'Завершена',cancelled:'Отменена'};
-let busy=false;let currentUser=null;let couriers=[];let priorIds=null;let availableCouriers=[];
+let busy=false;let currentUser=null;let couriers=[];let availableCouriers=[];
+let noticeUser=null,announcedRequests=new Set(),incomingQueue=[],incomingShowing=null,focusBeforeIncoming=null;
+function displayIncoming(){
+ if(incomingShowing||!incomingQueue.length)return;
+ const j=incomingQueue.shift();
+ incomingShowing=j;focusBeforeIncoming=document.activeElement;
+ $('incomingTitle').textContent='Новая заявка №'+j.id.slice(0,8).toUpperCase();
+ $('incomingShop').textContent=j.shop_name_snapshot||'Заведение';
+ $('incomingPickup').textContent=j.shop_address_snapshot||'Адрес забора не указан';
+ $('incomingDropoff').textContent=j.delivery_address||'Адрес доставки не указан';
+ $('incomingPrice').textContent=uah(j.delivery_fee_uah);
+ $('incomingOverlay').hidden=false;$('incomingOpen').focus();
+ try{if(!matchMedia('(prefers-reduced-motion: reduce)').matches)navigator.vibrate?.([170,80,170])}catch{}
+}
+function closeIncoming(){
+ $('incomingOverlay').hidden=true;incomingShowing=null;
+ if(focusBeforeIncoming?.isConnected)focusBeforeIncoming.focus();
+ focusBeforeIncoming=null;
+ displayIncoming();
+}
+$('incomingLater').onclick=closeIncoming;
+$('incomingOpen').onclick=()=>{
+ const id=incomingShowing?.id;closeIncoming();
+ const card=[...$('list').children].find(el=>el.dataset.jobId===id);
+ card?.scrollIntoView({behavior:'smooth',block:'start'});
+ card?.querySelector('select')?.focus({preventScroll:true});
+};
+document.addEventListener('keydown',e=>{
+ if($('incomingOverlay').hidden)return;
+ if(e.key==='Escape'){e.preventDefault();closeIncoming();return}
+ if(e.key!=='Tab')return;
+ const buttons=[...$('incomingDialog').querySelectorAll('button:not(:disabled)')];
+ const first=buttons[0],last=buttons[buttons.length-1];
+ if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus()}
+ else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus()}
+});
+function alertForIncoming(rows){
+ const pending=rows.filter(j=>j.status==='new');
+ incomingQueue=incomingQueue.filter(j=>pending.some(x=>x.id===j.id));
+ if(incomingShowing&&!pending.some(x=>x.id===incomingShowing.id))closeIncoming();
+ const fresh=pending.filter(j=>!announcedRequests.has(j.id));
+ for(const job of fresh){announcedRequests.add(job.id);incomingQueue.push(job)}
+ if(fresh.length){
+  $('message').textContent='🔔 Новых заявок: '+fresh.length;
+  displayIncoming();
+ }
+}
 function stat(label,value){const e=txt('div');e.append(txt('strong',String(value)),txt('span',label,'muted'));return e}
 async function assign(job,id,button,feedback){
  if(!id){feedback.textContent='Сначала выбери курьера.';return}
@@ -83,6 +152,7 @@ async function cancel(job,button,feedback){
 }
 function card(job){
  const e=txt('article','','job'),top=txt('div','','row'),badge=txt('span',names[job.status]||job.status,'pill');
+ e.dataset.jobId=job.id;
  top.append(txt('strong','№'+job.id.slice(0,8)),badge);e.append(top);
  e.append(txt('p','🏪 '+job.shop_name_snapshot+' · '+new Date(job.created_at).toLocaleString('ru-RU',{hour:'2-digit',minute:'2-digit',day:'2-digit',month:'2-digit'})));
  e.append(txt('p','📦 '+job.order_summary),txt('p','⏱ Готовность: '+(job.ready_in_minutes===0?'сразу':job.ready_in_minutes+' мин')));
@@ -117,6 +187,7 @@ async function load(){
  try{
   const {data,error:ae}=await db.auth.getUser();if(ae)throw ae;
   currentUser=data?.user||null;
+  if(currentUser?.id!==noticeUser){noticeUser=currentUser?.id||null;announcedRequests=new Set();incomingQueue=[];if(incomingShowing){incomingShowing=null;$('incomingOverlay').hidden=true;}}
   if(!currentUser){$('courierRoster').replaceChildren();$('role').textContent='Нужен вход';$('message').textContent='Войди в свой аккаунт через TEPLO, затем открой этот раздел.';$('list').replaceChildren();$('stats').replaceChildren();return}
   const {data:p,error:pe}=await db.from('profiles').select('role').eq('id',currentUser.id).single();if(pe)throw pe;
   if(!['admin','dispatcher'].includes(p.role)){$('courierRoster').replaceChildren();$('role').textContent='Нет доступа';$('message').textContent='Нужна роль диспетчера или администратора.';$('list').replaceChildren();$('stats').replaceChildren();return}
@@ -153,10 +224,7 @@ async function load(){
   }
   if(!couriers.length)rootRoster.append(txt('p','Подтверждённых курьеров нет. Назначь роль в панели команды.','muted'));
 
-  const fresh=priorIds?rows.filter(j=>!priorIds.has(j.id)):[];
-  if(fresh.length)$('message').textContent='🔔 '+fresh.length+' новых тестовых заявок!';
-  else $('message').textContent='● На связи · '+new Date().toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'});
-  priorIds=ids;
+  $('message').textContent='● На связи · '+new Date().toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'});
   
   $('stats').replaceChildren(
     stat('Ждут назначения',rows.filter(j=>j.status==='new').length),
@@ -167,6 +235,7 @@ async function load(){
   const root=$('list');root.replaceChildren();
   if(!rows.length){const p=txt('p','Новых курьерских заявок пока нет.','muted');const a=txt('a','Создать тестовую заявку →');a.href='partner.html?v=34';a.style.color='#ffc1e7';root.append(p,a);return}
   for(const j of rows)root.append(card(j));
+  alertForIncoming(rows);
  }catch(e){window.dispatchEvent(new Event('teplo:sync-error'));$('message').textContent='⚠️ Ошибка обновления: '+(e?.message||String(e))+'. Уже показанные заявки сохранены на экране.'}
  finally{busy=false;$('refresh').disabled=false}
 }
