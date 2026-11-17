@@ -33,11 +33,11 @@ a.action{display:flex;justify-content:center;align-items:center;min-height:53px;
 nav{position:fixed;bottom:0;left:0;right:0;padding:11px 16px calc(11px + env(safe-area-inset-bottom));background:#08070d;border-top:1px solid #43324c;display:flex;gap:8px;justify-content:center}
 nav a{flex:1;max-width:300px;text-align:center;border-radius:12px;padding:11px 6px;text-decoration:none;background:#241a2b;color:#eac9e5;font-weight:800;font-size:13px}
 </style><link rel="stylesheet" href="./neon.css?v=26"><link rel="stylesheet" href="./pilot-touch.css?v=29">
-<script src="./pilot-touch.js?v=29" defer></script><script src="./pilot-connectivity.js?v=31" defer></script></head>
+<script src="./pilot-touch.js?v=29" defer></script><script src="./pilot-connectivity.js?v=58" defer></script></head>
 <body><main>
 <header><div class="logo">TEPLO<small>COURIER TEAM</small></div><span class="pill">🧪 Тестовый доступ</span></header>
 <h1>Твой вход в команду TEPLO</h1>
-<p class="sub">Личный аккаунт курьера. Войди или зарегистрируйся, затем администратор назначит тебе роль.</p>
+<p class="sub">Для первого входа подтверди электронную почту по письму TEPLO. Затем администратор назначит роль курьера.</p>
 <section id="authBox">
 <h2>Аккаунт курьера</h2>
 <form id="loginForm">
@@ -49,7 +49,7 @@ nav a{flex:1;max-width:300px;text-align:center;border-radius:12px;padding:11px 6
 <button class="secondary" id="signup" type="button">Создать аккаунт</button>
 <button class="secondary" id="resend" type="button">Повторить письмо</button>
 </div>
-<p id="authMessage" class="mini" role="status" aria-live="polite">Пароль доступен только тебе. Администратору сообщай только email.</p>
+<p id="authMessage" class="mini" role="status" aria-live="polite">Если аккаунт уже создан, не регистрируйся снова. Открой письмо подтверждения в почте и только потом нажимай «Войти». Пароль администратору не отправляй.</p>
 </section>
 <section id="accountBox" hidden>
 <h2>Мой статус</h2><p id="accountEmail" class="mini"></p>
@@ -59,7 +59,7 @@ nav a{flex:1;max-width:300px;text-align:center;border-radius:12px;padding:11px 6
   <div class="row"><input id="courierName" maxlength="80" placeholder="Имя курьера" autocomplete="name"><button type="button" class="secondary" id="saveName">Сохранить имя</button></div>
   <p id="nameMessage" role="status" aria-live="polite" class="mini">Можно указать имя без фамилии. Пока имя не задано, будет показан email.</p>
 </div>
-<div id="readyBox" hidden><a class="action" href="pilot-courier.html?v=35">🛵 Перейти в рабочий кабинет</a><p class="mini">Открой смену, чтобы диспетчер мог назначить тебе тестовую заявку.</p></div>
+<div id="readyBox" hidden><a class="action" href="pilot-courier.html?v=58">🛵 Перейти в рабочий кабинет</a><p class="mini">Открой смену, чтобы диспетчер мог назначить тебе тестовую заявку.</p></div>
 <div id="pendingBox" hidden>
 <p>Аккаунт готов. Теперь администратор TEPLO должен назначить ему роль <strong>«Курьер»</strong> в управлении командой.</p>
 <button id="copyEmail" class="secondary" type="button">Скопировать мой email</button>
@@ -75,13 +75,25 @@ nav a{flex:1;max-width:300px;text-align:center;border-radius:12px;padding:11px 6
 </ol>
 <p class="mini">Это учебная симуляция: никаких реальных поездок, контактов клиентов или оплаты.</p></section>
 </main>
-<nav aria-label="Рабочие страницы"><a href="pilot-courier.html?v=35">🛵 Мой рабочий кабинет</a></nav>
+<nav aria-label="Рабочие страницы"><a href="pilot-courier.html?v=58">🛵 Мой рабочий кабинет</a></nav>
 <script type="module">
 import {createClient} from 'https://esm.sh/@supabase/supabase-js@2';
 const db=createClient('https://bgtegxdekqsajttkhhrj.supabase.co','sb_publishable_aSOKkJ_F47sGj9e8v8uJ3g_24rlQ8XG');
 const $=id=>document.getElementById(id);
 const REDIRECT='https://kirillbebzenka-coder.github.io/teplo-app/courier-start.html';
 let working=false,checking=false,account=null;
+function readableError(err){
+ const text=String(err?.message||err||'Неизвестная ошибка'),code=String(err?.code||'');
+ if(code==='email_not_confirmed'||/email not confirmed/i.test(text))
+  return 'Почта ещё не подтверждена. Открой письмо TEPLO в Gmail (проверь «Спам») и перейди по ссылке, затем вернись сюда и нажми «Войти».';
+ if(code==='over_email_send_rate_limit'||code==='over_request_rate_limit'||/for security purposes|only request this after|rate limit|too many requests/i.test(text))
+  return 'Слишком частые запросы. Проверь уже отправленное письмо в почте. Не нажимай повторную отправку много раз: Supabase временно ограничивает такие запросы.';
+ if(code==='invalid_credentials'||/invalid login credentials/i.test(text))
+  return 'Неправильная почта или пароль. Если только зарегистрировался, сначала подтверди почту.';
+ if(/failed to fetch|network|fetch error/i.test(text))
+  return 'Нет соединения с сервером. Проверь интернет и открой страницу через Safari или Chrome, а не встроенный браузер Telegram.';
+ return text;
+}
 function message(msg,kind=''){const e=$('authMessage');e.className=kind||'mini';e.textContent=msg}
 function notify(msg,kind='info'){window.TEPLOTouch?.notify?.(msg,kind)}
 function setBusy(state){
@@ -91,6 +103,12 @@ function setBusy(state){
 async function current(){
  if(checking)return;checking=true;
  try{
+  const {data:sessionData,error:sessionError}=await db.auth.getSession();
+  if(sessionError)throw sessionError;
+  if(!sessionData?.session?.user){
+   account=null;$('authBox').hidden=false;$('accountBox').hidden=true;
+   window.dispatchEvent(new Event('teplo:auth-required'));return;
+  }
   const {data,error}=await db.auth.getUser();
   if(error)throw error;
   account=data?.user||null;
@@ -112,7 +130,7 @@ async function current(){
   window.dispatchEvent(new Event('teplo:sync-ok'));
  }catch(e){
   window.dispatchEvent(new Event('teplo:sync-error'));
-  message('Не удалось проверить аккаунт: '+(e?.message||String(e)),'error');
+  message('Не удалось проверить аккаунт: '+readableError(e),'error');
  }finally{checking=false}
 }
 async function auth(kind){
@@ -128,11 +146,11 @@ async function auth(kind){
   if(kind==='signup'){
    const {data,error}=await db.auth.signUp({email,password,options:{emailRedirectTo:REDIRECT}});
    if(error)throw error;
-   message(data?.session?'✓ Аккаунт создан, вход выполнен.':'Запрос на регистрацию принят. Проверь почту и спам. После подтверждения вернись сюда и войди.','success');
+   message(data?.session?'Аккаунт создан, вход выполнен.':'Регистрация принята. Подтверди почту по ссылке из письма, затем вернись и войди. Не создавай аккаунт повторно.','success');
    notify('Проверь почту для подтверждения','success');
   }else if(kind==='login'){
    const {error}=await db.auth.signInWithPassword({email,password});if(error)throw error;
-   message('✓ Вход выполнен.','success');notify('Добро пожаловать в TEPLO','success');
+   message('Вход выполнен.','success');notify('Добро пожаловать в TEPLO','success');
   }else{
    const {error}=await db.auth.resend({type:'signup',email,options:{emailRedirectTo:REDIRECT}});
    if(error)throw error;
@@ -140,8 +158,7 @@ async function auth(kind){
   }
   await current();
  }catch(e){
-  const msg=e?.message||String(e);
-  message('Ошибка: '+msg,'error');notify('Действие не выполнено','error');
+  message('Ошибка: '+readableError(e),'error');notify('Действие не выполнено','error');
  }finally{window.TEPLOTouch?.busy?.(btn,false);setBusy(false)}
 }
 $('loginForm').addEventListener('submit',event=>{event.preventDefault();void auth('login')});
