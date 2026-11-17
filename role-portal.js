@@ -25,11 +25,11 @@ function applyRoleNavigation(role){
  if(!legacy)return;
  legacy.replaceChildren();
  const pages=role==='admin'?
- [['🏪','Ресторан','partner.html?v=35'],['📋','Диспетчер','pilot-dispatch.html?v=35'],['🛵','Курьер · тест','pilot-courier.html?v=39'],['⚙️','Команда','team.html?v=35']]:
- role==='dispatcher'? [['📋','Заявки','pilot-dispatch.html?v=35']]:
- role==='venue'? [['🏪','Мои заявки','partner.html?v=35']]:
- role==='courier'? [['🛵','Мои заказы','pilot-courier.html?v=35']]:
- role==='customer'? [['🏪','Магазины','./?v=35'],['🧾','Мои заказы','order.html?v=35#orders-section']]: [];
+ [['store','Ресторан','partner.html?v=55'],['clipboard','Диспетчер','pilot-dispatch.html?v=55'],['bike','Курьер · тест','pilot-courier.html?v=55'],['users','Команда','team.html?v=55']]:
+ role==='dispatcher'? [['clipboard','Заявки','pilot-dispatch.html?v=55']]:
+ role==='venue'? [['store','Мои заявки','partner.html?v=55']]:
+ role==='courier'? [['bike','Мои заказы','pilot-courier.html?v=55']]:
+ role==='customer'? [['store','Магазины','./?v=55'],['history','Мои заказы','order.html?v=55#orders-section']]: [];
  if(!pages.length){legacy.hidden=true;return}
  legacy.hidden=false;
  legacy.style.gridTemplateColumns='repeat('+pages.length+',minmax(0,1fr))';
@@ -37,11 +37,15 @@ function applyRoleNavigation(role){
   const headerLink=document.querySelector('main>header a[href*="dispatcher"]');
   if(headerLink)headerLink.hidden=true;
  }
- for(const [emoji,label,href] of pages){
-  const a=document.createElement('a');a.href=href;a.textContent=emoji+' '+label;
+ for(const [icon,label,href] of pages){
+  const a=document.createElement('a');a.href=href;
+  const figure=document.createElement('span');figure.setAttribute('data-teplo-icon',icon);figure.setAttribute('aria-hidden','true');
+  const text=document.createElement('span');text.textContent=label;
+  a.append(figure,text);
   if(location.pathname.endsWith(href.split('?')[0])){a.className='active';a.setAttribute('aria-current','page')}
   legacy.append(a);
  }
+ window.TEPLOIcons?.mount(legacy);
 }
 async function check(){
  try{
