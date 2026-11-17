@@ -134,11 +134,9 @@ async function load(){
     id:x.id,
     name:x.full_name?.trim()||x.email||'Курьер',
     email:x.email,
-    role:'courier',
     onShift:x.on_shift===true,
     activeJobs:Number(x.active_jobs||0)
   }));
-  if(p.role==='admin')couriers.push({id:currentUser.id,name:'Я сам — тестовый курьер',email:'',role:'admin',onShift:true,activeJobs:0});
   availableCouriers=couriers.filter(x=>!(x.activeJobs>0||busyIds.has(x.id))&&x.onShift);
   const rootRoster=$('courierRoster');rootRoster.replaceChildren();
   for(const x of couriers){
@@ -147,7 +145,7 @@ async function load(){
     label.append(txt('div',x.name,'name'));
     if(x.email && x.name!==x.email)label.append(txt('div',x.email,'muted'));
     const unavailable=x.activeJobs>0||busyIds.has(x.id);
-    const status=unavailable?'📦 Занят · '+Math.max(x.activeJobs,1)+' в работе':x.role==='admin'?'🧪 Доступен для теста':x.onShift?'🟢 На смене · свободен':'⚪ Не на смене';
+    const status=unavailable?'📦 Занят · '+Math.max(x.activeJobs,1)+' в работе':x.onShift?'🟢 На смене · свободен':'⚪ Не на смене';
     row.append(label,txt('span',status,'state'));rootRoster.append(row);
   }
   if(!couriers.length)rootRoster.append(txt('p','Подтверждённых курьеров нет. Назначь роль в панели команды.','muted'));
