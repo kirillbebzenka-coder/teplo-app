@@ -135,7 +135,8 @@ async function load(){
   if(oe)throw oe;if(te)throw te;if(se)throw se;if(le)throw le;
   ordersCache=orders||[];tasksCache=tasks||[];slotsCache=slots||[];linksCache=links||[];
   const signature=JSON.stringify({o:ordersCache.map(o=>[o.id,o.total]),t:tasksCache.map(t=>[t.order_id,t.shop_id,t.state,t.operator_note]),j:linksCache.map(j=>[j.id,j.status]),s:slotsCache.map(x=>[x.id,x.booked,x.capacity,x.is_open])});
-  if(signature!==lastSignature){lastSignature=signature;renderQueue()}
+  const editing=details.contains(document.activeElement)&&['INPUT','SELECT','TEXTAREA'].includes(document.activeElement?.tagName);
+  if(signature!==lastSignature&&!editing){lastSignature=signature;renderQueue()}
  }catch(e){const p=el('p','Не удалось загрузить заказы: '+(e?.message||String(e)),'warning');root.prepend(p)}
  finally{busy=false;refresh.disabled=false}
 }
