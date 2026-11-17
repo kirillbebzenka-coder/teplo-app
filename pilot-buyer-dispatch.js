@@ -96,12 +96,13 @@ function card(o,tasks,slots,links){
   c.append(part);
  }
  if(!linked){
-  const select=document.createElement('select');select.setAttribute('aria-label','Слот заказа');
+  const select=document.createElement('select');select.setAttribute('aria-label','Слот заказа');select.hidden=true;
   const initial=el('option','Выбери временной слот');initial.value='';select.append(initial);
   for(const slot of slots.filter(s=>s.is_open&&s.booked<s.capacity)){
    const option=el('option',day(slot.slot_start)+' · '+clock(slot.slot_start)+'–'+clock(slot.slot_end)+' · '+slot.booked+'/'+slot.capacity);
    option.value=slot.id;select.append(option);
   }
+  const picker=TEPLOSlotPicker.create(slots,{onChange:id=>{select.value=id}});
   const action=el('button','Передать курьерам');action.type='button';action.disabled=!confirmed||select.options.length===1;
   const msg=el('p',confirmed?'Все части подтверждены, выбери слот.':'Сначала подтверди каждое заведение.','muted');
   action.onclick=async()=>{
@@ -113,7 +114,7 @@ function card(o,tasks,slots,links){
     window.dispatchEvent(new Event('teplo:buyer-handoff'));
    }catch(e){msg.textContent='Ошибка: '+(e?.message||String(e));action.disabled=false}
   };
-  c.append(select,action,msg);
+  c.append(picker.element,select,action,msg);
  }
  return c;
 }
