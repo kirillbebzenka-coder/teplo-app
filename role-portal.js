@@ -45,7 +45,12 @@ function applyRoleNavigation(role){
   if(location.pathname.endsWith(href.split('?')[0])){a.className='active';a.setAttribute('aria-current','page')}
   legacy.append(a);
  }
- window.TEPLOIcons?.mount(legacy);
+ if(window.TEPLOIcons)window.TEPLOIcons.mount(legacy);
+ else if(!document.querySelector('script[data-teplo-icons-loader]')){
+  const script=document.createElement('script');script.src='./pilot-ui-icons.js?v=55';script.defer=true;
+  script.dataset.teploIconsLoader='true';script.onload=()=>window.TEPLOIcons?.mount(legacy);
+  document.head.append(script);
+ }
 }
 async function check(){
  try{
