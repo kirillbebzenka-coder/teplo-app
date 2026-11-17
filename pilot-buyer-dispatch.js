@@ -14,7 +14,7 @@ const filters=el('div','','buyer-filters'),shell=el('div','','queue-shell');
 const root=el('div','','queue-list');root.id='buyerOrders';
 const details=el('div','','queue-detail');details.id='buyerDetails';
 shell.append(root,details);section.append(filters,shell);
-let busy=false,selectedId=new URLSearchParams(location.search).get('order')||null,activeFilter=new URLSearchParams(location.search).get('order')?'all':'work',lastSignature=null,seenBuyerIds=null,ordersCache=[],tasksCache=[],slotsCache=[],linksCache=[];
+let busy=false,reloadPending=false,selectedId=new URLSearchParams(location.search).get('order')||null,activeFilter=new URLSearchParams(location.search).get('order')?'all':'work',lastSignature=null,seenBuyerIds=null,ordersCache=[],tasksCache=[],slotsCache=[],linksCache=[];
 const filterList=[['work','В обработке'],['issue','Проблемы'],['ready','К передаче'],['sent','У курьеров'],['all','Все']];
 function orderState(order){
  const pieces=tasksCache.filter(t=>t.order_id===order.id);
@@ -88,8 +88,10 @@ function card(o,tasks,slots,links){
       const {error}=await db.rpc('teplo_dispatch_update_venue',{
        p_order_id:o.id,p_shop_id:task.shop_id,p_action:next,p_note:note.value.trim()
       });
-      if(error)throw error;await load();
-     }catch(e){msg.textContent='Ошибка: '+(e?.message||String(e));b.disabled=false}
+      if(error)throw error;
+      msg.textContent='Статус сохранён. Обновляем карточку…';
+      await load(true);
+     }catch(e){msg.textContent='Ошибка сохранения: '+(e?.message||String(e));b.disabled=false}
     };controls.append(b)
    }
    part.append(note,controls,msg);
@@ -111,7 +113,10 @@ function card(o,tasks,slots,links){
    action.disabled=true;msg.textContent='Формируем доставку…';
    try{
     const {error}=await db.rpc('teplo_dispatch_send_to_couriers',{p_order_id:o.id,p_slot_id:select.value});
-    if(error)throw error;await load();
+    if(error)throw error;
+    activeFilter='sent';
+    msg.textContent='Передано курьерам. Обновляем статус…';
+    await load(true);
     window.dispatchEvent(new Event('teplo:buyer-handoff'));
    }catch(e){msg.textContent='Ошибка: '+(e?.message||String(e));action.disabled=false}
   };
@@ -119,8 +124,9 @@ function card(o,tasks,slots,links){
  }
  return c;
 }
-async function load(){
- if(busy)return;busy=true;refresh.disabled=true;
+async function load(force=false){
+ if(busy){if(force)reloadPending=true;return}
+ busy=true;refresh.disabled=true;
  try{
   const {data:auth,error:ae}=await db.auth.getUser();if(ae)throw ae;
   if(!auth?.user){section.hidden=true;return}
@@ -143,18 +149,21 @@ async function load(){
   seenBuyerIds=nextIds;
   const signature=JSON.stringify({o:ordersCache.map(o=>[o.id,o.total]),t:tasksCache.map(t=>[t.order_id,t.shop_id,t.state,t.operator_note]),j:linksCache.map(j=>[j.id,j.status]),s:slotsCache.map(x=>[x.id,x.booked,x.capacity,x.is_open])});
   const editing=details.contains(document.activeElement)&&['INPUT','SELECT','TEXTAREA'].includes(document.activeElement?.tagName);
-  if(signature!==lastSignature&&!editing){lastSignature=signature;renderQueue()}
+  if((force||signature!==lastSignature)&&(!editing||force)){lastSignature=signature;renderQueue()}
  }catch(e){const p=el('p','Не удалось загрузить заказы: '+(e?.message||String(e)),'warning');root.prepend(p)}
- finally{busy=false;refresh.disabled=false}
+ finally{
+  busy=false;refresh.disabled=false;
+  if(reloadPending){reloadPending=false;void load(true)}
+ }
 }
 window.TEPLOBuyerOrders={open(id){
  selectedId=id;activeFilter='all';section.dataset.mobileView='detail';renderQueue();
  details.scrollIntoView({block:'start',behavior:'smooth'});
 }};
-refresh.onclick=()=>{lastSignature=null;void load()};
+refresh.onclick=()=>void load(true);
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)void load()});
 window.addEventListener('online',()=>void load());
-window.addEventListener('teplo:buyer-handoff',()=>{lastSignature=null;void load()});
+window.addEventListener('teplo:buyer-handoff',()=>void load(true));
 setInterval(()=>{if(!document.hidden&&navigator.onLine)void load()},8000);
 db.auth.onAuthStateChange(()=>setTimeout(()=>void load(),0));
 void load();
