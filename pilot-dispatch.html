@@ -58,7 +58,7 @@ nav a.active{background:#39142e;color:#ffc3e8}
 <p id="message" class="muted">Получаем задания…</p></section>
 <div id="stats" class="stats"></div>
 <section><div class="row"><h2>Доступность курьеров</h2><span class="muted">Смены и занятость</span></div>
-<p class="muted">🟢 Свободен — можно назначить. 📦 Занят — выполняет заявку. ⚪ Не на смене — недоступен. Аккаунты без роли курьера отображаются в <a href="team.html?v=34" style="color:#ffaee9">панели команды</a>.</p>
+<p class="muted">🟢 Свободен — 0/2 заказа. 🟣 В работе — 1/2, можно назначить ещё один. 📦 Лимит — 2/2, новые заявки недоступны. ⚪ Не на смене — недоступен. Аккаунты без роли курьера отображаются в <a href="team.html?v=34" style="color:#ffaee9">панели команды</a>.</p>
 <div id="courierRoster" class="courier-grid"><p class="muted">Загружаем команду…</p></div></section>
 <section><div class="row"><h2>Заявки</h2><span class="muted">Назначать можно только новые</span></div>
 <div id="list"></div></section>
@@ -166,7 +166,7 @@ function card(job){
  if(job.status==='new'){
   const select=document.createElement('select');select.setAttribute('aria-label','Выбрать курьера для заявки '+job.id.slice(0,8));
   select.append(txt('option','Выбрать курьера'));select.firstChild.value='';
-  availableCouriers.forEach(c=>{const o=txt('option',c.name);o.value=c.id;select.append(o)});
+  availableCouriers.forEach(c=>{const o=txt('option',c.name+' · '+c.activeJobs+'/2 заказов');o.value=c.id;select.append(o)});
   const b=txt('button','🛵 Назначить курьера');b.disabled=!availableCouriers.length;
   b.onclick=()=>assign(job,select.value,b,feedback);
   const actions=txt('div','','actions');actions.append(select,b);e.append(actions);
@@ -192,17 +192,17 @@ async function load(){
   const {data:p,error:pe}=await db.from('profiles').select('role').eq('id',currentUser.id).single();if(pe)throw pe;
   if(!['admin','dispatcher'].includes(p.role)){$('courierRoster').replaceChildren();$('role').textContent='Нет доступа';$('message').textContent='Нужна роль диспетчера или администратора.';$('list').replaceChildren();$('stats').replaceChildren();return}
   $('role').textContent=p.role==='admin'?'Администратор':'Диспетчер';
-  const [{data:roster,error:re},{data:jobs,error:je}]=await Promise.all([
+  const [{data:roster,error:re},{data:jobs,error:je},{count:adminActive,error:adminCountError}]=await Promise.all([
     db.rpc('teplo_dispatch_courier_roster'),
     db.from('teplo_pilot_jobs').select('id,shop_name_snapshot,shop_address_snapshot,order_summary,ready_in_minutes,customer_name,customer_phone,delivery_address,status,courier_id,created_at,delivery_fee_uah,courier_reward_uah')
-      .order('created_at',{ascending:false}).limit(80)
+      .order('created_at',{ascending:false}).limit(80),
+    db.from('teplo_pilot_jobs').select('id',{count:'exact',head:true}).eq('courier_id',currentUser.id).in('status',['assigned','accepted','picked_up'])
   ]);
-  if(re)throw re;if(je)throw je;
+  if(re)throw re;if(je)throw je;if(adminCountError)throw adminCountError;
   window.dispatchEvent(new Event('teplo:sync-ok'));
 
   
-  const rows=jobs||[],ids=new Set(rows.map(x=>x.id));
-  const busyIds=new Set(rows.filter(j=>['assigned','accepted','picked_up'].includes(j.status) && j.courier_id).map(j=>j.courier_id));
+  const rows=jobs||[];
   couriers=(roster||[]).map(x=>({
     id:x.id,
     name:x.full_name?.trim()||x.email||'Курьер',
@@ -210,16 +210,15 @@ async function load(){
     onShift:x.on_shift===true,
     activeJobs:Number(x.active_jobs||0)
   }));
-  if(p.role==='admin')couriers.push({id:currentUser.id,name:'Я · тест курьера',email:'',role:'admin',onShift:true,activeJobs:0});
-   availableCouriers=couriers.filter(x=>!(x.activeJobs>0||busyIds.has(x.id))&&x.onShift);
+  if(p.role==='admin')couriers.push({id:currentUser.id,name:'Я · тест курьера',email:'',role:'admin',onShift:true,activeJobs:Number(adminActive||0)});
+  availableCouriers=couriers.filter(x=>x.activeJobs<2&&x.onShift);
   const rootRoster=$('courierRoster');rootRoster.replaceChildren();
   for(const x of couriers){
     const row=txt('div','','courier-row');
     const label=txt('div','','courier-label');
     label.append(txt('div',x.name,'name'));
     if(x.email && x.name!==x.email)label.append(txt('div',x.email,'muted'));
-    const unavailable=x.activeJobs>0||busyIds.has(x.id);
-    const status=unavailable?'📦 Занят · '+Math.max(x.activeJobs,1)+' в работе':x.role==='admin'?'🧪 Доступен для самотестирования':x.onShift?'🟢 На смене · свободен':'⚪ Не на смене';
+    const status=x.activeJobs>=2?'📦 Лимит: '+x.activeJobs+'/2':!x.onShift?'⚪ Не на смене':x.activeJobs===1?'🟣 1/2 · есть место':x.role==='admin'?'🧪 Тест · 0/2': '🟢 Свободен · 0/2';
     row.append(label,txt('span',status,'state'));rootRoster.append(row);
   }
   if(!couriers.length)rootRoster.append(txt('p','Подтверждённых курьеров нет. Назначь роль в панели команды.','muted'));
