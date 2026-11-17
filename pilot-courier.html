@@ -127,7 +127,7 @@ input:focus{outline:2px solid #a874ff}
 <section id="tab-profile" hidden>
 <h1>Мой профиль</h1>
 <section class="card">
-<div class="row"><div><div class="mini-head">Роль</div><h2 style="margin:4px 0">Курьер TEPLO</h2></div><span class="pill">Только свои задания</span></div>
+<div class="row"><div><div class="mini-head">Роль</div><h2 id="profileRoleTitle" style="margin:4px 0">Курьер TEPLO</h2></div><span class="pill">Только свои задания</span></div>
 <p id="profileEmail" class="muted"></p>
 <label for="profileName">Имя, которое видит диспетчер</label>
 <input id="profileName" maxlength="80" autocomplete="name" placeholder="Например: Марина">
@@ -291,10 +291,11 @@ async function load(){
   if(!user){lockPage('Войди под своим аккаунтом, чтобы получить доступ к рабочим заданиям.');return}
   const {data:profile,error:pe}=await db.from('profiles').select('role,full_name').eq('id',uid).single();if(pe)throw pe;
   role=profile?.role||'';
-  if(role!=='courier'){
-   lockPage('У этого аккаунта нет роли «Курьер». Попроси администратора назначить права в панели команды.');return;
+  if(!['courier','admin'].includes(role)){
+   lockPage('Доступ только для курьера или администратора в тестовом режиме. Попроси администратора назначить роль.');return;
   }
-  activeName=profile.full_name?.trim()||user.email||'Курьер';
+  $('profileRoleTitle').textContent=role==='admin'?'Администратор · тест курьера':'Курьер TEPLO';
+   activeName=profile.full_name?.trim()||user.email||'Курьер';
   $('userLabel').textContent=activeName;$('profileEmail').textContent=user.email||'';
   const [{data:jobs,error:je},{data:shifts,error:se}]=await Promise.all([
    db.from('teplo_pilot_jobs')
@@ -312,18 +313,18 @@ async function load(){
   $('shiftEmoji').textContent=shift?'🟢':'⚪';
   $('shiftHint').textContent=shift?(active.length?'У тебя активный заказ — сначала заверши его.':'Готов принимать новые назначения от диспетчера.'):'Открой смену, чтобы получать новые заказы.';
   $('shiftButton').textContent=shift?'Завершить смену':'Начать смену';
-  $('shiftButton').disabled=Boolean(active.length&&shift);
-  $('shiftCard').hidden=active.length>0;
+  $('shiftButton').disabled=role==='admin'||Boolean(active.length&&shift);
+  $('shiftCard').hidden=role==='admin'||active.length>0;
   $('dailyMetrics').hidden=active.length>0;
   $('orderHeaderTitle').textContent=active.length?(active[0].status==='assigned'?'Новый заказ':active[0].status==='accepted'?'Забери заказ':'Доставь заказ'):'Мои заказы';
-  $('workStatus').textContent=active.length?'📦 В работе':shift?'🟢 На смене':'⚪ Не на смене';
+  $('workStatus').textContent=active.length?'📦 В работе':role==='admin'?'🧪 Тест курьера':shift?'🟢 На смене':'⚪ Не на смене';
   $('activeCount').textContent=String(active.length);
   $('todayCount').textContent=String(rows.filter(j=>j.status==='delivered'&&j.delivered_at&&todayKey(j.delivered_at)===today()).length);
   $('allCount').textContent=String(rows.filter(j=>j.status==='delivered').length);
   $('shiftCount').textContent=String((shifts||[]).filter(s=>todayKey(s.started_at)===today()).length);
   if(!loaded)$('profileName').value=profile.full_name||'';
   const root=$('activeOrders');root.replaceChildren();
-  if(!active.length)root.append(create('div',shift?'Пока заказов нет. Ожидаем назначение от диспетчера.':'Нет активных заказов. Начни смену, чтобы диспетчер мог тебя выбрать.','card muted order-empty'));
+  if(!active.length)root.append(create('div',role==='admin'?'Нет активного тестового заказа. Открой диспетчерскую и назначь новую тестовую заявку себе.':shift?'Пока заказов нет. Ожидаем назначение от диспетчера.':'Нет активных заказов. Начни смену, чтобы диспетчер мог тебя выбрать.','card muted order-empty'));
   for(const job of active)root.append(renderActive(job));
   const historyRoot=$('historyOrders');historyRoot.replaceChildren();
   if(!history.length)historyRoot.append(create('p','Завершённых заказов пока нет.','muted'));
