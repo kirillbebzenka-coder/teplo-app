@@ -50,28 +50,29 @@ nav a.active{background:#37172f;color:#ffc0e7;border:1px solid #733865}
 <link rel="stylesheet" href="./pilot-touch.css?v=29">
 <script src="./pilot-touch.js?v=29" defer></script>
 <script src="./pilot-connectivity.js?v=31" defer></script>
-<script type="module" src="./role-portal.js?v=35"></script></head>
+<script type="module" src="./role-portal.js?v=35"></script><script src="./pilot-ui-icons.js?v=45" defer></script>
+</head>
 <body>
 <main>
 <header><div class="logo">TEPLO<span>PARTNER DELIVERY</span></div><a href="pilot-dispatch.html?v=32">Диспетчерская ↗</a></header>
 <span class="status-tag">● ТЕСТОВЫЙ РЕЖИМ</span>
-<h1>Нужен курьер?</h1>
-<p class="lead">Заполни заявку один раз. Она появится у диспетчера, который назначит курьера.</p>
+<h1>Оформление доставки</h1>
+<p class="lead">Укажи данные заказа и выбери удобный интервал. Курьер сможет взять заявку из общей очереди.</p>
 <section>
- <div class="row"><h2>Новая заявка</h2><span id="identity" class="muted">Проверяем вход…</span></div>
+ <div class="row"><h2>Создать заявку</h2><span id="identity" class="muted">Проверяем вход…</span></div>
  <p class="warn">Только симуляция! Нельзя передавать реальные заказы или данные клиентов. Вводи вымышленные контакты и адреса, не отправляй курьера в поездку.</p>
  <div id="accessMessage" class="muted"></div>
  <form id="requestForm" hidden>
   <label for="shop">Заведение</label>
   <select id="shop" required></select>
-  <p id="pickupAddress" class="muted" aria-live="polite">🏪 Откуда забрать: выбери заведение</p>
+  <p id="pickupAddress" class="muted" aria-live="polite">Точка забора: выбери заведение</p>
   <label for="slot">Время доставки · слот (до 4 заказов)</label>
   <select id="slot" required><option value="">Загружаем слоты…</option></select>
   <p id="slotHint" class="muted">Время по Киеву · доступные места обновляются автоматически.</p>
-  <p id="pilotFee" class="muted">🧪 Проверяем расчётную стоимость доставки…</p>
-  <label for="summary">Что нужно забрать</label>
+  <p id="pilotFee" class="muted">Загружаем стоимость доставки…</p>
+  <label for="summary">Состав заказа</label>
   <textarea id="summary" maxlength="400" placeholder="Например: 2 пиццы, готовность через 15 минут" required></textarea>
-  <label for="ready">Через сколько будет готово</label>
+  <label for="ready">Время готовности</label>
   <select id="ready">
    <option value="0">Уже готово</option>
    <option value="10">Через 10 минут</option>
@@ -80,22 +81,22 @@ nav a.active{background:#37172f;color:#ffc0e7;border:1px solid #733865}
    <option value="45">Через 45 минут</option>
    <option value="60">Через 60 минут</option>
   </select>
-  <label for="customer">Получатель (тестовое имя)</label>
+  <label for="customer">Имя получателя</label>
   <input id="customer" maxlength="90" placeholder="Тестовый клиент" value="Тестовый клиент" required>
-  <label for="phone">Телефон (тестовый)</label>
+  <label for="phone">Телефон получателя</label>
   <input id="phone" type="tel" inputmode="tel" maxlength="22" placeholder="+380000000000" value="+380000000000" required>
-  <label for="address">Куда доставить (тестовый адрес)</label>
+  <label for="address">Адрес доставки</label>
   <input id="address" maxlength="240" placeholder="Тестовая улица, дом 12" value="Тестовая улица, дом 12" required>
-  <button class="primary" type="submit" id="send">🛵 Нужен курьер</button>
+  <button class="primary" type="submit" id="send">Создать заявку</button>
  </form>
  <p id="feedback" role="status" aria-live="polite"></p>
 </section>
 <section>
- <div class="row"><h2>Мои заявки</h2><button class="secondary" type="button" id="refresh">↻ Обновить</button></div>
+ <div class="row"><h2>Мои заявки</h2><button class="secondary" type="button" id="refresh"><span data-teplo-icon="refresh"></span> Обновить</button></div>
  <div id="jobs" aria-live="polite"><p class="muted">Подключаемся…</p></div>
 </section>
 </main>
-<footer><nav aria-label="Рабочие разделы"><a class="active" href="partner.html?v=32">🏪 Заявки</a><a href="pilot-dispatch.html?v=32">📋 Диспетчер</a><a href="pilot-courier.html?v=32">🛵 Курьер</a></nav></footer>
+<footer><nav aria-label="Рабочие разделы"><a class="active" href="partner.html?v=32"><span data-teplo-icon="store"></span> Заявки</a><a href="pilot-dispatch.html?v=32"><span data-teplo-icon="clipboard"></span> Диспетчер</a><a href="pilot-courier.html?v=32"><span data-teplo-icon="bike"></span> Курьер</a></nav></footer>
 <script type="module">
 import {createClient} from 'https://esm.sh/@supabase/supabase-js@2';
 const db=createClient('https://bgtegxdekqsajttkhhrj.supabase.co','sb_publishable_aSOKkJ_F47sGj9e8v8uJ3g_24rlQ8XG');
@@ -150,7 +151,7 @@ async function getIdentity(){
  }
  activeShopIds=ids.map(s=>s.id);
  shopAddresses=new Map(ids.map(s=>[s.id,s.address||'Адрес заведения не указан']));
-  if(ids.length){const {data:pricing,error:priceError}=await db.from('teplo_pilot_pricing').select('delivery_fee_uah').eq('id',1).single();if(priceError)throw priceError;$('pilotFee').textContent='🧪 Расчётная стоимость доставки: '+uah(pricing.delivery_fee_uah)+' · без оплаты';}
+  if(ids.length){const {data:pricing,error:priceError}=await db.from('teplo_pilot_pricing').select('delivery_fee_uah').eq('id',1).single();if(priceError)throw priceError;$('pilotFee').textContent='Стоимость доставки: '+uah(pricing.delivery_fee_uah)+' · без оплаты';}
  const sel=$('shop');sel.replaceChildren();
  ids.forEach(s=>{const o=document.createElement('option');o.value=s.id;o.textContent=s.name;sel.append(o)});
  updatePickup();
@@ -176,8 +177,8 @@ async function loadJobs(){
    const top=node('div','','row');
    top.append(node('strong','№'+job.id.slice(0,8)),node('span',states[job.status]||job.status,'pill'));
    card.append(top,node('p',job.shop_name_snapshot+' · '+new Date(job.created_at).toLocaleString('ru-RU',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})));
-   card.append(node('p',job.slot_id?'🕒 Записан в выбранный слот':'🕒 Старая заявка · без слота','muted'));
-   card.append(node('p','🧪 Стоимость доставки: '+uah(job.delivery_fee_uah)+' (без оплаты)'),node('p','📦 '+job.order_summary),node('p','🏪 Забрать: '+(job.shop_address_snapshot||'Адрес забора не указан')),node('p','📍 Доставить: '+job.delivery_address),node('p','👤 '+job.customer_name),node('p','☎ '+job.customer_phone),node('p','Готовность: '+(job.ready_in_minutes===0?'сразу':job.ready_in_minutes+' мин')));
+   card.append(node('p',job.slot_id?'Записан в выбранный слот':'Старая заявка · без слота','muted'));
+   card.append(node('p','Стоимость доставки: '+uah(job.delivery_fee_uah)+' (без оплаты)'),node('p','Состав: '+job.order_summary),node('p','Точка забора: '+(job.shop_address_snapshot||'Адрес забора не указан')),node('p','Адрес доставки: '+job.delivery_address),node('p','Получатель: '+job.customer_name),node('p','Телефон: '+job.customer_phone),node('p','Готовность: '+(job.ready_in_minutes===0?'сразу':job.ready_in_minutes+' мин')));
    if(['new','assigned'].includes(job.status)){
     const b=node('button','Отменить тестовую заявку','secondary');
     b.onclick=async()=>{if(!confirm('Отменить тестовую заявку?'))return;b.disabled=true;const {error}=await db.rpc('teplo_cancel_pilot_job',{p_job_id:job.id});if(error){alert(error.message);b.disabled=false}else await loadJobs()};
@@ -188,7 +189,7 @@ async function loadJobs(){
  }catch(e){window.dispatchEvent(new Event('teplo:sync-error'));if(!root.children.length)root.append(node('p','Не удалось загрузить список. Повтори после восстановления сети.','muted'));else root.prepend(node('p','⚠️ Нет обновления списка: последняя загруженная версия может быть устаревшей.','warn'))}
  finally{fetching=false}
 }
-function updatePickup(){const box=$('pickupAddress');if(box)box.textContent='🏪 Откуда забрать: '+(shopAddresses.get($('shop').value)||'Выбери заведение')}
+function updatePickup(){const box=$('pickupAddress');if(box)box.textContent='Точка забора: '+(shopAddresses.get($('shop').value)||'Выбери заведение')}
 $('shop').addEventListener('change',updatePickup);
 $('requestForm').addEventListener('submit',async ev=>{
  ev.preventDefault();if(processing)return;
@@ -211,7 +212,7 @@ $('requestForm').addEventListener('submit',async ev=>{
   if(verifyError)throw verifyError;
   if(!verified)throw new Error('Заявка не найдена в базе после сохранения');
   draftId=null;feedback.className='ok';
-  feedback.textContent='✓ Тестовая заявка №'+String(data).slice(0,8)+' передана диспетчеру.';TEPLOTouch.notify('✓ Заявка сохранена! №'+String(data).slice(0,8),'success');TEPLOTouch.done($('send'));
+  feedback.textContent='Заявка №'+String(data).slice(0,8)+' передана диспетчеру.';TEPLOTouch.notify('Заявка сохранена · №'+String(data).slice(0,8),'success');TEPLOTouch.done($('send'));
   $('feedback').scrollIntoView({behavior:'smooth',block:'center'});
   $('summary').value='';
   await loadJobs();await loadSlots();
