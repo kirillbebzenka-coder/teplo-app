@@ -116,12 +116,13 @@ async function loadSlots(){
  try{
   const {data,error}=await db.rpc('teplo_pilot_list_slots');if(error)throw error;
   select.replaceChildren();
+  const placeholder=node('option','Выбери временной слот');placeholder.value='';select.append(placeholder);
   const available=(data||[]).filter(s=>s.is_open&&Number(s.booked)<Number(s.capacity));
   for(const s of available){
    const option=node('option',slotDate(s.slot_start)+' · '+slotTime(s.slot_start)+'–'+slotTime(s.slot_end)+' · '+s.booked+'/'+s.capacity+' заказов');
    option.value=s.id;select.append(option);
   }
-  if(available.some(s=>s.id===old))select.value=old;
+  select.value=available.some(s=>s.id===old)?old:'';
   const picker=TEPLOSlotPicker.create(available,{value:select.value,onChange:id=>{select.value=id;select.dispatchEvent(new Event('change'))}});
   $('slotPickerHost').replaceChildren(picker.element);
   if(!available.length){const option=node('option','Нет свободных слотов');option.value='';select.append(option)}
