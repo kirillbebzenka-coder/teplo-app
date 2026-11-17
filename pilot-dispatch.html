@@ -93,7 +93,7 @@ const $=id=>document.getElementById(id),txt=(tag,t='',cls='')=>{const e=document
 const uah=n=>Number(n||0).toLocaleString('ru-RU',{maximumFractionDigits:2})+' ₴';
 const names={new:'Новая',assigned:'Курьер назначен',accepted:'Курьер принял',picked_up:'Курьер забрал',delivered:'Завершена',cancelled:'Отменена'};
 let busy=false;let currentUser=null;let couriers=[];let availableCouriers=[],slots=[],selectedSlotDate='';
-let selectedCallId=null,callFilter='active',callRows=[],lastCallSignature=null,lastSlotsSignature=null;
+let selectedCallId=new URLSearchParams(location.search).get('job')||null,callFilter='active',callRows=[],lastCallSignature=null,lastSlotsSignature=null;
 const slotDay=t=>new Date(t).toLocaleDateString('ru-RU',{timeZone:'Europe/Kyiv',day:'2-digit',month:'2-digit',weekday:'short'});
 const slotClock=t=>new Date(t).toLocaleTimeString('ru-RU',{timeZone:'Europe/Kyiv',hour:'2-digit',minute:'2-digit'});
 const slotDateKey=t=>new Intl.DateTimeFormat('en-CA',{timeZone:'Europe/Kyiv',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date(t));
@@ -231,6 +231,7 @@ function renderCallQueue(){
   return (order[a.status]??6)-(order[b.status]??6)||new Date(a.created_at)-new Date(b.created_at);
  });
  if(!visible.some(j=>j.id===selectedCallId))selectedCallId=visible[0]?.id||null;
+ if(new URLSearchParams(location.search).get('job')===selectedCallId)section.dataset.mobileView='detail';
  const filters=[['active','В работе'],['new','Свободные'],['done','Завершены'],['all','Все']];
  const heading=section.querySelector('.workspace-heading');
  let controls=section.querySelector('#callFilters');
