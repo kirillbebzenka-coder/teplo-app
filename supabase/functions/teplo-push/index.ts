@@ -86,14 +86,22 @@ async function handleEvent(evt:{type?:string,id?:string}){
    recipients=[job.courier_id];
    payload={...payload,title:"TEPLO · Тебе назначен заказ",body:"Новая доставка в твоём кабинете.",url:"/teplo-app/pilot-courier.html?v=49"};
   }else{
-   const {data:staff}=await admin.from("profiles").select("id").in("role",["admin","dispatcher"]);
-   if(type==="courier_call")recipients=(staff||[]).map(p=>p.id);
    const {data:shifts}=await admin.from("courier_shifts").select("courier_id").is("ended_at",null);
-   const onShift=(shifts||[]).map(s=>s.courier_id);
-   recipients=[...recipients,...onShift];
-   payload={...payload,
-    title:type==="courier_call"?"TEPLO · Вызов курьера":"TEPLO · Свободная доставка",
-    body:type==="courier_call"?"Ресторан создал заявку на доставку.":"Доступен заказ в общей очереди.",
+   const onShift=(shifts||[]).map(x=>x.courier_id);
+   if(type==="courier_call"){
+    const {data:staff}=await admin.from("profiles").select("id").in("role",["admin","dispatcher"]);
+    const dispatcherResult=await sendTo((staff||[]).map(p=>p.id),{
+     ...payload,title:"TEPLO · Вызов курьера",body:"Ресторан создал заявку. Требуется диспетчер.",
+     url:"/teplo-app/pilot-dispatch.html?v=49&tab=calls&job="+evt.id
+    });
+    const courierResult=await sendTo(onShift,{
+     ...payload,title:"TEPLO · Свободный заказ",body:"Доступна доставка из заведения.",
+     url:"/teplo-app/pilot-courier.html?v=49"
+    });
+    return answer({sent:dispatcherResult.sent+courierResult.sent,attempted:dispatcherResult.attempted+courierResult.attempted});
+   }
+   recipients=onShift;
+   payload={...payload,title:"TEPLO · Свободная доставка",body:"Доступен заказ в общей очереди.",
     url:"/teplo-app/pilot-courier.html?v=49"};
   }
  }else return answer({ignored:true});
