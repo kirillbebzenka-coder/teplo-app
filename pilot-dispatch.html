@@ -91,6 +91,7 @@ const $=id=>document.getElementById(id),txt=(tag,t='',cls='')=>{const e=document
 const uah=n=>Number(n||0).toLocaleString('ru-RU',{maximumFractionDigits:2})+' ₴';
 const names={new:'Новая',assigned:'Курьер назначен',accepted:'Курьер принял',picked_up:'Курьер забрал',delivered:'Завершена',cancelled:'Отменена'};
 let busy=false;let currentUser=null;let couriers=[];let availableCouriers=[],slots=[],selectedSlotDate='';
+let selectedCallId=null,callFilter='active',callRows=[];
 const slotDay=t=>new Date(t).toLocaleDateString('ru-RU',{timeZone:'Europe/Kyiv',day:'2-digit',month:'2-digit',weekday:'short'});
 const slotClock=t=>new Date(t).toLocaleTimeString('ru-RU',{timeZone:'Europe/Kyiv',hour:'2-digit',minute:'2-digit'});
 const slotDateKey=t=>new Intl.DateTimeFormat('en-CA',{timeZone:'Europe/Kyiv',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date(t));
@@ -116,9 +117,9 @@ function closeIncoming(){
 $('incomingLater').onclick=closeIncoming;
 $('incomingOpen').onclick=()=>{
  const id=incomingShowing?.id;closeIncoming();
- const card=[...$('list').children].find(el=>el.dataset.jobId===id);
- card?.scrollIntoView({behavior:'smooth',block:'start'});
- card?.querySelector('select')?.focus({preventScroll:true});
+ window.TEPLOWorkspace?.show('calls');selectedCallId=id;callFilter='active';renderCallQueue();
+ $('deliveryArea').dataset.mobileView='detail';
+ $('deliveryDetail').scrollIntoView({behavior:'smooth',block:'start'});
 };
 document.addEventListener('keydown',e=>{
  if($('incomingOverlay').hidden)return;
@@ -208,6 +209,42 @@ async function cancel(job,button,feedback){
  }catch(e){feedback.textContent='Ошибка: '+(e?.message||String(e));TEPLOTouch.notify('Не удалось отменить','error')}
  finally{TEPLOTouch.busy(button,false)}
 }
+function renderCallQueue(){
+ const list=$('list'),details=$('deliveryDetail'),section=$('deliveryArea');
+ list.replaceChildren();details.replaceChildren();
+ const visible=callRows.filter(j=>callFilter==='all'||(callFilter==='new'?j.status==='new':callFilter==='done'?['delivered','cancelled'].includes(j.status):!['delivered','cancelled'].includes(j.status)));
+ visible.sort((a,b)=>{
+  const order={new:0,assigned:1,accepted:2,picked_up:3,delivered:4,cancelled:5};
+  return (order[a.status]??6)-(order[b.status]??6)||new Date(a.created_at)-new Date(b.created_at);
+ });
+ if(!visible.some(j=>j.id===selectedCallId))selectedCallId=visible[0]?.id||null;
+ const filters=[['active','В работе'],['new','Свободные'],['done','Завершены'],['all','Все']];
+ const heading=section.querySelector('.workspace-heading');
+ let controls=section.querySelector('#callFilters');
+ if(!controls){controls=txt('div','','buyer-filters');controls.id='callFilters';heading.after(controls)}
+ controls.replaceChildren();
+ for(const [key,label] of filters){
+  const count=callRows.filter(j=>key==='all'||(key==='new'?j.status==='new':key==='done'?['delivered','cancelled'].includes(j.status):!['delivered','cancelled'].includes(j.status))).length;
+  const b=txt('button',label+' · '+count,'secondary');b.type='button';
+  b.setAttribute('aria-pressed',String(callFilter===key));
+  b.onclick=()=>{callFilter=key;selectedCallId=null;section.dataset.mobileView='list';renderCallQueue()};
+  controls.append(b);
+ }
+ window.TEPLOWorkspace?.setCount('calls',callRows.filter(j=>!['delivered','cancelled'].includes(j.status)).length);
+ if(!visible.length)list.append(txt('p','Нет заявок в этом разделе.','muted'));
+ for(const job of visible){
+  const b=txt('button','','queue-entry'),top=txt('span','','queue-top');
+  b.type='button';b.setAttribute('aria-current',String(job.id===selectedCallId));
+  top.append(txt('strong','№'+job.id.slice(0,8).toUpperCase()),txt('span',names[job.status]||job.status,'queue-state'));
+  b.append(top,txt('span',job.shop_name_snapshot),txt('small','Доставка · '+uah(job.delivery_fee_uah)+' · '+new Date(job.created_at).toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'})));
+  b.onclick=()=>{selectedCallId=job.id;section.dataset.mobileView='detail';renderCallQueue();details.scrollIntoView({behavior:'smooth',block:'start'})};
+  list.append(b);
+ }
+ const current=callRows.find(j=>j.id===selectedCallId);
+ if(!current){details.append(txt('p','Выбери заявку слева.','muted'));return}
+ const back=txt('button','← К списку','detail-back');back.onclick=()=>{section.dataset.mobileView='list';list.querySelector('[aria-current="true"]')?.focus()};
+ details.append(back,card(current));
+}
 function card(job){
  const e=txt('article','','job'),top=txt('div','','row'),badge=txt('span',names[job.status]||job.status,'pill');
  e.dataset.jobId=job.id;
@@ -265,7 +302,7 @@ async function load(){
   $('role').textContent=p.role==='admin'?'Администратор':'Диспетчер';
   const [{data:roster,error:re},{data:jobs,error:je},{count:adminActive,error:adminCountError},{data:slotRows,error:slotError}]=await Promise.all([
     db.rpc('teplo_dispatch_courier_roster'),
-    db.from('teplo_pilot_jobs').select('id,slot_id,shop_name_snapshot,shop_address_snapshot,order_summary,ready_in_minutes,customer_name,customer_phone,delivery_address,status,courier_id,created_at,delivery_fee_uah,courier_reward_uah')
+    db.from('teplo_pilot_jobs').select('id,slot_id,source_order_id,shop_name_snapshot,shop_address_snapshot,order_summary,ready_in_minutes,customer_name,customer_phone,delivery_address,status,courier_id,created_at,delivery_fee_uah,courier_reward_uah')
       .order('created_at',{ascending:false}).limit(80),
     db.from('teplo_pilot_jobs').select('id',{count:'exact',head:true}).eq('courier_id',currentUser.id).in('status',['assigned','accepted','picked_up']),
     db.rpc('teplo_pilot_list_slots')
@@ -275,7 +312,8 @@ async function load(){
   window.dispatchEvent(new Event('teplo:sync-ok'));
 
   
-  const rows=jobs||[];
+  const rows=(jobs||[]).filter(j=>!j.source_order_id);
+  callRows=rows;
   couriers=(roster||[]).map(x=>({
     id:x.id,
     name:x.full_name?.trim()||x.email||'Курьер',
@@ -304,9 +342,7 @@ async function load(){
     stat('Свободных курьеров',availableCouriers.length),
     stat('Завершено (тест)',rows.filter(j=>j.status==='delivered').length)
   );
-  const root=$('list');root.replaceChildren();
-  if(!rows.length){const p=txt('p','Новых курьерских заявок пока нет.','muted');const a=txt('a','Создать тестовую заявку →');a.href='partner.html?v=34';a.style.color='#ffc1e7';root.append(p,a);return}
-  for(const j of rows)root.append(card(j));
+  renderCallQueue();
   alertForIncoming(rows);
  }catch(e){window.dispatchEvent(new Event('teplo:sync-error'));$('message').textContent='⚠️ Ошибка обновления: '+(e?.message||String(e))+'. Уже показанные заявки сохранены на экране.'}
  finally{busy=false;$('refresh').disabled=false}
