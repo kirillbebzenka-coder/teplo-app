@@ -47,23 +47,28 @@ nav a.active{background:#39142e;color:#ffc3e8}
 #incomingDialog button{display:block;width:100%;min-height:58px;font-size:17px;margin-top:10px}
 </style><link rel="stylesheet" href="./neon.css?v=26">
 <link rel="stylesheet" href="./pilot-touch.css?v=29">
+<link rel="stylesheet" href="./dispatcher-workspace.css?v=47">
 <script src="./pilot-touch.js?v=29" defer></script>
+<script src="./dispatcher-workspace.js?v=47" defer></script>
 <script src="./pilot-connectivity.js?v=31" defer></script><script type="module" src="./role-portal.js?v=35"></script><script src="./pilot-ui-icons.js?v=45" defer></script>
 </head>
 <body><main>
 <header><div class="brand">TEPLO</div><a href="dispatcher.html?v=28">Старые заказы ↗</a></header>
 <h1>Диспетчерская</h1>
-<p class="muted">Ресторан передал заявку → назначь курьера → смотри статус.</p>
+<p class="muted">Один заказ — один рабочий процесс. Открой заявку из очереди, обработай и переходи к следующей.</p>
 <section><div class="row"><span id="role" class="pill">Проверяем вход…</span><button id="refresh" class="secondary"><span data-teplo-icon="refresh"></span> Обновить</button></div>
 <p class="warning">Демо-режим: реальные поездки запрещены. Используй только вымышленные данные.</p>
 <p id="message" class="muted">Получаем задания…</p></section>
 <div id="stats" class="stats"></div>
-<section><div class="row"><h2><span data-teplo-icon="calendar"></span> Временные слоты</h2><span class="muted">Время по Киеву · 4 места по умолчанию</span></div><p class="muted">Диспетчер может изменить количество заказов в слоте и открыть или закрыть приём.</p><label for="slotDayFilter" class="muted">Дата расписания</label><select id="slotDayFilter" aria-label="Выбрать день слотов"></select><div id="slotManager" class="courier-grid"><p class="muted">Загружаем расписание…</p></div></section>
-<section><div class="row"><h2>Доступность курьеров</h2><span class="muted">Смены и занятость</span></div>
+<div id="workspaceTabs" class="workspace-tabs"></div>
+<section id="buyerOrderArea" class="workspace-panel" data-mobile-view="list"></section>
+<section id="slotArea" class="workspace-panel"><div class="row"><h2><span data-teplo-icon="calendar"></span> Временные слоты</h2><span class="muted">Время по Киеву · 4 места по умолчанию</span></div><p class="muted">Диспетчер может изменить количество заказов в слоте и открыть или закрыть приём.</p><label for="slotDayFilter" class="muted">Дата расписания</label><select id="slotDayFilter" aria-label="Выбрать день слотов"></select><div id="slotManager" class="courier-grid"><p class="muted">Загружаем расписание…</p></div></section>
+<section id="courierArea" class="workspace-panel"><div class="row"><h2>Доступность курьеров</h2><span class="muted">Смены и занятость</span></div>
 <p class="muted">0/2 — свободен. 1/2 — доступен для ещё одного заказа. 2/2 — лимит достигнут. Не на смене — недоступен. Аккаунты без роли курьера отображаются в <a href="team.html?v=34" style="color:#ffaee9">панели команды</a>.</p>
 <div id="courierRoster" class="courier-grid"><p class="muted">Загружаем команду…</p></div></section>
-<section><div class="row"><h2>Заявки</h2><span class="muted">Назначать можно только новые</span></div>
-<div id="list"></div></section>
+<section id="deliveryArea" class="workspace-panel" data-mobile-view="list">
+<div class="row workspace-heading"><h2>Вызовы курьера</h2><span class="muted">Заявки заведений</span></div>
+<div class="queue-shell"><div id="list" class="queue-list" aria-label="Очередь вызовов курьера"></div><div id="deliveryDetail" class="queue-detail"><p class="muted">Выбери вызов из очереди.</p></div></div></section>
 </main><div id="incomingOverlay" hidden>
 <article id="incomingDialog" class="job" role="alertdialog" aria-modal="true" aria-labelledby="incomingTitle" aria-describedby="incomingCaption">
 <span class="pill"><span data-teplo-icon="bell"></span> НОВАЯ ЗАЯВКА</span>
@@ -312,4 +317,4 @@ window.addEventListener('online',()=>void load());
 window.setInterval(()=>{if(!document.hidden&&navigator.onLine)void load()},8000);
 db.auth.onAuthStateChange(()=>setTimeout(()=>void load(),0));
 await load();
-</script><script type="module" src="./pilot-buyer-dispatch.js?v=46"></script></body></html>
+</script><script type="module" src="./pilot-buyer-dispatch.js?v=47"></script></body></html>
