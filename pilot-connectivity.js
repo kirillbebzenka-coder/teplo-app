@@ -28,6 +28,7 @@
     const stamp=lastSync?' Последняя проверка: '+new Date(lastSync).toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'})+'.':'';
     show('⚠️ Нет интернета — заявки сейчас не обновляются.'+stamp+' После восстановления сети обновим список автоматически.','error');
   }
+  window.addEventListener('teplo:auth-required',()=>{show('Вход ещё не выполнен. Подтверди электронную почту, затем войди. Заказы не удалены.','checking')});
   window.addEventListener('teplo:sync-ok',()=>{
     lastSync=Date.now();
     show('● Данные получены с сервера · '+new Date(lastSync).toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'}),'ok');
