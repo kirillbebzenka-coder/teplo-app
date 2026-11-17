@@ -86,6 +86,16 @@ input:focus{outline:2px solid #a874ff}
  #activeOrders .order-focus{padding:15px 13px}
  #activeOrders .order-stop .stop-address{font-size:21px}
 }
+
+/* Incoming pilot assignment dialog: reuse existing TEPLO palette, no theme changes. */
+#incomingOverlay{position:fixed;inset:0;z-index:100;display:flex;align-items:center;justify-content:center;padding:16px;background:#08080ee6}
+#incomingDialog{width:min(100%,520px);max-height:calc(100dvh - 32px);overflow-y:auto;margin:0;padding:22px;border:1px solid var(--violet)}
+#incomingDialog h2{font-size:clamp(28px,8vw,37px);line-height:1.14;margin:10px 0}
+#incomingDialog .incoming-place{border-left:3px solid var(--violet);padding:2px 0 2px 13px;margin:14px 0}
+#incomingDialog .incoming-place p{font-size:clamp(18px,5.2vw,23px);line-height:1.3;font-weight:850;overflow-wrap:anywhere}
+#incomingDialog .incoming-amount{font-size:30px;font-weight:950;margin:10px 0}
+#incomingDialog .primary{min-height:62px;font-size:18px}
+#incomingDialog .ghost{width:100%;margin-top:10px}
 </style>
 <link rel="stylesheet" href="./neon.css?v=26">
 <link rel="stylesheet" href="./pilot-touch.css?v=29">
@@ -147,18 +157,32 @@ input:focus{outline:2px solid #a874ff}
 <button type="button" aria-selected="false" data-tab="history"><span>🧾</span>История</button>
 <button type="button" aria-selected="false" data-tab="profile"><span>👤</span>Профиль</button>
 </nav>
+<div id="incomingOverlay" hidden>
+<article id="incomingDialog" class="card hero" role="alertdialog" aria-modal="true" aria-labelledby="incomingTitle" aria-describedby="incomingCaption">
+<div class="pill">🔔 НОВОЕ НАЗНАЧЕНИЕ · ТЕСТ</div>
+<h2 id="incomingTitle">Новый заказ!</h2>
+<p id="incomingCaption" class="muted">Диспетчер назначил тебе тестовую доставку.</p>
+<div id="incomingShop" class="order-heading big"></div>
+<div class="incoming-place"><div class="mini-head">🏪 ЗАБРАТЬ</div><p id="incomingPickup"></p></div>
+<div class="incoming-place"><div class="mini-head">📍 ДОСТАВИТЬ</div><p id="incomingDropoff"></p></div>
+<div class="mini-head">Будущий заработок · тест</div>
+<p id="incomingReward" class="incoming-amount"></p>
+<button id="incomingOpen" class="primary" type="button">Открыть заказ</button>
+<button id="incomingLater" class="ghost" type="button">Позже</button>
+</article></div>
 <script type="module">
 import {createClient} from 'https://esm.sh/@supabase/supabase-js@2';
 const db=createClient('https://bgtegxdekqsajttkhhrj.supabase.co','sb_publishable_aSOKkJ_F47sGj9e8v8uJ3g_24rlQ8XG');
 const $=id=>document.getElementById(id);
 const create=(tag,text='',cls='')=>{const el=document.createElement(tag);el.textContent=String(text??'');if(cls)el.className=cls;return el};
 const statuses={assigned:'Новое назначение',accepted:'Принят',picked_up:'В пути',delivered:'Завершён',cancelled:'Отменён'};
-let uid=null,role='',activeName='',logged=null,shiftStarted=null,shift=false,busy=false,shiftBusy=false,actionBusy=false,loaded=false,prevIds=null;
+let uid=null,role='',activeName='',logged=null,shiftStarted=null,shift=false,busy=false,shiftBusy=false,actionBusy=false,loaded=false;
 const formatDate=ts=>new Date(ts).toLocaleString('ru-RU',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
 const todayKey=ts=>new Date(ts).toLocaleDateString('en-CA');
 const today=()=>todayKey(Date.now());
 const uah=n=>Number(n||0).toLocaleString('ru-RU',{minimumFractionDigits:0,maximumFractionDigits:2})+' ₴';
 let earnedByJob=new Map();
+let noticeUser=null,announcedAssignments=new Set(),incomingQueue=[],incomingShowing=null,focusBeforeIncoming=null;
 const time=ts=>new Date(ts).toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'});
 function toast(t,k='info'){window.TEPLOTouch?.notify?.(t,k)}
 function setTab(tab){
@@ -166,6 +190,53 @@ function setTab(tab){
  document.querySelectorAll('#tabbar button').forEach(b=>b.setAttribute('aria-selected',String(b.dataset.tab===tab)));
 }
 document.querySelectorAll('#tabbar button').forEach(b=>b.onclick=()=>setTab(b.dataset.tab));
+function displayNextIncoming(){
+ if(incomingShowing||!incomingQueue.length)return;
+ const j=incomingQueue.shift();
+ incomingShowing=j;focusBeforeIncoming=document.activeElement;
+ $('incomingTitle').textContent='Новый заказ №'+j.id.slice(0,8).toUpperCase();
+ $('incomingShop').textContent=j.shop_name_snapshot||'Заведение';
+ $('incomingPickup').textContent=j.shop_address_snapshot||'Адрес забора не указан';
+ $('incomingDropoff').textContent=j.delivery_address||'Адрес доставки не указан';
+ $('incomingReward').textContent=uah(j.courier_reward_uah);
+ $('incomingOverlay').hidden=false;
+ $('incomingOpen').focus();
+ try{if(!matchMedia('(prefers-reduced-motion: reduce)').matches)navigator.vibrate?.([170,80,170])}catch{}
+}
+function closeIncoming(){
+ $('incomingOverlay').hidden=true;incomingShowing=null;
+ if(focusBeforeIncoming?.isConnected)focusBeforeIncoming.focus();
+ focusBeforeIncoming=null;
+ displayNextIncoming();
+}
+$('incomingLater').onclick=closeIncoming;
+$('incomingOpen').onclick=()=>{
+ const id=incomingShowing?.id;closeIncoming();setTab('jobs');
+ const card=[...$('activeOrders').children].find(el=>el.dataset.jobId===id);
+ card?.scrollIntoView({behavior:'smooth',block:'start'});
+ card?.querySelector('.order-action')?.focus({preventScroll:true});
+};
+document.addEventListener('keydown',e=>{
+ if($('incomingOverlay').hidden)return;
+ if(e.key==='Escape'){e.preventDefault();closeIncoming();return}
+ if(e.key!=='Tab')return;
+ const buttons=[...$('incomingDialog').querySelectorAll('button:not(:disabled)')];
+ const first=buttons[0],last=buttons[buttons.length-1];
+ if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus()}
+ else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus()}
+});
+function alertForIncoming(active){
+ const assigned=active.filter(j=>j.status==='assigned');
+ incomingQueue=incomingQueue.filter(j=>assigned.some(x=>x.id===j.id));
+ if(incomingShowing&&!assigned.some(x=>x.id===incomingShowing.id))closeIncoming();
+ const fresh=assigned.filter(j=>!announcedAssignments.has(j.id));
+ for(const job of fresh){announcedAssignments.add(job.id);incomingQueue.push(job)}
+ if(fresh.length){
+  $('alert').hidden=false;
+  $('alert').textContent='🔔 Назначен новый заказ №'+fresh[0].id.slice(0,8).toUpperCase();
+  displayNextIncoming();
+ }else if(!assigned.length){$('alert').hidden=true}
+}
 function textLine(t){return create('p',t)}
 function addressBlock(title,addr){
  const wrap=create('div','','stage'),label=create('strong',title),val=create('p',addr||'Не указан');
@@ -192,6 +263,7 @@ async function change(job,action,btn,msg){
 }
 function renderActive(j){
  const c=create('article','','card hero order-focus');
+ c.dataset.jobId=j.id;
  const head=create('div','','row'),info=create('div');
  info.append(create('div','ЗАКАЗ №'+j.id.slice(0,8).toUpperCase(),'order-number'),
              create('h2',j.shop_name_snapshot||'Заведение','order-heading'));
@@ -294,6 +366,7 @@ async function load(){
  try{
   const {data:auth,error:ae}=await db.auth.getUser();if(ae)throw ae;
   const user=auth?.user;uid=user?.id||null;
+  if(uid!==noticeUser){noticeUser=uid;announcedAssignments=new Set();incomingQueue=[];if(incomingShowing)closeIncoming();}
   if(!user){lockPage('Войди под своим аккаунтом, чтобы получить доступ к рабочим заданиям.');return}
   const {data:profile,error:pe}=await db.from('profiles').select('role,full_name').eq('id',uid).single();if(pe)throw pe;
   role=profile?.role||'';
@@ -341,12 +414,7 @@ async function load(){
   const historyRoot=$('historyOrders');historyRoot.replaceChildren();
   if(!history.length)historyRoot.append(create('p','Завершённых заказов пока нет.','muted'));
   for(const job of history)historyRoot.append(renderHistory(job));
-  const nowIds=new Set(active.map(j=>j.id));
-  if(prevIds){
-    const newJobs=active.filter(j=>!prevIds.has(j.id));
-    if(newJobs.length){$('alert').hidden=false;$('alert').textContent='🔔 Новое назначение №'+newJobs[0].id.slice(0,8);toast('Новое назначение от диспетчера','success')}
-  }
-  prevIds=nowIds;
+  alertForIncoming(active);
   $('screenState').textContent='● Синхронизировано с сервером · '+time(Date.now());
   $('loading').hidden=true;$('lock').hidden=true;$('app').hidden=false;$('tabbar').hidden=false;
   loaded=true;window.dispatchEvent(new Event('teplo:sync-ok'));
