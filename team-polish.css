@@ -1,0 +1,52 @@
+/* TEPLO Team · same black/neon palette as dispatch, courier and partner. */
+:root{color-scheme:dark}
+html,body{background:#050507!important;color:#f5f7fb!important}
+body{font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+main{max-width:980px;margin:0 auto;padding:20px 16px calc(138px + env(safe-area-inset-bottom))}
+h1{font-size:clamp(27px,6vw,37px);letter-spacing:-.045em;line-height:1.15;margin:15px 0 8px}
+h2{font-size:clamp(18px,4.4vw,22px);letter-spacing:-.025em;margin:0 0 11px}
+p{line-height:1.5}
+.muted,.account-line{color:#a8b0c2!important}
+section{background:#101118!important;border:1px solid #292b39!important;border-radius:18px;padding:18px;margin:14px 0;box-shadow:0 10px 28px #0003!important}
+article,.accounts article{background:#171922!important;border:1px solid #292b39!important;border-radius:14px;padding:14px;margin:0}
+#adminArea>section{margin:14px 0}
+#courierInvitation{display:grid;gap:9px}
+#courierInvitation .invite-url{font-size:12px;color:#b9b0c8;overflow-wrap:anywhere;line-height:1.6}
+#courierInvitation ol{margin:0 0 4px;padding-left:22px}
+#courierInvitation li{padding:4px 0;color:#c9c2d1}
+#adminArea>section>p.muted{font-size:14px}
+.brand{font-size:clamp(26px,5vw,31px)}
+.role,.account-chip{display:inline-flex;align-items:center;gap:5px;background:#1b1523!important;border:1px solid #55405c!important;border-radius:999px;color:#ffa1e1!important;font-size:12px;padding:5px 10px;margin:4px 5px 0 0;line-height:1.35}
+.account-chip.pending{color:#d4b5d0!important;border-color:#644d61!important}
+.account-chip.is-active{border-color:#985fff!important;color:#e1cfff!important}
+.accounts{display:grid;gap:10px}
+.accounts .ident{font-size:16px;font-weight:800;overflow-wrap:anywhere}
+.accounts .account-line{font-size:13px}
+.cards{display:grid;gap:10px}
+#staffList article{display:flex;flex-wrap:wrap;gap:7px;align-items:center}
+#staffList article strong{overflow-wrap:anywhere}
+label{font-size:14px;color:#e9e5f2;font-weight:700}
+input,select{min-height:48px;width:100%;padding:11px 13px;border:1px solid #363646!important;background:#0b0c12!important;color:#f5f7fb!important;border-radius:12px!important}
+button,.invite-button,.assign-account{min-height:48px;border-radius:13px!important;background:linear-gradient(112deg,#ff4fca,#985fff)!important;color:#100a18!important;border:1px solid transparent!important;font-weight:790!important;padding:10px 15px;box-shadow:0 4px 16px #ff4fca26!important}
+#refresh{background:#171922!important;border:1px solid #553750!important;color:#ffa1e1!important;box-shadow:none!important}
+button:disabled{opacity:.5}
+#pilotPricing form{max-width:560px}
+#pilotPricing .muted{font-size:13px}
+#staffForm{max-width:620px}
+#staffForm button{margin-top:10px}
+#staffList .role{margin-left:0}
+#notice,#feedback{white-space:pre-wrap}
+.success{color:#c6f5db!important}
+.warning{color:#d4b5d0!important}
+.error{color:#ff808f!important}
+.teplo-tabs{background:#0b0c12!important;border-top:1px solid #292b39!important;box-shadow:0 -6px 24px #0007!important}
+nav.teplo-tabs a{font-size:12px!important;padding:9px 4px!important;min-height:61px!important;gap:6px!important;color:#a8b0c2!important}
+nav.teplo-tabs a.active,nav.teplo-tabs a[aria-current="page"]{color:#ffa1e1!important;background:#1b1523!important;border:1px solid #55405c!important}
+nav.teplo-tabs a>span[data-teplo-icon]{font-size:20px!important;height:1.15em;width:1.15em;opacity:.92}
+nav.teplo-tabs a>span:not([data-teplo-icon]){font-size:12px!important;font-weight:680}
+#adminArea>section a{color:#ffa1e1!important}
+#pilotPricing .muted,#courierInvitation .muted{margin:4px 0 9px}
+#pilotPricing button{width:100%;max-width:440px}
+#accountDirectory .assign-account{width:100%;margin-top:12px}
+@media(min-width:700px){.accounts{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:420px){main{padding:14px 12px calc(130px + env(safe-area-inset-bottom))}section{padding:14px}h2{font-size:19px}}
