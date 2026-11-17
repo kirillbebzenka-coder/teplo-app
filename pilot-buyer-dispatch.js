@@ -14,7 +14,7 @@ const filters=el('div','','buyer-filters'),shell=el('div','','queue-shell');
 const root=el('div','','queue-list');root.id='buyerOrders';
 const details=el('div','','queue-detail');details.id='buyerDetails';
 shell.append(root,details);section.append(filters,shell);
-let busy=false,selectedId=null,activeFilter='work',lastSignature=null,seenBuyerIds=null,ordersCache=[],tasksCache=[],slotsCache=[],linksCache=[];
+let busy=false,selectedId=new URLSearchParams(location.search).get('order')||null,activeFilter=new URLSearchParams(location.search).get('order')?'all':'work',lastSignature=null,seenBuyerIds=null,ordersCache=[],tasksCache=[],slotsCache=[],linksCache=[];
 const filterList=[['work','В обработке'],['issue','Проблемы'],['ready','К передаче'],['sent','У курьеров'],['all','Все']];
 function orderState(order){
  const pieces=tasksCache.filter(t=>t.order_id===order.id);
@@ -31,6 +31,7 @@ function renderQueue(){
   return (rank[orderState(a)[0]]??4)-(rank[orderState(b)[0]]??4)||new Date(a.created_at)-new Date(b.created_at);
  });
  if(!visible.some(o=>o.id===selectedId))selectedId=visible[0]?.id||null;
+ if(new URLSearchParams(location.search).get('order')===selectedId)section.dataset.mobileView='detail';
  filters.replaceChildren();
  for(const [key,label] of filterList){
   const count=ordersCache.filter(o=>key==='all'||(key==='work'?['work','ready','issue'].includes(orderState(o)[0]):orderState(o)[0]===key)).length;
