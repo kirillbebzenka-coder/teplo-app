@@ -44,7 +44,8 @@ function renderQueue(){
   const state=orderState(order),item=el('button','','queue-entry'),top=el('span','','queue-top');
   item.type='button';item.setAttribute('aria-current',String(order.id===selectedId));
   top.append(el('strong','№'+order.id.slice(0,8).toUpperCase()),el('span',state[1],'queue-state'));
-  item.append(top,el('span',order.shop_name_snapshot||'Сборный заказ'),
+  const venues=tasksCache.filter(t=>t.order_id===order.id).map(t=>t.shop_name_snapshot);
+  item.append(top,el('span',venues.length>1?'Сборный · '+venues.join(' + '):(venues[0]||'Заказ покупателя')),
    el('small',order.order_items.length+' позиций · '+tasksCache.filter(t=>t.order_id===order.id).length+' заведений · '+money(order.total)));
   item.onclick=()=>{selectedId=order.id;section.dataset.mobileView='detail';renderQueue();details.scrollIntoView({block:'start',behavior:'smooth'})};
   root.append(item);
@@ -124,7 +125,7 @@ async function load(){
   const {data:profile,error:pe}=await db.from('profiles').select('role').eq('id',auth.user.id).single();
   if(pe)throw pe;
   if(!['admin','dispatcher'].includes(profile.role)){section.hidden=true;return}
-  section.hidden=false;
+  section.hidden=Boolean(window.TEPLOWorkspace && window.TEPLOWorkspace.active!=='buyers');
   const [{data:orders,error:oe},{data:tasks,error:te},{data:slots,error:se},{data:links,error:le}]=await Promise.all([
    db.from('orders').select('id,customer_name,customer_phone,delivery_address,subtotal,delivery_fee,total,created_at,is_test,order_items(shop_id,product_name_snapshot,quantity,line_total)').eq('is_test',true).order('created_at',{ascending:false}).limit(70),
    db.from('teplo_order_venue_tasks').select('order_id,shop_id,shop_name_snapshot,shop_address_snapshot,state,operator_note').limit(350),
