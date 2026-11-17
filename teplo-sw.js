@@ -6,8 +6,9 @@ self.addEventListener('push',event=>{
  try{data=event.data?.json()||{}}catch{data={title:'TEPLO',body:'Новое уведомление'}}
  const title=String(data.title||'TEPLO · Новый заказ').slice(0,90);
  const url=typeof data.url==='string'&&data.url.startsWith('/teplo-app/')?data.url:'/teplo-app/pilot-dispatch.html?v=49';
+ // Android 8+ can override custom Web Push vibration: notification channel settings govern haptics.
  const opts={body:String(data.body||'Открой TEPLO').slice(0,180),tag:String(data.tag||'teplo-alert').slice(0,90),renotify:true,
-  badge:'./favicon.ico',data:{url},vibrate:[160,80,160]};
+  silent:false,requireInteraction:true,data:{url},vibrate:[290,120,380,130,330]};
  event.waitUntil(self.registration.showNotification(title,opts));
 });
 self.addEventListener('notificationclick',event=>{
