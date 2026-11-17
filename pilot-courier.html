@@ -268,7 +268,8 @@ function renderSlotBoard(free,activeCount){
   const item=create('article','','card'),head=create('div','','row');
   item.dataset.jobId=j.id;
   head.append(create('strong','№'+j.id.slice(0,8).toUpperCase()),create('span',slotDate(j.slot_start)+' · '+slotClock(j.slot_start)+'–'+slotClock(j.slot_end),'pill'));
-  item.append(head,create('h3',j.shop_name_snapshot||'Заведение'),
+  const readiness=j.ready_at?new Date(j.ready_at).toLocaleTimeString('ru-RU',{timeZone:'Europe/Kyiv',hour:'2-digit',minute:'2-digit'}):'время уточняется';
+  item.append(head,create('h3',j.shop_name_snapshot||'Заведение'),create('p','Готовность: '+readiness,'pill'),
    create('p','Забрать: '+(j.shop_address_snapshot||'Адрес не указан')),
    create('p','Доставить: '+j.delivery_address),
    create('p','Состав: '+(j.order_summary||'Тестовый заказ')),
@@ -328,7 +329,7 @@ function renderActive(j){
  // Order of stops follows the courier's task. Address and recipient are always visible.
  const pickups=stopsByJob.get(j.id)||[];
  const stops=[
-  ...(pickups.length?pickups.map((p,i)=>({label:'ТОЧКА ЗАБОРА '+(i+1)+' · '+p.shop_name_snapshot,address:p.shop_address_snapshot||'Адрес не указан',active:j.status!=='picked_up'})):[{label:'ТОЧКА ЗАБОРА',address:j.shop_address_snapshot||'Адрес забора не указан',active:j.status!=='picked_up'}]),
+  ...(pickups.length?pickups.map((p,i)=>({label:'ТОЧКА ЗАБОРА '+(i+1)+' · '+p.shop_name_snapshot,address:(p.shop_address_snapshot||'Адрес не указан')+(p.ready_at?' · Готовность '+new Date(p.ready_at).toLocaleTimeString('ru-RU',{timeZone:'Europe/Kyiv',hour:'2-digit',minute:'2-digit'}):''),active:j.status!=='picked_up'})):[{label:'ТОЧКА ЗАБОРА',address:j.shop_address_snapshot||'Адрес забора не указан',active:j.status!=='picked_up'}]),
   {label:'АДРЕС ДОСТАВКИ',address:j.delivery_address||'Адрес доставки не указан',active:j.status==='picked_up'}
  ];
  if(j.status==='picked_up')stops.reverse();
@@ -365,7 +366,7 @@ function renderActive(j){
  }
  const details=document.createElement('details');details.className='order-secondary';
  details.append(create('summary','Дополнительная информация'),
-    create('p','Готовность: '+(j.ready_in_minutes?'через '+j.ready_in_minutes+' мин после оформления':'уже готово')),
+    create('p','Готовность: '+(j.ready_at?new Date(j.ready_at).toLocaleTimeString('ru-RU',{timeZone:'Europe/Kyiv',hour:'2-digit',minute:'2-digit'}):'время уточняется')),
     create('p','Назначено: '+(j.assigned_at?formatDate(j.assigned_at):'время не указано')));
  c.append(details,feedback);
  return c;
@@ -432,17 +433,17 @@ async function load(){
   $('userLabel').textContent=activeName;$('profileEmail').textContent=user.email||'';
   const [{data:jobs,error:je},{data:shifts,error:se},{data:earnings,error:ee},{data:openJobs,error:openError}]=await Promise.all([
    db.from('teplo_pilot_jobs')
-    .select('id,shop_name_snapshot,shop_address_snapshot,order_summary,ready_in_minutes,customer_name,customer_phone,delivery_address,status,created_at,assigned_at,accepted_at,picked_up_at,delivered_at,delivery_fee_uah,courier_reward_uah')
+    .select('id,shop_name_snapshot,shop_address_snapshot,order_summary,ready_in_minutes,ready_at,customer_name,customer_phone,delivery_address,status,created_at,assigned_at,accepted_at,picked_up_at,delivered_at,delivery_fee_uah,courier_reward_uah')
     .eq('courier_id',uid).order('created_at',{ascending:false}).limit(100),
    db.from('courier_shifts').select('id,started_at,ended_at')
     .eq('courier_id',uid).order('started_at',{ascending:false}).limit(70),
    db.from('teplo_pilot_earnings').select('job_id,amount_uah,recorded_at').eq('courier_id',uid).limit(1000),
-   db.rpc('teplo_pilot_open_jobs')
+   db.rpc('teplo_pilot_open_jobs_eta')
   ]);
   if(je)throw je;if(se)throw se;if(ee)throw ee;if(openError)throw openError;
   earnedByJob=new Map((earnings||[]).map(e=>[e.job_id,Number(e.amount_uah)]));
   const rows=jobs||[],active=rows.filter(j=>['assigned','accepted','picked_up'].includes(j.status));
-  const {data:stopRows,error:stopError}=active.length?await db.from('teplo_pilot_job_stops').select('job_id,stop_number,shop_name_snapshot,shop_address_snapshot').in('job_id',active.map(j=>j.id)).order('stop_number'): {data:[],error:null};
+  const {data:stopRows,error:stopError}=active.length?await db.from('teplo_pilot_job_stops').select('job_id,stop_number,shop_name_snapshot,shop_address_snapshot,ready_at').in('job_id',active.map(j=>j.id)).order('stop_number'): {data:[],error:null};
   if(stopError)throw stopError;
   stopsByJob=new Map();
   for(const stop of stopRows||[]){const list=stopsByJob.get(stop.job_id)||[];list.push(stop);stopsByJob.set(stop.job_id,list)}
