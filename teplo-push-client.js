@@ -53,7 +53,8 @@ $('pushEnable').onclick=async()=>{
   if(permission!=='granted')throw new Error('Уведомления не разрешены в браузере');
   const token=await auth();
   const {publicKey}=await invoke('/config',token);
-  const binary=atob(publicKey.replace(/-/g,'+').replace(/_/g,'/'));
+  const b64=publicKey.replace(/-/g,'+').replace(/_/g,'/');
+  const binary=atob(b64+'='.repeat((4-b64.length%4)%4));
   const key=Uint8Array.from(binary,c=>c.charCodeAt(0));
   const reg=await registration();
   const sub=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:key});
