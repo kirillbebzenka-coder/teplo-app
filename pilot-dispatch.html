@@ -91,7 +91,7 @@ const $=id=>document.getElementById(id),txt=(tag,t='',cls='')=>{const e=document
 const uah=n=>Number(n||0).toLocaleString('ru-RU',{maximumFractionDigits:2})+' ₴';
 const names={new:'Новая',assigned:'Курьер назначен',accepted:'Курьер принял',picked_up:'Курьер забрал',delivered:'Завершена',cancelled:'Отменена'};
 let busy=false;let currentUser=null;let couriers=[];let availableCouriers=[],slots=[],selectedSlotDate='';
-let selectedCallId=null,callFilter='active',callRows=[];
+let selectedCallId=null,callFilter='active',callRows=[],lastCallSignature=null,lastSlotsSignature=null;
 const slotDay=t=>new Date(t).toLocaleDateString('ru-RU',{timeZone:'Europe/Kyiv',day:'2-digit',month:'2-digit',weekday:'short'});
 const slotClock=t=>new Date(t).toLocaleTimeString('ru-RU',{timeZone:'Europe/Kyiv',hour:'2-digit',minute:'2-digit'});
 const slotDateKey=t=>new Intl.DateTimeFormat('en-CA',{timeZone:'Europe/Kyiv',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date(t));
@@ -308,7 +308,11 @@ async function load(){
     db.rpc('teplo_pilot_list_slots')
   ]);
   if(re)throw re;if(je)throw je;if(adminCountError)throw adminCountError;if(slotError)throw slotError;
-  slots=slotRows||[];renderSlots();
+  slots=slotRows||[];
+  const slotSignature=JSON.stringify(slots.map(x=>[x.id,x.slot_start,x.capacity,x.is_open,x.booked]));
+  if(slotSignature!==lastSlotsSignature && !($('slotManager').contains(document.activeElement) && document.activeElement?.tagName==='SELECT')){
+   lastSlotsSignature=slotSignature;renderSlots();
+  }
   window.dispatchEvent(new Event('teplo:sync-ok'));
 
   
@@ -342,7 +346,9 @@ async function load(){
     stat('Свободных курьеров',availableCouriers.length),
     stat('Завершено (тест)',rows.filter(j=>j.status==='delivered').length)
   );
-  renderCallQueue();
+  const signature=JSON.stringify({jobs:rows.map(j=>[j.id,j.status,j.courier_id,j.slot_id]),couriers:couriers.map(c=>[c.id,c.activeJobs,c.onShift]),slots:slots.map(s=>[s.id,s.booked,s.capacity,s.is_open])});
+  const editing=$('deliveryDetail').contains(document.activeElement)&&['SELECT','INPUT','TEXTAREA'].includes(document.activeElement?.tagName);
+  if(signature!==lastCallSignature&&!editing){lastCallSignature=signature;renderCallQueue()}
   alertForIncoming(rows);
  }catch(e){window.dispatchEvent(new Event('teplo:sync-error'));$('message').textContent='⚠️ Ошибка обновления: '+(e?.message||String(e))+'. Уже показанные заявки сохранены на экране.'}
  finally{busy=false;$('refresh').disabled=false}
