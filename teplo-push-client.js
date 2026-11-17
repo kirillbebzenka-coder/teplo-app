@@ -5,7 +5,7 @@ const endpoint='https://bgtegxdekqsajttkhhrj.supabase.co/functions/v1/teplo-push
 const root=document.createElement('section');
 root.id='pushSettings';
 root.className='push-settings';
-root.innerHTML='<div class="row"><strong>Уведомления на телефон</strong><span class="pill" id="pushStatus">Не подключено</span></div><p class="muted">Новые заказы и назначения, даже когда TEPLO закрыт. Разрешение даётся один раз для этого телефона.</p><div class="push-actions"><button id="pushEnable" type="button">Включить push</button><button id="pushTest" type="button" class="secondary" hidden>Проверить</button><button id="pushDisable" type="button" class="secondary" hidden>Отключить</button></div><p id="pushFeedback" class="muted" role="status"></p>';
+root.innerHTML='<div class="row"><strong>Уведомления на телефон</strong><span class="pill" id="pushStatus">Не подключено</span></div><p class="muted">Новые заказы и назначения, даже когда TEPLO закрыт. Разрешение даётся один раз для этого телефона.</p><div class="push-actions"><button id="pushEnable" type="button">Подключить телефон</button><button id="pushTest" type="button" class="secondary" hidden>Проверить</button><button id="pushResync" type="button" class="secondary" hidden>Переподключить</button><button id="pushDisable" type="button" class="secondary" hidden>Отключить</button></div><p id="pushFeedback" class="muted" role="status"></p>';
 const css=document.createElement('style');
 css.textContent='#pushSettings{margin:12px 0;background:#101118;border:1px solid #403447;border-radius:16px;padding:14px}#pushSettings strong{font-size:16px}#pushSettings .push-actions{display:flex;gap:8px;flex-wrap:wrap}#pushSettings .push-actions button{flex:1 1 125px;min-height:48px}#pushSettings .muted{margin:9px 0;font-size:13px}';
 document.head.append(css);
@@ -14,12 +14,14 @@ if(document.getElementById('message')?.parentElement)document.getElementById('me
 else document.querySelector('main')?.insertAdjacentElement('afterbegin',root);
 const $=id=>document.getElementById(id);
 let pending=false,worker=null;
-function available(){return location?.parentElement&&'serviceWorker' in navigator&&'PushManager' in window&&'Notification' in window&&isSecureContext}
-function state(text,connected=false){$('pushStatus').textContent=text;$('pushEnable').hidden=connected;$('pushTest').hidden=!connected;$('pushDisable').hidden=!connected}
+function available(){return Boolean(root.isConnected&&'serviceWorker' in navigator&&'PushManager' in window&&'Notification' in window&&isSecureContext)}
+function state(text,connected=false){$('pushStatus').textContent=text;$('pushEnable').hidden=connected;$('pushTest').hidden=!connected;$('pushResync').hidden=!connected;$('pushDisable').hidden=!connected}
 function info(text){$('pushFeedback').textContent=text}
 async function auth(){
+ const {data:{user},error:userError}=await db.auth.getUser();
+ if(userError||!user)throw new Error('Сначала войди в рабочий аккаунт TEPLO');
  const {data:{session},error}=await db.auth.getSession();
- if(error||!session?.access_token)throw new Error('Сначала войди в рабочий аккаунт TEPLO');
+ if(error||!session?.access_token)throw new Error('Сессия закончилась, войди ещё раз');
  return session.access_token;
 }
 async function invoke(path,token,body){
@@ -31,7 +33,7 @@ async function invoke(path,token,body){
  return data;
 }
 async function registration(){
- if(!worker)worker=await navigator.serviceWorker.register('./teplo-sw.js?v=49',{scope:'./',updateViaCache:'none'});
+ if(!worker)worker=await navigator.serviceWorker.register('./teplo-sw.js?v=55',{scope:'./',updateViaCache:'none'});
  return worker;
 }
 async function status(){
@@ -45,12 +47,12 @@ async function status(){
     await auth();
     const {error}=await db.rpc('teplo_push_save_subscription',{p_subscription:subscription.toJSON()});
     if(error)throw error;
-    state('Включено',true);info('Телефон подписан. Нажми «Проверить», чтобы проверить доставку.');
+    state('Включено',true);info('Телефон зарегистрирован в TEPLO. Проверь тестовым уведомлением, затем создай заявку из ресторана.');
    }catch(e){
-    state('Нужен вход');info('Войди в рабочий аккаунт и обнови страницу для синхронизации push: '+(e?.message||String(e)));
+    state('Требуется вход');info('Не удалось привязать подписку: '+(e?.message||String(e)));
    }
   }
-  else {state('Не подключено');info('Нажми «Включить push», чтобы получать уведомления при закрытой вкладке.')}
+  else {state('Не подключено');info('Нажми «Подключить телефон», затем разреши уведомления Chrome. Без подписки сервер не может доставить push.');}
  }catch(e){state('Ошибка');info(e?.message||String(e))}
 }
 $('pushEnable').onclick=async()=>{
@@ -66,18 +68,40 @@ $('pushEnable').onclick=async()=>{
   const binary=atob(b64+'='.repeat((4-b64.length%4)%4));
   const key=Uint8Array.from(binary,c=>c.charCodeAt(0));
   const reg=await registration();
-  const sub=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:key});
+  await navigator.serviceWorker.ready;
+  const sub=(await reg.pushManager.getSubscription())||await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:key});
   const {error}=await db.rpc('teplo_push_save_subscription',{p_subscription:sub.toJSON()});
   if(error)throw error;
-  state('Включено',true);info('Устройство зарегистрировано. Теперь отправь тестовое уведомление.');
+  state('Включено',true);info('Телефон подключён. Нажми «Проверить», затем отправь тестовый заказ магазина.');
  }catch(e){info('Не удалось включить: '+(e?.message||String(e)))}
  finally{pending=false;$('pushEnable').disabled=false}
 };
 $('pushTest').onclick=async()=>{
  if(pending)return;pending=true;$('pushTest').disabled=true;
- try{const token=await auth();const result=await invoke('/test',token,{});info(result.sent?'Тестовое уведомление отправлено на телефон.':'Нет доступных подписок. Попробуй переподключить push.')}
+ try{const token=await auth();const result=await invoke('/test',token,{});info(result.sent?'Сервер передал тестовый push в службу уведомлений телефона. Если он не отображается, проверь разрешения Chrome и уведомления Android.':'Push не отправлен: зарегистрированных устройств 0 или служба доставки недоступна. Нажми «Переподключить».')}
  catch(e){info('Ошибка теста: '+(e?.message||String(e)))}
  finally{pending=false;$('pushTest').disabled=false}
+};
+$('pushResync').onclick=async()=>{
+ if(pending)return;pending=true;$('pushResync').disabled=true;info('Обновляем подписку…');
+ try{
+  if(Notification.permission!=='granted')throw new Error('Включи уведомления в настройках Chrome');
+  const token=await auth(),{publicKey}=await invoke('/config',token);
+  const reg=await registration();
+  const existing=await reg.pushManager.getSubscription();
+  if(existing){
+   const {error}=await db.rpc('teplo_push_remove_subscription',{p_endpoint:existing.endpoint});
+   if(error)throw error;
+   await existing.unsubscribe();
+  }
+  const b64=publicKey.replace(/-/g,'+').replace(/_/g,'/');
+  const key=Uint8Array.from(atob(b64+'='.repeat((4-b64.length%4)%4)),c=>c.charCodeAt(0));
+  const sub=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:key});
+  const {error}=await db.rpc('teplo_push_save_subscription',{p_subscription:sub.toJSON()});
+  if(error)throw error;
+  state('Включено',true);info('Подписка обновлена. Нажми «Проверить».');
+ }catch(e){info('Не удалось переподключить: '+(e?.message||String(e)))}
+ finally{pending=false;$('pushResync').disabled=false}
 };
 $('pushDisable').onclick=async()=>{
  if(pending)return;pending=true;$('pushDisable').disabled=true;
@@ -93,3 +117,4 @@ $('pushDisable').onclick=async()=>{
  finally{pending=false;$('pushDisable').disabled=false}
 };
 void status();
+db.auth.onAuthStateChange(()=>{if(document.visibilityState==='visible')queueMicrotask(()=>void status())});
