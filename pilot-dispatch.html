@@ -48,36 +48,37 @@ nav a.active{background:#39142e;color:#ffc3e8}
 </style><link rel="stylesheet" href="./neon.css?v=26">
 <link rel="stylesheet" href="./pilot-touch.css?v=29">
 <script src="./pilot-touch.js?v=29" defer></script>
-<script src="./pilot-connectivity.js?v=31" defer></script><script type="module" src="./role-portal.js?v=35"></script></head>
+<script src="./pilot-connectivity.js?v=31" defer></script><script type="module" src="./role-portal.js?v=35"></script><script src="./pilot-ui-icons.js?v=45" defer></script>
+</head>
 <body><main>
 <header><div class="brand">TEPLO</div><a href="dispatcher.html?v=28">Старые заказы ↗</a></header>
-<h1>Курьерские заявки</h1>
+<h1>Диспетчерская</h1>
 <p class="muted">Ресторан передал заявку → назначь курьера → смотри статус.</p>
-<section><div class="row"><span id="role" class="pill">Проверяем вход…</span><button id="refresh" class="secondary">↻ Обновить</button></div>
-<p class="warning">🧪 Тест: никого не отправлять. Для пилота используем вымышленные контакты.</p>
+<section><div class="row"><span id="role" class="pill">Проверяем вход…</span><button id="refresh" class="secondary"><span data-teplo-icon="refresh"></span> Обновить</button></div>
+<p class="warning">Демо-режим: реальные поездки запрещены. Используй только вымышленные данные.</p>
 <p id="message" class="muted">Получаем задания…</p></section>
 <div id="stats" class="stats"></div>
-<section><div class="row"><h2>🕒 Временные слоты</h2><span class="muted">Время по Киеву · 4 места по умолчанию</span></div><p class="muted">Диспетчер может изменить количество заказов в слоте и открыть или закрыть приём.</p><label for="slotDayFilter" class="muted">Дата расписания</label><select id="slotDayFilter" aria-label="Выбрать день слотов"></select><div id="slotManager" class="courier-grid"><p class="muted">Загружаем расписание…</p></div></section>
+<section><div class="row"><h2><span data-teplo-icon="calendar"></span> Временные слоты</h2><span class="muted">Время по Киеву · 4 места по умолчанию</span></div><p class="muted">Диспетчер может изменить количество заказов в слоте и открыть или закрыть приём.</p><label for="slotDayFilter" class="muted">Дата расписания</label><select id="slotDayFilter" aria-label="Выбрать день слотов"></select><div id="slotManager" class="courier-grid"><p class="muted">Загружаем расписание…</p></div></section>
 <section><div class="row"><h2>Доступность курьеров</h2><span class="muted">Смены и занятость</span></div>
-<p class="muted">🟢 Свободен — 0/2 заказа. 🟣 В работе — 1/2, можно назначить ещё один. 📦 Лимит — 2/2, новые заявки недоступны. ⚪ Не на смене — недоступен. Аккаунты без роли курьера отображаются в <a href="team.html?v=34" style="color:#ffaee9">панели команды</a>.</p>
+<p class="muted">0/2 — свободен. 1/2 — доступен для ещё одного заказа. 2/2 — лимит достигнут. Не на смене — недоступен. Аккаунты без роли курьера отображаются в <a href="team.html?v=34" style="color:#ffaee9">панели команды</a>.</p>
 <div id="courierRoster" class="courier-grid"><p class="muted">Загружаем команду…</p></div></section>
 <section><div class="row"><h2>Заявки</h2><span class="muted">Назначать можно только новые</span></div>
 <div id="list"></div></section>
 </main><div id="incomingOverlay" hidden>
 <article id="incomingDialog" class="job" role="alertdialog" aria-modal="true" aria-labelledby="incomingTitle" aria-describedby="incomingCaption">
-<span class="pill">🔔 НОВАЯ ЗАЯВКА · ТЕСТ</span>
+<span class="pill"><span data-teplo-icon="bell"></span> НОВАЯ ЗАЯВКА</span>
 <h2 id="incomingTitle">Ресторан вызвал курьера</h2>
 <p id="incomingCaption" class="muted">Новая заявка ожидает назначения.</p>
 <h3 id="incomingShop"></h3>
-<div class="incoming-place"><span class="muted">🏪 ЗАБРАТЬ</span><p id="incomingPickup"></p></div>
-<div class="incoming-place"><span class="muted">📍 ДОСТАВИТЬ</span><p id="incomingDropoff"></p></div>
+<div class="incoming-place"><span class="muted"><span data-teplo-icon="store"></span> ЗАБРАТЬ</span><p id="incomingPickup"></p></div>
+<div class="incoming-place"><span class="muted"><span data-teplo-icon="pin"></span> ДОСТАВИТЬ</span><p id="incomingDropoff"></p></div>
 <span class="muted">Стоимость доставки · тест</span>
 <p class="incoming-amount" id="incomingPrice"></p>
 <button id="incomingOpen" type="button">Открыть заявку</button>
 <button id="incomingLater" type="button" class="secondary">Позже</button>
 </article>
 </div>
-<nav aria-label="Рабочие разделы"><a href="partner.html?v=34">🏪 Ресторан</a><a href="pilot-dispatch.html?v=34" class="active">📋 Диспетчер</a><a href="pilot-courier.html?v=34">🛵 Курьер</a></nav>
+<nav aria-label="Рабочие разделы"><a href="partner.html?v=34"><span data-teplo-icon="store"></span> Ресторан</a><a href="pilot-dispatch.html?v=34" class="active"><span data-teplo-icon="clipboard"></span> Диспетчер</a><a href="pilot-courier.html?v=34"><span data-teplo-icon="bike"></span> Курьер</a></nav>
 <script type="module">
 import {createClient} from 'https://esm.sh/@supabase/supabase-js@2';
 const db=createClient('https://bgtegxdekqsajttkhhrj.supabase.co','sb_publishable_aSOKkJ_F47sGj9e8v8uJ3g_24rlQ8XG');
@@ -130,7 +131,7 @@ function alertForIncoming(rows){
  const fresh=pending.filter(j=>!announcedRequests.has(j.id));
  for(const job of fresh){announcedRequests.add(job.id);incomingQueue.push(job)}
  if(fresh.length){
-  $('message').textContent='🔔 Новых заявок: '+fresh.length;
+  $('message').textContent='Новых заявок: '+fresh.length;
   displayIncoming();
  }
 }
@@ -189,7 +190,7 @@ async function assign(job,id,button,feedback){
  try{
   const {error}=await db.rpc('teplo_assign_pilot_job',{p_job_id:job.id,p_courier_id:id});
   if(error)throw error;
-  feedback.textContent='✓ Курьер назначен.';TEPLOTouch.notify('✓ Курьер назначен','success');TEPLOTouch.done(button);await load();
+  feedback.textContent='Курьер назначен.';TEPLOTouch.notify('Курьер назначен','success');TEPLOTouch.done(button);await load();
  }catch(e){feedback.textContent='Ошибка: '+(e?.message||String(e));TEPLOTouch.notify('Не удалось назначить: '+(e?.message||String(e)),'error')}
  finally{TEPLOTouch.busy(button,false)}
 }
@@ -206,26 +207,26 @@ function card(job){
  const e=txt('article','','job'),top=txt('div','','row'),badge=txt('span',names[job.status]||job.status,'pill');
  e.dataset.jobId=job.id;
  top.append(txt('strong','№'+job.id.slice(0,8)),badge);e.append(top);
- e.append(txt('p','🏪 '+job.shop_name_snapshot+' · '+new Date(job.created_at).toLocaleString('ru-RU',{hour:'2-digit',minute:'2-digit',day:'2-digit',month:'2-digit'})));
- e.append(txt('p','📦 '+job.order_summary),txt('p','⏱ Готовность: '+(job.ready_in_minutes===0?'сразу':job.ready_in_minutes+' мин')));
- e.append(txt('p','🧪 Доставка: '+uah(job.delivery_fee_uah)+' · Курьеру после доставки: '+uah(job.courier_reward_uah)));
- if(job.slot_id){const slot=slots.find(x=>x.id===job.slot_id);if(slot)e.append(txt('p','🕒 '+slotDay(slot.slot_start)+' · '+slotClock(slot.slot_start)+'–'+slotClock(slot.slot_end)+' · '+slot.booked+'/'+slot.capacity,'muted'))}else e.append(txt('p','🕒 Старая заявка без слота','muted'));
+ e.append(txt('p','Заведение: '+job.shop_name_snapshot+' · '+new Date(job.created_at).toLocaleString('ru-RU',{hour:'2-digit',minute:'2-digit',day:'2-digit',month:'2-digit'})));
+ e.append(txt('p','Состав: '+job.order_summary),txt('p','Готовность: '+(job.ready_in_minutes===0?'сразу':job.ready_in_minutes+' мин')));
+ e.append(txt('p','Стоимость доставки: '+uah(job.delivery_fee_uah)+' · Курьеру после доставки: '+uah(job.courier_reward_uah)));
+ if(job.slot_id){const slot=slots.find(x=>x.id===job.slot_id);if(slot)e.append(txt('p','Слот: '+slotDay(slot.slot_start)+' · '+slotClock(slot.slot_start)+'–'+slotClock(slot.slot_end)+' · '+slot.booked+'/'+slot.capacity,'muted'))}else e.append(txt('p','Старая заявка · без слота','muted'));
  const route=txt('div','','route');
- route.append(txt('p','🏪 ЗАБРАТЬ: '+(job.shop_address_snapshot||'Адрес забора не указан')),
-              txt('p','📍 ДОСТАВИТЬ: '+job.delivery_address));
+ route.append(txt('p','Точка забора: '+(job.shop_address_snapshot||'Адрес забора не указан')),
+              txt('p','Адрес доставки: '+job.delivery_address));
  e.append(route);
- e.append(txt('p','👤 Получатель: '+job.customer_name),txt('p','☎ Телефон: '+job.customer_phone));
+ e.append(txt('p','Получатель: '+job.customer_name),txt('p','Телефон: '+job.customer_phone));
  const feedback=txt('p','','muted');feedback.setAttribute('role','status');
  if(job.status==='new'){
   const select=document.createElement('select');select.setAttribute('aria-label','Выбрать курьера для заявки '+job.id.slice(0,8));
   select.append(txt('option','Выбрать курьера'));select.firstChild.value='';
   availableCouriers.forEach(c=>{const o=txt('option',c.name+' · '+c.activeJobs+'/2 заказов');o.value=c.id;select.append(o)});
-  const b=txt('button','🛵 Назначить курьера');b.disabled=!availableCouriers.length;
+  const b=txt('button','Назначить');b.disabled=!availableCouriers.length;
   b.onclick=()=>assign(job,select.value,b,feedback);
   const actions=txt('div','','actions');actions.append(select,b);e.append(actions);
  }
  if(['assigned','accepted'].includes(job.status)){
-  const b=txt('button','↩ Вернуть в очередь','secondary');b.onclick=()=>release(job,b,feedback);e.append(b);
+  const b=txt('button','Вернуть в очередь','secondary');b.onclick=()=>release(job,b,feedback);e.append(b);
  }
  if(job.status==='new'){
   const selector=document.createElement('select');selector.setAttribute('aria-label','Новый слот для заказа '+job.id.slice(0,8));
@@ -243,7 +244,7 @@ function card(job){
   const person=couriers.find(c=>c.id===job.courier_id);
   e.append(txt('p','Курьер: '+(person?.name||'назначен'),'muted'));
  }
- if(job.status==='delivered')e.append(txt('p','✓ Симуляция завершена. Повторно назначить этот заказ нельзя.','muted'));
+ if(job.status==='delivered')e.append(txt('p','Доставка завершена. Повторно назначить этот заказ нельзя.','muted'));
  if(job.status==='cancelled')e.append(txt('p','Заказ отменён. Для назначения нужна новая заявка.','muted'));
  e.append(feedback);return e;
 }
@@ -285,7 +286,7 @@ async function load(){
     const label=txt('div','','courier-label');
     label.append(txt('div',x.name,'name'));
     if(x.email && x.name!==x.email)label.append(txt('div',x.email,'muted'));
-    const status=x.activeJobs>=2?'📦 Лимит: '+x.activeJobs+'/2':!x.onShift?'⚪ Не на смене':x.activeJobs===1?'🟣 1/2 · есть место':x.role==='admin'?'🧪 Тест · 0/2': '🟢 Свободен · 0/2';
+    const status=x.activeJobs>=2?'Лимит: '+x.activeJobs+'/2':!x.onShift?'Не на смене':x.activeJobs===1?'1/2 · доступен':x.role==='admin'?'Тест · 0/2': 'Свободен · 0/2';
     row.append(label,txt('span',status,'state'));rootRoster.append(row);
   }
   if(!couriers.length)rootRoster.append(txt('p','Подтверждённых курьеров нет. Назначь роль в панели команды.','muted'));
