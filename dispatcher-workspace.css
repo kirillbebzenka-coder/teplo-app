@@ -1,0 +1,60 @@
+/* Dispatcher workspace: layout and hierarchy only. Keep TEPLO's existing palette and surfaces. */
+main{max-width:1120px}
+.workspace-tabs{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin:16px 0;position:sticky;top:0;z-index:22;background:#050507;padding:9px 0}
+.workspace-tabs button{font-size:14px;min-height:53px;background:#1c1a25;color:#ffb4e5;border:1px solid #5a3d57;box-shadow:none;display:flex;justify-content:center;align-items:center;gap:7px}
+.workspace-tabs button[aria-selected="true"]{background:linear-gradient(112deg,#ff4fca,#985fff);color:#0f0915;border-color:transparent}
+.workspace-tabs .tab-count{min-width:22px;min-height:22px;display:inline-flex;align-items:center;justify-content:center;border-radius:99px;padding:0 6px;background:#261727;color:#ffa1e1;font-size:12px}
+.workspace-tabs button[aria-selected="true"] .tab-count{background:#0f091530;color:#0f0915}
+.workspace-panel{margin:0}
+.workspace-panel>h2,.workspace-panel>.row h2{margin:0}
+.workspace-panel .queue-shell{display:grid;grid-template-columns:minmax(250px,.85fr) minmax(0,1.5fr);gap:12px;align-items:start}
+.queue-list{display:flex;flex-direction:column;gap:8px;max-height:70vh;overflow:auto;padding:2px 3px 3px 0}
+.queue-entry{appearance:none;text-align:left!important;display:flex;flex-direction:column;gap:5px;width:100%;min-height:80px;justify-content:center;border:1px solid #403447!important;background:#15141d!important;color:#f5f7fb!important;border-radius:13px;padding:12px!important;font-weight:500;box-shadow:none;line-height:1.35}
+.queue-entry[aria-current="true"]{border-color:#985fff!important;background:#261727!important}
+.queue-entry strong{font-size:16px}
+.queue-entry small{font-size:12px;color:#adb3c3;font-weight:500}
+.queue-entry .queue-top{display:flex;align-items:center;justify-content:space-between;gap:7px}
+.queue-entry .queue-state{font-size:11px;color:#ffa1e1;line-height:1.2;text-align:right}
+.queue-detail{min-width:0;max-height:70vh;overflow:auto}
+.queue-detail .job{margin:0}
+.queue-detail h3{font-size:17px}
+.queue-detail .route{margin:10px 0}
+.queue-detail .route+ .route{margin-top:10px}
+.queue-detail .row{margin-bottom:10px}
+.queue-detail .actions{display:flex;gap:7px;flex-wrap:wrap}
+.queue-detail .actions button{width:auto;flex:1 1 130px}
+.queue-detail button{min-height:46px}
+.queue-detail .detail-back{display:none;background:#1c1a25;border:1px solid #5a3d57;color:#ffb4e5;margin-bottom:10px}
+.queue-detail .mini-section-heading{font-size:13px;font-weight:800;color:#ffa1e1;margin:15px 0 8px}
+#buyerOrderArea,#deliveryArea,#slotArea,#courierArea{scroll-margin-top:84px}
+#buyerOrderArea .workspace-heading,#deliveryArea .workspace-heading{margin:0 0 12px}
+#buyerOrderArea .workspace-heading .muted,#deliveryArea .workspace-heading .muted{margin:5px 0}
+#buyerOrderArea .queue-detail input{display:block;width:100%;min-height:46px;padding:12px;border:1px solid #493b53;background:#0c0d14;border-radius:11px;color:#fff;font:inherit;margin:10px 0}
+#buyerOrderArea .queue-detail select{max-width:100%}
+#buyerOrderArea .venue-state{font-size:12px;color:#ffa1e1;font-weight:700}
+#buyerOrderArea .buyer-progress{display:flex;align-items:center;gap:8px;color:#adb3c3;font-size:13px;margin:8px 0}
+#buyerOrderArea .buyer-progress strong{color:#f5f7fb;font-size:13px}
+#buyerOrderArea .buyer-steps{display:flex;gap:5px}
+#buyerOrderArea .buyer-steps span{height:5px;min-width:14px;flex:1;background:#393245;border-radius:4px}
+#buyerOrderArea .buyer-steps span.done{background:#985fff}
+#buyerOrderArea .buyer-steps span.issue{background:#ff4fca}
+#buyerOrderArea .buyer-filters{display:flex;gap:7px;flex-wrap:wrap;margin:8px 0 13px}
+#buyerOrderArea .buyer-filters button{background:#1c1a25;color:#ffb4e5;border:1px solid #5a3d57;padding:9px 12px;font-size:13px}
+#buyerOrderArea .buyer-filters button[aria-pressed="true"]{background:#261727;border-color:#985fff}
+#buyerOrderArea .job .route{background:#0b0c14}
+#buyerOrderArea .route strong{font-size:15px}
+#buyerOrderArea .buyer-footer{border-top:1px solid #403447;padding-top:15px;margin-top:16px}
+@media(max-width:720px){
+ main{padding:14px 12px 145px}
+ .workspace-tabs{gap:5px;margin:11px -4px;padding:8px 4px}
+ .workspace-tabs button{font-size:12px;min-height:51px;padding:8px 3px;border-radius:10px;flex-direction:column;gap:2px}
+ .workspace-tabs .tab-count{font-size:10px;min-height:17px;min-width:17px}
+ .workspace-panel .queue-shell{display:block}
+ .queue-list{max-height:none}
+ .queue-detail{max-height:none;overflow:visible}
+ .workspace-panel[data-mobile-view="list"] .queue-detail{display:none}
+ .workspace-panel[data-mobile-view="detail"] .queue-list{display:none}
+ .workspace-panel[data-mobile-view="detail"] .detail-back{display:block}
+ .workspace-panel[data-mobile-view="detail"] .workspace-heading{display:none}
+ .queue-entry{min-height:78px}
+}
