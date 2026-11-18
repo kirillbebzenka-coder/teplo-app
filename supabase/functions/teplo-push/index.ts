@@ -72,6 +72,21 @@ async function handleEvent(evt:{type?:string,id?:string}){
  }
  let recipients:string[]=[];
  let payload={title:"TEPLO · Новый заказ",body:"Открой рабочий кабинет",url:"/teplo-app/pilot-dispatch.html?v=49",tag:"teplo-order-"+evt.id};
+ if(type==="delivery_delay"){
+  const reasons:Record<string,string>={no_courier:"Нет свободных курьеров на смене",unclaimed:"Заказ не принимают более 5 минут",unconfirmed:"Назначение не подтверждено",pickup:"Нужно проверить забор заказа",delivery:"Нужно проверить завершение доставки",slot:"Временной слот закончился",closed_slot:"Слот закрыт для принятия"};
+  const reason=(evt as {reason?:string}).reason||"";
+  if(!reasons[reason])return answer({error:"Invalid delay reason"},400);
+  const {data:job}=await admin.from("teplo_pilot_jobs").select("id,is_test,status").eq("id",evt.id).single();
+  if(!job?.is_test||!["new","assigned","accepted","picked_up"].includes(job.status))return answer({ignored:true,sent:0,attempted:0});
+  const expected:Record<string,string>={no_courier:"new",unclaimed:"new",closed_slot:"new",unconfirmed:"assigned",pickup:"accepted",delivery:"picked_up"};
+  if(expected[reason]&&job.status!==expected[reason])return answer({ignored:true,sent:0,attempted:0});
+  const {data:staff,error}=await admin.from("profiles").select("id").in("role",["admin","dispatcher"]);
+  if(error)throw error;
+  return answer(await sendTo((staff||[]).map(p=>p.id),{
+   title:"TEPLO · Требует внимания",body:reasons[reason]+" · №"+evt.id.slice(0,8).toUpperCase(),
+   url:"/teplo-app/pilot-dispatch.html?v=59&tab=calls&job="+evt.id,tag:"teplo-delay-"+evt.id+"-"+job.status
+  }));
+ }
  if(type==="buyer_order"){
   const {data:order}=await admin.from("orders").select("id,is_test").eq("id",evt.id).single();
   if(!order?.is_test)return answer({ignored:true});
