@@ -50,7 +50,7 @@ nav a.active{background:#39142e;color:#ffc3e8}
 <link rel="stylesheet" href="./dispatcher-workspace.css?v=47">
 <link rel="stylesheet" href="./teplo-slot-picker.css?v=48">
 <script src="./pilot-touch.js?v=29" defer></script>
-<script src="./dispatcher-workspace.js?v=57" defer></script>
+<script src="./dispatcher-workspace.js?v=58" defer></script>
 <script src="./teplo-slot-picker.js?v=48" defer></script>
 <script src="./pilot-connectivity.js?v=31" defer></script><script type="module" src="./role-portal.js?v=55"></script><script src="./pilot-ui-icons.js?v=45" defer></script>
 </head>
@@ -88,7 +88,9 @@ nav a.active{background:#39142e;color:#ffc3e8}
 <nav aria-label="Рабочие разделы"><a href="partner.html?v=34"><span data-teplo-icon="store"></span> Ресторан</a><a href="pilot-dispatch.html?v=34" class="active"><span data-teplo-icon="clipboard"></span> Диспетчер</a><a href="pilot-courier.html?v=34"><span data-teplo-icon="bike"></span> Курьер</a></nav>
 <script type="module">
 import {createClient} from 'https://esm.sh/@supabase/supabase-js@2';
-import {deliveryHistory} from './dispatcher-history.js?v=57';
+import {deliveryHistory} from './dispatcher-history.js?v=58';
+import {attentionReasons} from './dispatcher-attention.js?v=58';
+import {deliveryNotes} from './dispatcher-notes.js?v=58';
 const db=createClient('https://bgtegxdekqsajttkhhrj.supabase.co','sb_publishable_aSOKkJ_F47sGj9e8v8uJ3g_24rlQ8XG');
 const $=id=>document.getElementById(id),txt=(tag,t='',cls='')=>{const e=document.createElement(tag);e.textContent=String(t??'');if(cls)e.className=cls;return e};
 const uah=n=>Number(n||0).toLocaleString('ru-RU',{maximumFractionDigits:2})+' ₴';
@@ -227,20 +229,20 @@ function renderCallQueue(){
  const list=$('list'),details=$('deliveryDetail'),section=$('deliveryArea');
  list.replaceChildren();details.replaceChildren();
  if(callFilter==='done'||callFilter==='all')list.append(txt('p','Архив: последние 80 завершённых доставок. Активные загружаются отдельно.','muted'));
- const visible=callRows.filter(j=>callFilter==='all'||(callFilter==='new'?j.status==='new':callFilter==='done'?['delivered','cancelled'].includes(j.status):!['delivered','cancelled'].includes(j.status)));
+ const visible=callRows.filter(j=>callFilter==='attention'?attentionReasons(j,slots,couriers).length>0:callFilter==='all'||(callFilter==='new'?j.status==='new':callFilter==='done'?['delivered','cancelled'].includes(j.status):!['delivered','cancelled'].includes(j.status)));
  visible.sort((a,b)=>{
   const order={new:0,assigned:1,accepted:2,picked_up:3,delivered:4,cancelled:5};
   return (order[a.status]??6)-(order[b.status]??6)||new Date(a.created_at)-new Date(b.created_at);
  });
  if(!visible.some(j=>j.id===selectedCallId))selectedCallId=visible[0]?.id||null;
  if(new URLSearchParams(location.search).get('job')===selectedCallId)section.dataset.mobileView='detail';
- const filters=[['active','В работе'],['new','Свободные'],['done','Завершены'],['all','Все']];
+ const filters=[['attention','Требует внимания'],['active','В работе'],['new','Свободные'],['done','Завершены'],['all','Все']];
  const heading=section.querySelector('.workspace-heading');
  let controls=section.querySelector('#callFilters');
  if(!controls){controls=txt('div','','buyer-filters');controls.id='callFilters';heading.after(controls)}
  controls.replaceChildren();
  for(const [key,label] of filters){
-  const count=callRows.filter(j=>key==='all'||(key==='new'?j.status==='new':key==='done'?['delivered','cancelled'].includes(j.status):!['delivered','cancelled'].includes(j.status))).length;
+  const count=callRows.filter(j=>key==='attention'?attentionReasons(j,slots,couriers).length>0:key==='all'||(key==='new'?j.status==='new':key==='done'?['delivered','cancelled'].includes(j.status):!['delivered','cancelled'].includes(j.status))).length;
   const b=txt('button',label+' · '+count,'secondary');b.type='button';
   b.setAttribute('aria-pressed',String(callFilter===key));
   b.onclick=()=>{callFilter=key;selectedCallId=null;section.dataset.mobileView='list';renderCallQueue()};
@@ -252,6 +254,7 @@ function renderCallQueue(){
   const b=txt('button','','queue-entry'),top=txt('span','','queue-top');
   b.type='button';b.setAttribute('aria-current',String(job.id===selectedCallId));
   top.append(txt('strong','№'+job.id.slice(0,8).toUpperCase()),txt('span',names[job.status]||job.status,'queue-state'));
+  const problems=attentionReasons(job,slots,couriers);if(problems.length)b.append(txt('span',problems.join(' · '),'warning'));
   b.append(top,txt('span',(job.source_order_id?'Покупатель · ':'Заведение · ')+job.shop_name_snapshot),txt('small','Доставка · '+uah(job.delivery_fee_uah)+' · '+new Date(job.created_at).toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'})));
   b.onclick=()=>{selectedCallId=job.id;section.dataset.mobileView='detail';renderCallQueue();details.scrollIntoView({behavior:'smooth',block:'start'})};
   list.append(b);
@@ -265,6 +268,9 @@ function card(job){
  const e=txt('article','','job'),top=txt('div','','row'),badge=txt('span',names[job.status]||job.status,'pill');
  e.dataset.jobId=job.id;
  top.append(txt('strong','№'+job.id.slice(0,8)),badge);e.append(top);
+ const problems=attentionReasons(job,slots,couriers);
+ for(const reason of problems)e.append(txt('p',reason,'warning'));
+ if(problems.length)e.append(txt('p','Тестовые пороги контроля. Это сигнал проверить заказ, а не автоматическая отмена.','muted'));
  e.append(txt('p','Заведение: '+job.shop_name_snapshot+' · '+new Date(job.created_at).toLocaleString('ru-RU',{hour:'2-digit',minute:'2-digit',day:'2-digit',month:'2-digit'})));
  e.append(txt('p','Состав: '+job.order_summary),txt('p','Готовность: '+(job.ready_in_minutes===0?'сразу':job.ready_in_minutes+' мин')));
  e.append(txt('p','Стоимость доставки: '+uah(job.delivery_fee_uah)+' · Курьеру после доставки: '+uah(job.courier_reward_uah)));
@@ -304,10 +310,10 @@ function card(job){
  }
  if(job.status==='delivered')e.append(txt('p','Доставка завершена. Повторно назначить этот заказ нельзя.','muted'));
  if(job.status==='cancelled')e.append(txt('p','Заказ отменён. Для назначения нужна новая заявка.','muted'));
- e.append(feedback,deliveryHistory(db,job.id));return e;
+ e.append(feedback,deliveryHistory(db,job.id),deliveryNotes(db,job.id));return e;
 }
 async function loadDeliveryJobs(){
- const columns='id,slot_id,source_order_id,shop_name_snapshot,shop_address_snapshot,order_summary,ready_in_minutes,customer_name,customer_phone,delivery_address,status,courier_id,created_at,updated_at,delivery_fee_uah,courier_reward_uah';
+ const columns='id,slot_id,source_order_id,shop_name_snapshot,shop_address_snapshot,order_summary,ready_in_minutes,customer_name,customer_phone,delivery_address,status,courier_id,created_at,updated_at,assigned_at,accepted_at,picked_up_at,ready_at,delivery_fee_uah,courier_reward_uah';
  const active=[];
  for(let start=0;;start+=500){
   const {data,error}=await db.from('teplo_pilot_jobs').select(columns).in('status',['new','assigned','accepted','picked_up']).order('created_at').order('id').range(start,start+499);
@@ -379,12 +385,13 @@ async function load(){
   $('message').textContent='● На связи · '+new Date().toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'});
   
   $('stats').replaceChildren(
+    stat('Требуют внимания',rows.filter(j=>attentionReasons(j,slots,couriers).length>0).length),
     stat('Ждут назначения',rows.filter(j=>j.status==='new').length),
     stat('В работе',rows.filter(j=>['assigned','accepted','picked_up'].includes(j.status)).length),
     stat('Свободных курьеров',availableCouriers.length),
     stat('Завершено (тест)',rows.filter(j=>j.status==='delivered').length)
   );
-  const signature=JSON.stringify({jobs:rows.map(j=>[j.id,j.status,j.courier_id,j.slot_id,j.updated_at]),couriers:couriers.map(c=>[c.id,c.activeJobs,c.onShift]),slots:slots.map(s=>[s.id,s.booked,s.capacity,s.is_open])});
+  const signature=JSON.stringify({jobs:rows.map(j=>[j.id,j.status,j.courier_id,j.slot_id,j.updated_at,attentionReasons(j,slots,couriers).join('|')]),couriers:couriers.map(c=>[c.id,c.activeJobs,c.onShift]),slots:slots.map(s=>[s.id,s.booked,s.capacity,s.is_open])});
   const editing=$('deliveryDetail').contains(document.activeElement)&&['SELECT','INPUT','TEXTAREA'].includes(document.activeElement?.tagName);
   if(signature!==lastCallSignature&&!editing){lastCallSignature=signature;renderCallQueue()}
   alertForIncoming(rows);

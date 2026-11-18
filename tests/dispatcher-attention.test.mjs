@@ -1,0 +1,18 @@
+import assert from 'node:assert/strict';
+import {attentionReasons as check} from '../dispatcher-attention.js';
+const now=Date.parse('2026-11-18T12:00:00Z'),iso=n=>new Date(now+n*60000).toISOString();
+const slot={id:'s',is_open:true,slot_start:iso(-10),slot_end:iso(40)},courier={onShift:true,activeJobs:0};
+const job={id:'j',slot_id:'s',status:'new',created_at:iso(-10),updated_at:iso(-10)};
+assert.equal(check(job,[slot],[courier],now).length,1);
+assert(check(job,[slot],[],now).some(x=>x.includes('Нет свободных')));
+assert.equal(check({...job,updated_at:iso(-1)},[slot],[courier],now).length,0);
+assert.equal(check(job,[{...slot,slot_start:iso(60),slot_end:iso(120)}],[],now).length,0);
+assert(check(job,[{...slot,is_open:false}],[courier],now).some(x=>x.includes('Слот закрыт')));
+assert(check({...job,status:'assigned',assigned_at:iso(-4)},[slot],[courier],now).some(x=>x.includes('не подтверждено')));
+assert.equal(check({...job,status:'assigned',assigned_at:iso(-1)},[slot],[courier],now).length,0);
+assert(check({...job,status:'accepted',ready_at:iso(-16)},[slot],[courier],now).some(x=>x.includes('готовности')));
+assert.equal(check({...job,status:'accepted',ready_at:iso(10)},[slot],[courier],now).length,0);
+assert(check({...job,status:'picked_up',picked_up_at:iso(-61)},[slot],[courier],now).some(x=>x.includes('часа')));
+for(const status of ['delivered','cancelled'])assert.equal(check({...job,status},[],[],now).length,0);
+assert(check(job,[slot],[{onShift:true,activeJobs:2}],now).some(x=>x.includes('Нет свободных')));
+console.log('PASS: due/future slots, retries, capacity, acceptance, readiness, completion, terminal statuses.');
