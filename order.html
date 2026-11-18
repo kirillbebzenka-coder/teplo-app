@@ -163,12 +163,30 @@ async function catalog(){
  }catch(e){$('connection').textContent='Ошибка';root.replaceChildren(el('p','Не удалось загрузить каталог.'));message(e.message,true)}
 }
 async function orders(){const root=$('orders');root.replaceChildren();try{const u=await session();if(!u){root.append(el('p','Войди, чтобы увидеть свои заказы.'));return}const {data,error}=await db.from('orders').select('id,shop_name_snapshot,is_test,status,demo_status,delivery_address,payment_method,subtotal,delivery_fee,total,created_at,order_items(product_name_snapshot,quantity,unit_price_snapshot,shop_id)').eq('customer_id',u.id).order('created_at',{ascending:false}).limit(30);if(error)throw error;if(!data.length){root.append(el('p','Заказов пока нет.'));return}for(const o of data){const card=el('article','','order');card.append(el('h3',(o.is_test?'🧪 ТЕСТ — НЕ ВЫПОЛНЯТЬ · ':'')+(o.shop_name_snapshot||'Заказ')),el('p','Статус: '+(o.is_test?({'pending':'Ожидает подтверждения (тест)','confirmed':'Подтверждён (тест)','preparing':'Готовится (тест)','ready_for_pickup':'Готов к выдаче (тест)','assigned':'Передан курьеру (тест)','picked_up':'Забран курьером (тест)','delivered':'Доставлен (тест)'}[o.demo_status]||o.demo_status):o.status)),el('p','Итого: '+money(o.total)+' (доставка '+money(o.delivery_fee)+')'),el('p','Адрес: '+(o.delivery_address||'—')),el('p','Оплата: '+(o.payment_method==='card_on_delivery'?'Картой при получении (если доступно)':'Наличными при получении')),el('small',new Date(o.created_at).toLocaleString('ru-UA')));for(const p of o.order_items||[])card.append(el('p',p.product_name_snapshot+' × '+p.quantity+' · '+money(p.unit_price_snapshot)));root.append(card)}}catch(e){message('Заказы: '+e.message,true)}}
+const EMAIL_COOLDOWN_MS=60000;
+function emailCooldown(kind,email){
+ const key='teplo:email:'+kind+':'+email.toLowerCase(),last=Number(localStorage.getItem(key)||0),left=EMAIL_COOLDOWN_MS-(Date.now()-last);
+ if(left>0)return Math.ceil(left/1000);
+ localStorage.setItem(key,String(Date.now()));return 0;
+}
+function readableAuthError(e){
+ const m=String(e?.message||e||'Ошибка'),c=String(e?.code||'');
+ if(c==='over_email_send_rate_limit'||/email rate limit|over_email_send_rate_limit|429/i.test(m))return 'На сервере исчерпан лимит писем подтверждения. Это общая проблема TEPLO, а не твоего телефона или почты. Повторные попытки не помогут; администратор настраивает почтовый сервис.';
+ if(c==='over_request_rate_limit'||/for security purposes|only request this after|too many requests/i.test(m))return 'Слишком частые запросы. Подожди перед следующей попыткой и проверь уже полученные письма.';
+ if(c==='email_not_confirmed'||/email not confirmed/i.test(m))return 'Подтверди почту по письму TEPLO, затем войди. Проверь папку «Спам».';
+ if(c==='invalid_credentials'||/invalid login credentials/i.test(m))return 'Неверная почта или пароль. Если только зарегистрировался, сначала подтверди email.';
+ return m;
+}
 async function auth(kind){
   const email=$('email').value.trim(), password=$('password').value;
   const status=$('authStatus'), login=$('login'), signup=$('signup');
   const show=(text,error=false)=>{status.textContent=text;status.style.color=error?'#ff9999':'#d89a45'};
   if(!email||!password){$('authDetails').open=true;show('Введи email и пароль.',true);return}
   if(kind==='signup'&&password.length<6){show('Пароль должен содержать минимум 6 символов.',true);return}
+  if(kind==='signup'){
+    const wait=emailCooldown('signup',email);
+    if(wait){show('Запрос уже отправлялся. Подожди '+wait+' сек. и проверь почту. Повторная регистрация не нужна.',true);return}
+  }
   login.disabled=true;signup.disabled=true;show(kind==='signup'?'Отправляем запрос на регистрацию…':'Проверяем данные для входа…');
   const slow=setTimeout(()=>show('Сервер отвечает дольше обычного. Не нажимай кнопку повторно.'),12000);
   try{
@@ -178,13 +196,15 @@ async function auth(kind){
       show(result.data?.session?'Аккаунт создан, вход выполнен.':'Запрос принят. Проверь письмо для подтверждения email (включая Спам).');
     }else{show('Вход выполнен.')}
     await session();if(result.data?.session){$('authDetails').open=false}await orders();
-  }catch(e){show('Ошибка: '+(e?.message||String(e)),true)}
+  }catch(e){show('Ошибка: '+readableAuthError(e),true)}
   finally{clearTimeout(slow);login.disabled=false;signup.disabled=false}
 }
 async function resendConfirmation(){
   const status=$('authStatus'), btn=$('resend'), email=$('email').value.trim();
   const show=(s,bad=false)=>{status.textContent=s;status.style.color=bad?'#ff9999':'#d89a45'};
   if(!email){show('Сначала введи email.',true);return}
+  const wait=emailCooldown('resend',email);
+  if(wait){show('Подожди '+wait+' сек. перед повторным запросом письма.',true);return}
   btn.disabled=true;
   show('Запрашиваем новое письмо подтверждения…');
   try{
@@ -194,7 +214,7 @@ async function resendConfirmation(){
   }catch(e){
     if(/rate limit|429|too many/i.test(String(e?.message||e))){
       show('Лимит писем Supabase пока исчерпан. Не отправляй запросы повторно — попробуй позднее.',true);
-    }else{show('Ошибка: '+(e?.message||String(e)),true)}
+    }else{show('Ошибка: '+readableAuthError(e),true)}
   }finally{btn.disabled=false}
 }
 async function saveDemoCheckout(){
