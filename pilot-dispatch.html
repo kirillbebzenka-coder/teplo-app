@@ -50,7 +50,7 @@ nav a.active{background:#39142e;color:#ffc3e8}
 <link rel="stylesheet" href="./dispatcher-workspace.css?v=47">
 <link rel="stylesheet" href="./teplo-slot-picker.css?v=48">
 <script src="./pilot-touch.js?v=29" defer></script>
-<script src="./dispatcher-workspace.js?v=47" defer></script>
+<script src="./dispatcher-workspace.js?v=57" defer></script>
 <script src="./teplo-slot-picker.js?v=48" defer></script>
 <script src="./pilot-connectivity.js?v=31" defer></script><script type="module" src="./role-portal.js?v=55"></script><script src="./pilot-ui-icons.js?v=45" defer></script>
 </head>
@@ -69,7 +69,7 @@ nav a.active{background:#39142e;color:#ffc3e8}
 <p class="muted">0/2 — свободен. 1/2 — доступен для ещё одного заказа. 2/2 — лимит достигнут. Не на смене — недоступен. Аккаунты без роли курьера отображаются в <a href="team.html?v=34" style="color:#ffaee9">панели команды</a>.</p>
 <div id="courierRoster" class="courier-grid"><p class="muted">Загружаем команду…</p></div></section>
 <section id="deliveryArea" class="workspace-panel" data-mobile-view="list">
-<div class="row workspace-heading"><h2>Вызовы курьера</h2><span class="muted">Заявки заведений</span></div>
+<div class="row workspace-heading"><h2>Все доставки</h2><span class="muted">Покупатели и заведения</span></div>
 <div class="queue-shell"><div id="list" class="queue-list" aria-label="Очередь вызовов курьера"></div><div id="deliveryDetail" class="queue-detail"><p class="muted">Выбери вызов из очереди.</p></div></div></section>
 </main><div id="incomingOverlay" hidden>
 <article id="incomingDialog" class="job" role="alertdialog" aria-modal="true" aria-labelledby="incomingTitle" aria-describedby="incomingCaption">
@@ -88,11 +88,12 @@ nav a.active{background:#39142e;color:#ffc3e8}
 <nav aria-label="Рабочие разделы"><a href="partner.html?v=34"><span data-teplo-icon="store"></span> Ресторан</a><a href="pilot-dispatch.html?v=34" class="active"><span data-teplo-icon="clipboard"></span> Диспетчер</a><a href="pilot-courier.html?v=34"><span data-teplo-icon="bike"></span> Курьер</a></nav>
 <script type="module">
 import {createClient} from 'https://esm.sh/@supabase/supabase-js@2';
+import {deliveryHistory} from './dispatcher-history.js?v=57';
 const db=createClient('https://bgtegxdekqsajttkhhrj.supabase.co','sb_publishable_aSOKkJ_F47sGj9e8v8uJ3g_24rlQ8XG');
 const $=id=>document.getElementById(id),txt=(tag,t='',cls='')=>{const e=document.createElement(tag);e.textContent=String(t??'');if(cls)e.className=cls;return e};
 const uah=n=>Number(n||0).toLocaleString('ru-RU',{maximumFractionDigits:2})+' ₴';
 const names={new:'Новая',assigned:'Курьер назначен',accepted:'Курьер принял',picked_up:'Курьер забрал',delivered:'Завершена',cancelled:'Отменена'};
-let busy=false;let currentUser=null;let couriers=[];let availableCouriers=[],slots=[],selectedSlotDate='';
+let canManage=false;let busy=false;let currentUser=null;let couriers=[];let availableCouriers=[],slots=[],selectedSlotDate='';
 let selectedCallId=new URLSearchParams(location.search).get('job')||null,callFilter='active',callRows=[],lastCallSignature=null,lastSlotsSignature=null;
 const slotDay=t=>new Date(t).toLocaleDateString('ru-RU',{timeZone:'Europe/Kyiv',day:'2-digit',month:'2-digit',weekday:'short'});
 const slotClock=t=>new Date(t).toLocaleTimeString('ru-RU',{timeZone:'Europe/Kyiv',hour:'2-digit',minute:'2-digit'});
@@ -225,6 +226,7 @@ async function cancel(job,button,feedback){
 function renderCallQueue(){
  const list=$('list'),details=$('deliveryDetail'),section=$('deliveryArea');
  list.replaceChildren();details.replaceChildren();
+ if(callFilter==='done'||callFilter==='all')list.append(txt('p','Архив: последние 80 завершённых доставок. Активные загружаются отдельно.','muted'));
  const visible=callRows.filter(j=>callFilter==='all'||(callFilter==='new'?j.status==='new':callFilter==='done'?['delivered','cancelled'].includes(j.status):!['delivered','cancelled'].includes(j.status)));
  visible.sort((a,b)=>{
   const order={new:0,assigned:1,accepted:2,picked_up:3,delivered:4,cancelled:5};
@@ -250,7 +252,7 @@ function renderCallQueue(){
   const b=txt('button','','queue-entry'),top=txt('span','','queue-top');
   b.type='button';b.setAttribute('aria-current',String(job.id===selectedCallId));
   top.append(txt('strong','№'+job.id.slice(0,8).toUpperCase()),txt('span',names[job.status]||job.status,'queue-state'));
-  b.append(top,txt('span',job.shop_name_snapshot),txt('small','Доставка · '+uah(job.delivery_fee_uah)+' · '+new Date(job.created_at).toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'})));
+  b.append(top,txt('span',(job.source_order_id?'Покупатель · ':'Заведение · ')+job.shop_name_snapshot),txt('small','Доставка · '+uah(job.delivery_fee_uah)+' · '+new Date(job.created_at).toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'})));
   b.onclick=()=>{selectedCallId=job.id;section.dataset.mobileView='detail';renderCallQueue();details.scrollIntoView({behavior:'smooth',block:'start'})};
   list.append(b);
  }
@@ -302,22 +304,44 @@ function card(job){
  }
  if(job.status==='delivered')e.append(txt('p','Доставка завершена. Повторно назначить этот заказ нельзя.','muted'));
  if(job.status==='cancelled')e.append(txt('p','Заказ отменён. Для назначения нужна новая заявка.','muted'));
- e.append(feedback);return e;
+ e.append(feedback,deliveryHistory(db,job.id));return e;
 }
+async function loadDeliveryJobs(){
+ const columns='id,slot_id,source_order_id,shop_name_snapshot,shop_address_snapshot,order_summary,ready_in_minutes,customer_name,customer_phone,delivery_address,status,courier_id,created_at,updated_at,delivery_fee_uah,courier_reward_uah';
+ const active=[];
+ for(let start=0;;start+=500){
+  const {data,error}=await db.from('teplo_pilot_jobs').select(columns).in('status',['new','assigned','accepted','picked_up']).order('created_at').order('id').range(start,start+499);
+  if(error)return {error};active.push(...(data||[]));if((data||[]).length<500)break;
+ }
+ const {data,error}=await db.from('teplo_pilot_jobs').select(columns).in('status',['delivered','cancelled']).order('created_at',{ascending:false}).order('id').limit(80);
+ return error?{error}:{data:[...active,...(data||[])]};
+}
+window.addEventListener('teplo:open-delivery',async event=>{
+ const id=event.detail?.id;if(typeof id!=='string')return;
+ await load();
+ if(!canManage)return;
+ if(!callRows.some(j=>j.id===id)){
+  try{
+   const {data,error}=await db.from('teplo_pilot_jobs').select('*').eq('id',id).single();
+   if(error)throw error;callRows.push(data);
+  }catch{$('message').textContent='Не удалось открыть доставку. Обнови список и проверь доступ.';return}
+ }
+ selectedCallId=id;callFilter='all';window.TEPLOWorkspace?.show('calls');renderCallQueue();$('deliveryArea').dataset.mobileView='detail';
+});
 async function load(){
  if(busy)return;busy=true;$('refresh').disabled=true;
  try{
   const {data,error:ae}=await db.auth.getUser();if(ae)throw ae;
-  currentUser=data?.user||null;
+  currentUser=data?.user||null;canManage=false;
   if(currentUser?.id!==noticeUser){noticeUser=currentUser?.id||null;announcedRequests=new Set();incomingQueue=[];if(incomingShowing){incomingShowing=null;$('incomingOverlay').hidden=true;}}
-  if(!currentUser){$('courierRoster').replaceChildren();$('role').textContent='Нужен вход';$('message').textContent='Войди в свой аккаунт через TEPLO, затем открой этот раздел.';$('list').replaceChildren();$('stats').replaceChildren();return}
+  if(!currentUser){$('courierRoster').replaceChildren();$('role').textContent='Нужен вход';$('message').textContent='Войди в свой аккаунт через TEPLO, затем открой этот раздел.';$('list').replaceChildren();$('deliveryDetail').replaceChildren();callRows=[];lastCallSignature=null;$('stats').replaceChildren();return}
   const {data:p,error:pe}=await db.from('profiles').select('role').eq('id',currentUser.id).single();if(pe)throw pe;
-  if(!['admin','dispatcher'].includes(p.role)){$('courierRoster').replaceChildren();$('role').textContent='Нет доступа';$('message').textContent='Нужна роль диспетчера или администратора.';$('list').replaceChildren();$('stats').replaceChildren();return}
+  if(!['admin','dispatcher'].includes(p.role)){$('courierRoster').replaceChildren();$('role').textContent='Нет доступа';$('message').textContent='Нужна роль диспетчера или администратора.';$('list').replaceChildren();$('deliveryDetail').replaceChildren();callRows=[];lastCallSignature=null;$('stats').replaceChildren();return}
+  canManage=true;
   $('role').textContent=p.role==='admin'?'Администратор':'Диспетчер';
   const [{data:roster,error:re},{data:jobs,error:je},{count:adminActive,error:adminCountError},{data:slotRows,error:slotError}]=await Promise.all([
     db.rpc('teplo_dispatch_courier_roster'),
-    db.from('teplo_pilot_jobs').select('id,slot_id,source_order_id,shop_name_snapshot,shop_address_snapshot,order_summary,ready_in_minutes,customer_name,customer_phone,delivery_address,status,courier_id,created_at,delivery_fee_uah,courier_reward_uah')
-      .order('created_at',{ascending:false}).limit(80),
+    loadDeliveryJobs(),
     db.from('teplo_pilot_jobs').select('id',{count:'exact',head:true}).eq('courier_id',currentUser.id).in('status',['assigned','accepted','picked_up']),
     db.rpc('teplo_pilot_list_slots')
   ]);
@@ -330,7 +354,7 @@ async function load(){
   window.dispatchEvent(new Event('teplo:sync-ok'));
 
   
-  const rows=(jobs||[]).filter(j=>!j.source_order_id);
+  const rows=jobs||[];
   callRows=rows;
   couriers=(roster||[]).map(x=>({
     id:x.id,
@@ -360,7 +384,7 @@ async function load(){
     stat('Свободных курьеров',availableCouriers.length),
     stat('Завершено (тест)',rows.filter(j=>j.status==='delivered').length)
   );
-  const signature=JSON.stringify({jobs:rows.map(j=>[j.id,j.status,j.courier_id,j.slot_id]),couriers:couriers.map(c=>[c.id,c.activeJobs,c.onShift]),slots:slots.map(s=>[s.id,s.booked,s.capacity,s.is_open])});
+  const signature=JSON.stringify({jobs:rows.map(j=>[j.id,j.status,j.courier_id,j.slot_id,j.updated_at]),couriers:couriers.map(c=>[c.id,c.activeJobs,c.onShift]),slots:slots.map(s=>[s.id,s.booked,s.capacity,s.is_open])});
   const editing=$('deliveryDetail').contains(document.activeElement)&&['SELECT','INPUT','TEXTAREA'].includes(document.activeElement?.tagName);
   if(signature!==lastCallSignature&&!editing){lastCallSignature=signature;renderCallQueue()}
   alertForIncoming(rows);
@@ -373,4 +397,4 @@ window.addEventListener('online',()=>void load());
 window.setInterval(()=>{if(!document.hidden&&navigator.onLine)void load()},8000);
 db.auth.onAuthStateChange(()=>setTimeout(()=>void load(),0));
 await load();
-</script><script type="module" src="./pilot-buyer-dispatch.js?v=56"></script><script type="module" src="./teplo-push-client.js?v=55"></script></body></html>
+</script><script type="module" src="./pilot-buyer-dispatch.js?v=57"></script><script type="module" src="./teplo-push-client.js?v=55"></script></body></html>

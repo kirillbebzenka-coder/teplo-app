@@ -2,7 +2,7 @@
 (() => {
  const tabs=[
   {id:'buyers',label:'Покупатели',panel:'buyerOrderArea'},
-  {id:'calls',label:'Вызовы',panel:'deliveryArea'},
+  {id:'calls',label:'Доставки',panel:'deliveryArea'},
   {id:'couriers',label:'Курьеры',panel:'courierArea'},
   {id:'slots',label:'Слоты',panel:'slotArea'}
  ];

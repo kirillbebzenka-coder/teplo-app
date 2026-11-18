@@ -5,6 +5,7 @@ const el=(tag,text='',cls='')=>{const node=document.createElement(tag);node.text
 const money=n=>Number(n||0).toLocaleString('ru-RU',{maximumFractionDigits:2})+' ₴';
 const day=t=>new Date(t).toLocaleDateString('ru-RU',{timeZone:'Europe/Kyiv',day:'2-digit',month:'2-digit'});
 const clock=t=>new Date(t).toLocaleTimeString('ru-RU',{timeZone:'Europe/Kyiv',hour:'2-digit',minute:'2-digit'});
+const deliveryStates={new:'Ищем курьера',assigned:'Курьер назначен',accepted:'Курьер принял',picked_up:'Курьер забрал',delivered:'Доставлен',cancelled:'Отменён'};
 const states={pending:'Не размещён',ordered:'Заказ размещён',confirmed:'Подтверждено',issue:'Проблема'};
 const section=document.getElementById('buyerOrderArea');
 const header=el('div','','row'),h2=el('h2','Заказы покупателей'),refresh=el('button','Обновить','secondary');
@@ -15,11 +16,11 @@ const root=el('div','','queue-list');root.id='buyerOrders';
 const details=el('div','','queue-detail');details.id='buyerDetails';
 shell.append(root,details);section.append(filters,shell);
 let busy=false,reloadPending=false,selectedId=new URLSearchParams(location.search).get('order')||null,activeFilter=new URLSearchParams(location.search).get('order')?'all':'work',lastSignature=null,seenBuyerIds=null,ordersCache=[],tasksCache=[],slotsCache=[],linksCache=[];
-const filterList=[['work','В обработке'],['issue','Проблемы'],['ready','К передаче'],['sent','У курьеров'],['all','Все']];
+const filterList=[['work','В обработке'],['issue','Проблемы'],['ready','К передаче'],['sent','Доставка'],['done','Завершены'],['all','Все']];
 function orderState(order){
  const pieces=tasksCache.filter(t=>t.order_id===order.id);
  const link=linksCache.find(x=>x.source_order_id===order.id);
- if(link)return ['sent',link.status==='delivered'?'Доставлен':'У курьеров'];
+ if(link)return [['delivered','cancelled'].includes(link.status)?'done':'sent',deliveryStates[link.status]||link.status];
  if(!pieces.length||pieces.some(t=>t.state==='issue'))return ['issue','Требует решения'];
  if(pieces.every(t=>t.state==='confirmed'))return ['ready','Готов к передаче'];
  return ['work',pieces.filter(t=>t.state==='confirmed').length+'/'+pieces.length+' подтверждено'];
@@ -61,12 +62,16 @@ function card(o,tasks,slots,links){
  const c=el('article','','job'),top=el('div','','row'),pieces=tasks.filter(t=>t.order_id===o.id);
  const linked=links.find(l=>l.source_order_id===o.id);
  const confirmed=pieces.length>0&&pieces.every(t=>t.state==='confirmed');
- top.append(el('strong','Заказ №'+o.id.slice(0,8).toUpperCase()),el('span',linked?'Передан курьерам':confirmed?'Подтверждён':'Ожидает обработки','pill'));
+ top.append(el('strong','Заказ №'+o.id.slice(0,8).toUpperCase()),el('span',linked?(deliveryStates[linked.status]||linked.status):confirmed?'Подтверждён':'Ожидает обработки','pill'));
  c.append(top,el('p','Покупатель · '+new Date(o.created_at).toLocaleString('ru-RU',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}),'muted'));
  c.append(el('p','Получатель: '+o.customer_name+' · '+o.customer_phone));
  c.append(el('p','Адрес доставки: '+o.delivery_address));
  c.append(el('p','Стоимость товаров: '+money(o.subtotal)+' · Доставка: '+money(o.delivery_fee)+' · Итого: '+money(o.total)));
- if(linked)c.append(el('p','Общая курьерская доставка №'+linked.id.slice(0,8).toUpperCase()+' · '+linked.status,'muted'));
+ if(linked){
+  c.append(el('p','Доставка №'+linked.id.slice(0,8).toUpperCase()+' · '+(deliveryStates[linked.status]||linked.status),'muted'));
+  const manage=el('button','Открыть управление доставкой','secondary');manage.type='button';
+  manage.onclick=()=>window.dispatchEvent(new CustomEvent('teplo:open-delivery',{detail:{id:linked.id}}));c.append(manage);
+ }
  if(!pieces.length)c.append(el('p','Не указаны заведения. Нельзя передать курьеру.','warning'));
  for(const task of pieces){
   const part=el('div','','route');part.append(el('strong',task.shop_name_snapshot+' · '+states[task.state]));
