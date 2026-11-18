@@ -82,12 +82,20 @@ const db=createClient('https://bgtegxdekqsajttkhhrj.supabase.co','sb_publishable
 const $=id=>document.getElementById(id);
 const REDIRECT='https://kirillbebzenka-coder.github.io/teplo-app/courier-start.html';
 let working=false,checking=false,account=null;
+const EMAIL_COOLDOWN_MS=60000;
+function emailCooldown(kind,email){
+ const key='teplo:email:'+kind+':'+email.toLowerCase(),last=Number(localStorage.getItem(key)||0),left=EMAIL_COOLDOWN_MS-(Date.now()-last);
+ if(left>0)return Math.ceil(left/1000);
+ localStorage.setItem(key,String(Date.now()));return 0;
+}
 function readableError(err){
  const text=String(err?.message||err||'Неизвестная ошибка'),code=String(err?.code||'');
  if(code==='email_not_confirmed'||/email not confirmed/i.test(text))
   return 'Почта ещё не подтверждена. Открой письмо TEPLO в Gmail (проверь «Спам») и перейди по ссылке, затем вернись сюда и нажми «Войти».';
- if(code==='over_email_send_rate_limit'||code==='over_request_rate_limit'||/for security purposes|only request this after|rate limit|too many requests/i.test(text))
-  return 'Слишком частые запросы. Проверь уже отправленное письмо в почте. Не нажимай повторную отправку много раз: Supabase временно ограничивает такие запросы.';
+ if(code==='over_email_send_rate_limit'||/email rate limit|429/i.test(text))
+  return 'В TEPLO исчерпан общий лимит отправки писем подтверждения. Это проблема почтового сервиса, а не твоего телефона. Администратор настраивает отправку писем; не повторяй регистрацию.';
+ if(code==='over_request_rate_limit'||/for security purposes|only request this after|rate limit|too many requests/i.test(text))
+  return 'Слишком частые запросы. Проверь уже отправленное письмо в почте. Подожди перед повтором.';
  if(code==='invalid_credentials'||/invalid login credentials/i.test(text))
   return 'Неправильная почта или пароль. Если только зарегистрировался, сначала подтверди почту.';
  if(/failed to fetch|network|fetch error/i.test(text))
@@ -138,6 +146,10 @@ async function auth(kind){
  const email=$('email').value.trim(),password=$('password').value;
  if(!email){message('Введи email.','error');return}
  if(kind!=='resend'&&password.length<6){message('Пароль должен содержать минимум 6 символов.','error');return}
+ if(kind==='signup'||kind==='resend'){
+  const wait=emailCooldown(kind,email);
+  if(wait){message('Подожди '+wait+' сек. перед повторным запросом. Проверь ранее отправленное письмо.','error');return}
+ }
  setBusy(true);
  message(kind==='signup'?'Создаём аккаунт…':kind==='login'?'Проверяем данные…':'Отправляем письмо…');
  const btn=$(kind==='signup'?'signup':kind==='resend'?'resend':'login');
