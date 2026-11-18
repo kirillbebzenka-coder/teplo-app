@@ -3,7 +3,7 @@ import {createClient} from 'https://esm.sh/@supabase/supabase-js@2';
 const db=createClient('https://bgtegxdekqsajttkhhrj.supabase.co','sb_publishable_aSOKkJ_F47sGj9e8v8uJ3g_24rlQ8XG');
 const el=(tag,text='',cls='')=>{const e=document.createElement(tag);e.textContent=text;if(cls)e.className=cls;return e};
 const root=document.getElementById('venueOrders');
-const heading=el('h2','Заказы покупателей'),hint=el('p','Подтверди свою часть заказа и время готовности. Сборную доставку передают курьеру после подтверждения всех заведений.','muted'),refresh=el('button','Обновить','secondary'),status=el('p','','muted'),list=el('div');
+const heading=el('h2','Заказы покупателей'),hint=el('p','Подтверди свою часть заказа и время готовности. После подтверждения всех заведений сервер автоматически подберёт слот и передаст заказ в очередь курьеров.','muted'),refresh=el('button','Обновить','secondary'),status=el('p','','muted'),list=el('div');
 refresh.type='button';status.setAttribute('role','status');root.append(heading,hint,refresh,status,list);
 let busy=false,saving=false,signature='',identity=null;
 const labels={pending:'Новый заказ',ordered:'Ожидает подтверждения',confirmed:'Подтверждён',issue:'Проблема'};
