@@ -66,7 +66,7 @@ main{padding-bottom:calc(172px + env(safe-area-inset-bottom))}
 .buyer-nav a.active{background:#3a2938;border-radius:12px;color:#edb6d4!important}
 #cartBar{bottom:calc(78px + env(safe-area-inset-bottom))}
 </style><link rel="stylesheet" href="./neon.css?v=26">
-<script type="module" src="./role-portal.js?v=55"></script></head><body><main><header><div><h1>TEPLO</h1><small>Тестовый магазин · оформление заказа</small></div><a href="./?v=25" class="quick-orders">← Рестораны</a><span id="connection" hidden>Проверяем…</span></header><nav class="buyer-nav" aria-label="Навигация покупателя"><a href="./?v=25">🏪 Рестораны</a><a href="order.html?v=25#orders-section" class="active">🧾 Мои заказы</a></nav><div class="welcome"><span>Доставка с теплом</span><h2>Тестовый заказ.<br>Три простых шага.</h2><p>Пока всё работает в тестовом режиме — без оплаты и доставки.</p></div>
+<script type="module" src="./role-portal.js?v=55"></script></head><body><main><header><div><h1>TEPLO</h1><small>Тестовый магазин · оформление заказа</small></div><a href="./?v=63" class="quick-orders">← Рестораны</a><span id="connection" hidden>Проверяем…</span></header><nav class="buyer-nav" aria-label="Навигация покупателя"><a href="./?v=63">🏪 Рестораны</a><a href="order.html?v=63#orders-section" class="active">🧾 Мои заказы</a></nav><div class="welcome"><span>Доставка с теплом</span><h2>Тестовая доставка.<br>Проверяем весь путь.</h2><p>Тестовые заведения подтверждают заказ автоматически. Курьер принимает его в своём кабинете. Реальных оплат и поездок нет.</p></div>
 <section id="accountSection" class="account-section"><details id="authDetails"><summary id="accountSummary">Аккаунт · Войти / регистрация</summary><div class="auth-content"><p class="muted">Вход нужен только для оформления заказа и просмотра его статуса.</p><input id="email" type="email" autocomplete="email" placeholder="Email"><input id="password" type="password" autocomplete="current-password" placeholder="Пароль (минимум 6 символов)"><button id="login">Войти</button> <button id="signup">Регистрация</button> <button id="resend">Повторить письмо</button> <button id="logout" hidden>Выйти</button><p id="authStatus" role="status" aria-live="polite" style="min-height:24px;color:#d89a45;font-weight:600"></p><p id="who"></p></div></details></section>
 <section id="market"><div class="heading-row"><h2>1. Выбери товары</h2><span class="demo-tag">● ТЕСТ</span></div><p class="muted">Нажми «+ Добавить» у понравившегося товара.</p><button id="refresh">Обновить</button><div id="catalog"></div></section>
 <section id="cart-section" hidden><h2>2. Корзина</h2><button type="button" id="backToCatalog" class="secondary">← Назад к товарам</button><div id="cart"></div><button id="goCheckout">Продолжить →</button></section>
@@ -152,7 +152,7 @@ async function catalog(){
   if(error||pe)throw error||pe;loadedShops=shops||[];root.replaceChildren();
   const feedback=el('p','','muted');feedback.id='catalogStatus';feedback.setAttribute('role','status');root.append(feedback);
   const switcher=el('div','','row');
-  for(const shop of loadedShops){const link=el('a',shop.name);link.href='order.html?v=62&shop='+encodeURIComponent(shop.id);link.className='badge';if(shop.id===requestedShop)link.setAttribute('aria-current','page');switcher.append(link)}root.append(switcher);
+  for(const shop of loadedShops){const link=el('a',shop.name);link.href='order.html?v=63&shop='+encodeURIComponent(shop.id);link.className='badge';if(shop.id===requestedShop)link.setAttribute('aria-current','page');switcher.append(link)}root.append(switcher);
   $('shopPick').replaceChildren(...loadedShops.map(shop=>{const o=el('option',shop.name);o.value=shop.id;return o}));await pickProducts();
   const visible=requestedShop?loadedShops.filter(x=>x.id===requestedShop):loadedShops;
   if(!visible.length)root.append(el('p','Заведение недоступно. Выбери другое в списке выше.','muted'));
@@ -172,7 +172,26 @@ async function catalog(){
   renderCart();$('connection').textContent='База доступна';message('Меню загружено. Только тестовые заказы — без оплаты и поездок.');
  }catch(e){$('connection').textContent='Ошибка';root.replaceChildren(el('p','Не удалось загрузить меню. Нажми «Обновить».'));message(e.message,true)}
 }
-async function orders(){const root=$('orders');root.replaceChildren();try{const u=await session();if(!u){root.append(el('p','Войди, чтобы увидеть свои заказы.'));return}const {data,error}=await db.from('orders').select('id,shop_name_snapshot,is_test,status,demo_status,delivery_address,payment_method,subtotal,delivery_fee,total,created_at,order_items(product_name_snapshot,quantity,unit_price_snapshot,shop_id)').eq('customer_id',u.id).order('created_at',{ascending:false}).limit(30);if(error)throw error;if(!data.length){root.append(el('p','Заказов пока нет.'));return}for(const o of data){const card=el('article','','order');card.append(el('h3',(o.is_test?'🧪 ТЕСТ — НЕ ВЫПОЛНЯТЬ · ':'')+(o.shop_name_snapshot||'Заказ')),el('p','Статус: '+(o.is_test?({'pending':'Ожидает подтверждения (тест)','confirmed':'Подтверждён (тест)','preparing':'Готовится (тест)','ready_for_pickup':'Готов к выдаче (тест)','assigned':'Передан курьеру (тест)','picked_up':'Забран курьером (тест)','delivered':'Доставлен (тест)'}[o.demo_status]||o.demo_status):o.status)),el('p','Итого: '+money(o.total)+' (доставка '+money(o.delivery_fee)+')'),el('p','Адрес: '+(o.delivery_address||'—')),el('p','Оплата: '+(o.payment_method==='card_on_delivery'?'Картой при получении (если доступно)':'Наличными при получении')),el('small',new Date(o.created_at).toLocaleString('ru-UA')));for(const p of o.order_items||[])card.append(el('p',p.product_name_snapshot+' × '+p.quantity+' · '+money(p.unit_price_snapshot)));root.append(card)}}catch(e){message('Заказы: '+e.message,true)}}
+let ordersBusy=false;
+async function orders(){
+ if(ordersBusy)return;ordersBusy=true;const root=$('orders');
+ try{
+  const u=await session();if(!u){root.replaceChildren(el('p','Войди, чтобы увидеть свои заказы.'));return}
+  const [{data,error},{data:progress,error:progressError}]=await Promise.all([
+   db.from('orders').select('id,shop_name_snapshot,is_test,status,demo_status,delivery_address,payment_method,subtotal,delivery_fee,total,created_at,order_items(product_name_snapshot,quantity,unit_price_snapshot,shop_id)').eq('customer_id',u.id).order('created_at',{ascending:false}).limit(30),
+   db.rpc('teplo_buyer_order_progress')
+  ]);
+  if(error)throw error;root.replaceChildren();
+  if(!data?.length){root.append(el('p','Заказов пока нет.'));return}
+  for(const order of data){
+   const card=el('article','','order'),step=(progress||[]).find(x=>x.order_id===order.id);
+   card.append(el('h3',(order.is_test?'ТЕСТ · ':'')+(order.shop_name_snapshot||'Заказ')+' · №'+order.id.slice(0,8).toUpperCase()));
+   const state=el('p',step?.message||(progressError?'Заказ сохранён. Статус временно недоступен — обновляем.':order.demo_status||order.status));state.setAttribute('role','status');card.append(state);
+   card.append(el('p','Итого: '+money(order.total)+' (доставка '+money(order.delivery_fee)+')'),el('p','Адрес: '+(order.delivery_address||'—')),el('p','Способ оплаты: '+(order.payment_method==='card_on_delivery'?'Картой при получении':'Наличными при получении')+' · в тесте деньги не списываются'),el('small',new Date(order.created_at).toLocaleString('ru-UA')));
+   for(const item of order.order_items||[])card.append(el('p',item.product_name_snapshot+' × '+item.quantity+' · '+money(item.unit_price_snapshot)));root.append(card);
+  }
+ }catch(e){message('Не удалось обновить заказы: '+e.message,true)}finally{ordersBusy=false}
+}
 const EMAIL_COOLDOWN_MS=60000;
 function emailCooldown(kind,email){
  const key='teplo:email:'+kind+':'+email.toLowerCase(),last=Number(localStorage.getItem(key)||0),left=EMAIL_COOLDOWN_MS-(Date.now()-last);
@@ -276,4 +295,6 @@ $('backToCart').onclick=()=>document.getElementById('cart-section').scrollIntoVi
 $('goCheckout').onclick=()=>{$('delivery-form').hidden=false;document.getElementById('delivery-form').scrollIntoView({behavior:'smooth',block:'start'})};renderCart();$('shopPick').onchange=pickProducts;$('checkout').onclick=checkout;$('testCheckout').onclick=createDemoOrder;$('saveDemoCheckout').onclick=saveDemoCheckout;
 $('login').onclick=()=>auth('login');$('signup').onclick=()=>auth('signup');$('resend').onclick=resendConfirmation;$('logout').onclick=async()=>{await db.auth.signOut();await session();await orders();message('Вы вышли')};$('refresh').onclick=catalog;$('refreshOrders').onclick=orders;
 db.auth.onAuthStateChange(()=>{setTimeout(()=>{void session().catch(e=>message('Сессия: '+e.message,true))},0)});await session();await catalog();await orders();
+setInterval(()=>{if(!document.hidden&&navigator.onLine)void orders()},8000);
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)void orders()});
 </script></body></html>
