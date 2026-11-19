@@ -15,7 +15,7 @@ const destinations={
  admin:'team.html?v=35',
  dispatcher:'pilot-dispatch.html?v=35',
  venue:'partner.html?v=35',
- courier:'pilot-courier.html?v=35',
+ courier:'pilot-courier.html?v=67',
  customer:'courier-start.html?v=35'
 };
 function applyRoleNavigation(role){
@@ -25,10 +25,10 @@ function applyRoleNavigation(role){
  if(!legacy)return;
  legacy.replaceChildren();
  const pages=role==='admin'?
- [['store','Ресторан','partner.html?v=55'],['clipboard','Диспетчер','pilot-dispatch.html?v=55'],['bike','Курьер · тест','pilot-courier.html?v=55'],['users','Команда','team.html?v=55']]:
+ [['store','Ресторан','partner.html?v=55'],['clipboard','Диспетчер','pilot-dispatch.html?v=55'],['bike','Курьер · тест','pilot-courier.html?v=67'],['users','Команда','team.html?v=55']]:
  role==='dispatcher'? [['clipboard','Заявки','pilot-dispatch.html?v=55']]:
  role==='venue'? [['store','Мои заявки','partner.html?v=55']]:
- role==='courier'? [['bike','Мои заказы','pilot-courier.html?v=55']]:
+ role==='courier'? [['bike','Мои заказы','pilot-courier.html?v=67']]:
  role==='customer'? [['store','Магазины','./?v=55'],['history','Мои заказы','order.html?v=55#orders-section']]: [];
  if(!pages.length){legacy.hidden=true;return}
  legacy.hidden=false;
