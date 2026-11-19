@@ -10,14 +10,18 @@ function notice(text){$('connectionNotice').hidden=!text;$('connectionNotice').t
 function refreshView(){if(!state)return;state.online=navigator.onLine;state.mutating=mutating;state.canClaim=canClaim({activeCount:state.active.length,shift:state.shift,role:state.role,busy:mutating,online:state.online});view.update(state);}
 function lock(message){state=null;view.selected=null;$('loading').hidden=true;$('app').hidden=true;$('tabbar').hidden=true;$('routeActions').hidden=true;document.body.classList.remove('has-route-action');$('lock').hidden=false;$('lockText').textContent=message;if($('incomingDialog').open)$('incomingDialog').close();if($('issueDialog').open)$('issueDialog').close();}
 function reveal(){ $('loading').hidden=true;$('lock').hidden=true;$('app').hidden=false;$('tabbar').hidden=false; }
-function authRequired(){lock('Войди в подтверждённый аккаунт курьера. Доступ назначает владелец TEPLO.');}
+function authRequired(){notice('');lock('Войди в подтверждённый аккаунт курьера. Доступ назначает владелец TEPLO.');}
 async function allEarnings(userId){const rows=[];for(let start=0;;start+=500){const {data,error}=await db.from('teplo_pilot_earnings').select('job_id,amount_uah,recorded_at').eq('courier_id',userId).order('recorded_at',{ascending:false}).order('job_id').range(start,start+499);if(error)throw error;rows.push(...(data||[]));if((data||[]).length<500)return rows;}}
 const jobColumns='id,shop_name_snapshot,shop_address_snapshot,order_summary,ready_in_minutes,ready_at,customer_name,customer_phone,delivery_address,status,created_at,assigned_at,accepted_at,picked_up_at,delivered_at,delivery_fee_uah,courier_reward_uah';
 async function load(){
  if(preview){await loadPreview();return;}
  if(loading){refreshAgain=true;return;}loading=true;$('refresh').disabled=true;
  try{
-  const {data:auth,error:authError}=await db.auth.getUser();if(authError)throw authError;const user=auth?.user;
+  const {data:sessionData,error:sessionError}=await db.auth.getSession();if(sessionError)throw sessionError;
+  if(!sessionData?.session){authRequired();return;}
+  const {data:auth,error:authError}=await db.auth.getUser();
+  if(authError&&(authError.name==='AuthSessionMissingError'||authError.status===401)){authRequired();return;}
+  if(authError)throw authError;const user=auth?.user;
   if(!user){authRequired();return;}
   if(!user.email_confirmed_at){lock('Сначала подтверди электронную почту и войди ещё раз.');return;}
   if(sessionId!==user.id){sessionId=user.id;state=null;view.selected=null;assignedSeen=new Set();noticeQueue=[];historyLimit=80;}
@@ -37,7 +41,7 @@ async function load(){
   state={active,history:(historyResult.data||[]).slice(0,historyLimit),moreHistory:(historyResult.data||[]).length>historyLimit,open:openResult.data||[],earnings,stops,shift:!!currentShift,shiftStarted:currentShift?.started_at,role:profile.role,name:profile.full_name||'Курьер',email:user.email||''};
   if(document.activeElement!==$('profileName'))$('profileName').value=profile.full_name||'';
   reveal();refreshView();notice('');announceAssignments(active);
- }catch(e){if(!state)lock('Не удалось загрузить кабинет. Проверь интернет и нажми обновление.');notice(navigator.onLine?'Нет связи с сервером. На экране последние полученные данные. Повтори обновление.':'Нет интернета. На экране последние полученные данные.');}
+ }catch(e){if(!state)lock('Не удалось загрузить кабинет. Проверь интернет и нажми обновление.');notice(state?(navigator.onLine?'Нет связи с сервером. На экране последние полученные данные. Повтори обновление.':'Нет интернета. На экране последние полученные данные.'):'Не удалось связаться с сервером. Проверь интернет и повтори обновление.');}
  finally{loading=false;$('refresh').disabled=false;if(refreshAgain){refreshAgain=false;queueMicrotask(()=>void load());}}
 }
 async function mutation(action,success){
