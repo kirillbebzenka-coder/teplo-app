@@ -8,3 +8,4 @@ jobs:
       - run: node scripts/check-js.mjs
       - run: node tests/dispatcher-attention.test.mjs
       - run: node tests/checkout-network.test.mjs
+      - run: node tests/courier-workspace.test.mjs

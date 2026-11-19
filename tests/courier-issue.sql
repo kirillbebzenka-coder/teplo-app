@@ -1,0 +1,35 @@
+begin;
+do $$
+declare owner_id uuid; first_rider uuid; second_rider uuid; oid uuid; jid uuid; items jsonb;
+begin
+ select p.id into owner_id from public.profiles p join auth.users u on u.id=p.id where p.role='admin' and u.email_confirmed_at is not null limit 1;
+ select jsonb_agg(jsonb_build_object('product_id',p.id,'quantity',1)) into items from public.products p join teplo_private.demo_venue_acceptance d on d.shop_id=p.shop_id where p.is_available;
+ select p.id into first_rider from public.profiles p join auth.users u on u.id=p.id where p.role='courier' and u.email_confirmed_at is not null and exists(select 1 from public.courier_shifts where courier_id=p.id and ended_at is null) limit 1;
+ select p.id into second_rider from public.profiles p join auth.users u on u.id=p.id where p.role='courier' and p.id<>first_rider and u.email_confirmed_at is not null limit 1;
+ if owner_id is null or first_rider is null or second_rider is null then raise exception 'Requires administrator and two verified couriers';end if;
+ update public.profiles set role='customer' where id=owner_id;
+ perform set_config('request.jwt.claim.sub',owner_id::text,true);
+ oid:=public.place_teplo_demo_combined_cart(items,'Тест доступа','0000000000','Тестовая улица','1','','cash_on_delivery',gen_random_uuid());
+ set constraints all immediate;
+ select id into jid from public.teplo_pilot_jobs where source_order_id=oid;
+ if jid is null then raise exception 'Fixture not dispatched';end if;
+ if has_column_privilege('authenticated','public.profiles','role','UPDATE') then raise exception 'Customer can elevate profile role';end if;
+ begin perform public.teplo_assign_pilot_job(jid,first_rider);raise exception 'ASSERT: customer assigned courier';exception when others then if sqlerrm like 'ASSERT:%' then raise;end if;end;
+ perform set_config('request.jwt.claim.sub',first_rider::text,true);
+ if exists(select 1 from jsonb_array_elements(public.teplo_buyer_order_progress()) x where x->>'order_id'=oid::text) then raise exception 'Foreign buyer progress exposed';end if;
+ perform set_config('request.jwt.claim.sub',owner_id::text,true);
+ update public.profiles set role='admin' where id=owner_id;
+ perform public.teplo_assign_pilot_job(jid,first_rider);
+ perform set_config('request.jwt.claim.sub',second_rider::text,true);
+ begin perform public.teplo_courier_report_issue(jid,'Чужая проблема');raise exception 'ASSERT: foreign courier reported';exception when others then if sqlerrm like 'ASSERT:%' then raise;end if;end;
+ perform set_config('request.jwt.claim.sub',first_rider::text,true);
+ begin perform public.teplo_courier_report_issue(jid,'ok');raise exception 'ASSERT: short issue';exception when others then if sqlerrm like 'ASSERT:%' then raise;end if;end;
+ perform public.teplo_courier_report_issue(jid,'Тест: заведение задерживает заказ');
+ perform public.teplo_courier_report_issue(jid,'Тест: заведение задерживает заказ');
+ if (select count(*) from public.teplo_dispatch_notes where job_id=jid and actor_id=first_rider and kind='issue')<>1 then raise exception 'Repeated issue duplicated';end if;
+ if (select status from public.teplo_pilot_jobs where id=jid)<>'assigned' then raise exception 'Issue changed delivery state';end if;
+ update public.profiles set role='customer' where id=first_rider;
+ begin perform public.teplo_courier_report_issue(jid,'Тест после смены роли');raise exception 'ASSERT: customer retained access';exception when others then if sqlerrm like 'ASSERT:%' then raise;end if;end;
+ if has_function_privilege('anon','public.teplo_courier_report_issue(uuid,text)','EXECUTE') then raise exception 'Anonymous execute';end if;
+end $$;
+rollback;

@@ -9,8 +9,9 @@ root.innerHTML='<div class="row"><strong>Уведомления на телеф�
 const css=document.createElement('style');
 css.textContent='#pushSettings{margin:12px 0;background:#101118;border:1px solid #403447;border-radius:16px;padding:14px}#pushSettings strong{font-size:16px}#pushSettings .push-actions{display:flex;gap:8px;flex-wrap:wrap}#pushSettings .push-actions button{flex:1 1 125px;min-height:48px}#pushSettings .muted{margin:9px 0;font-size:13px}';
 document.head.append(css);
-const location=document.getElementById('message')?.parentElement||document.querySelector('main');
-if(document.getElementById('message')?.parentElement)document.getElementById('message').parentElement.after(root);
+const settingsTarget=document.querySelector('[data-teplo-push-settings]');
+if(settingsTarget)settingsTarget.append(root);
+else if(document.getElementById('message')?.parentElement)document.getElementById('message').parentElement.after(root);
 else document.querySelector('main')?.insertAdjacentElement('afterbegin',root);
 const $=id=>document.getElementById(id);
 let pending=false,worker=null;
