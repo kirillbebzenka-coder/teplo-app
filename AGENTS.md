@@ -11,3 +11,5 @@ The owner's priority is a working courier application with minimal manual operat
 - Preserve black/pink/violet styling, existing data/roles/features. Keep real deliveries and payments disabled.
 - Changes should be small and reversible. Use a development branch for future feature work; validate before promotion to main. Check GitHub workflow completion and deployed assets before claiming availability.
 - State what was actually tested and what still requires physical-device or account testing. Do not ask the owner to rediscover technical root causes already available from the backend.
+
+- Courier workspace changes: run `node tests/courier-workspace.test.mjs`, `node tests/courier-controller.test.mjs`, and `tests/courier-issue.sql` for issue reporting. Preview never authenticates or mutates the backend. Keep its shell in sync with pilot-courier.html.
