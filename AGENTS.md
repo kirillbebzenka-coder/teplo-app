@@ -13,3 +13,5 @@ The owner's priority is a working courier application with minimal manual operat
 - State what was actually tested and what still requires physical-device or account testing. Do not ask the owner to rediscover technical root causes already available from the backend.
 
 - Courier workspace changes: run `node tests/courier-workspace.test.mjs`, `node tests/courier-controller.test.mjs`, and `tests/courier-issue.sql` for issue reporting. Preview never authenticates or mutates the backend. Keep its shell in sync with pilot-courier.html.
+
+- Delivery-zone/time changes require `node tests/delivery-timer.test.mjs` and `tests/delivery-timers.sql` in addition to checkout-to-delivery. Never reset a pickup deadline on reload/readiness change, never guess an unknown locality, and do not present pickup slots as end-to-end delivery promises.

@@ -38,8 +38,8 @@ main{padding-bottom:calc(125px + env(safe-area-inset-bottom))}
 .accounts .assign-account{margin-top:9px;padding:10px;background:linear-gradient(110deg,#ff4fca,#985fff)!important;color:#14091b!important}
 
 </style><script src="./pilot-touch.js?v=29" defer></script>
-<script type="module" src="./role-portal.js?v=67"></script></head><body><main>
-<div class="row"><span class="brand">TEPLO</span><a href="pilot-dispatch.html?v=54">← Диспетчер</a></div>
+<script type="module" src="./role-portal.js?v=68"></script></head><body><main>
+<div class="row"><span class="brand">TEPLO</span><a href="pilot-dispatch.html?v=68">← Диспетчер</a></div>
 <h1>Управление командой</h1>
 <p class="muted">Администрирование ролей, магазинов и сотрудников TEPLO.</p>
 <section><div class="row"><button id="refresh">Обновить</button><span id="access" class="role">Проверяем роль…</span></div><p id="notice" class="muted" role="status" aria-live="polite">Проверяем доступ…</p></section>
@@ -79,15 +79,15 @@ main{padding-bottom:calc(125px + env(safe-area-inset-bottom))}
 <div class="row"><h2>Все зарегистрированные аккаунты</h2><span class="muted">В том числе без роли курьера</span></div>
 <p class="muted">Аккаунт ещё не подтверждён — назначения недоступны. Подтверждённый покупатель — можно назначить курьером кнопкой. Сотрудник на смене отображается ниже и в диспетчерской.</p>
 <div id="accountDirectory" class="accounts"><p class="muted">Загружаем аккаунты…</p></div>
-</section><section><h2>Пилот курьерской службы</h2><p class="muted">Тестируй заявки без настоящих клиентов или доставок. Администратор может открыть кабинет курьера для самотестирования, не меняя роль.</p><p><a href="partner.html?v=54">Создать заявку</a> · <a href="pilot-dispatch.html?v=54">Диспетчер</a> · <a href="pilot-courier.html?v=67">Курьер</a></p></section><section><h2>Сотрудники</h2><div id="staffList" class="cards"></div></section>
+</section><section><h2>Пилот курьерской службы</h2><p class="muted">Тестируй заявки без настоящих клиентов или доставок. Администратор может открыть кабинет курьера для самотестирования, не меняя роль.</p><p><a href="partner.html?v=54">Создать заявку</a> · <a href="pilot-dispatch.html?v=68">Диспетчер</a> · <a href="pilot-courier.html?v=68">Курьер</a></p></section><section><h2>Сотрудники</h2><div id="staffList" class="cards"></div></section>
 </div>
 <section><p class="warning"><strong>Реальная доставка отключена.</strong> Роли не включают автоматически заказы, платежи или курьерские назначения.</p></section>
 </main>
 <nav class="teplo-tabs" aria-label="Разделы TEPLO">
 <a href="./?v=54"><span data-teplo-icon="store"></span><span>Покупатель</span></a>
-<a href="pilot-dispatch.html?v=54"><span data-teplo-icon="clipboard"></span><span>Диспетчер</span></a>
+<a href="pilot-dispatch.html?v=68"><span data-teplo-icon="clipboard"></span><span>Диспетчер</span></a>
 <a href="partner.html?v=54"><span data-teplo-icon="store"></span><span>Ресторан</span></a>
-<a href="pilot-courier.html?v=67"><span data-teplo-icon="bike"></span><span>Курьер</span></a>
+<a href="pilot-courier.html?v=68"><span data-teplo-icon="bike"></span><span>Курьер</span></a>
 </nav>
 <script type="module">
 import {createClient} from 'https://esm.sh/@supabase/supabase-js@2';

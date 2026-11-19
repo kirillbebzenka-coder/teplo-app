@@ -52,7 +52,7 @@ nav a.active{background:#39142e;color:#ffc3e8}
 <script src="./pilot-touch.js?v=29" defer></script>
 <script src="./dispatcher-workspace.js?v=58" defer></script>
 <script src="./teplo-slot-picker.js?v=48" defer></script>
-<script src="./pilot-connectivity.js?v=31" defer></script><script type="module" src="./role-portal.js?v=67"></script><script src="./pilot-ui-icons.js?v=45" defer></script>
+<script src="./pilot-connectivity.js?v=31" defer></script><script type="module" src="./role-portal.js?v=68"></script><script src="./pilot-ui-icons.js?v=45" defer></script>
 </head>
 <body><main>
 <header><div class="brand">TEPLO</div><a href="dispatcher.html?v=28">Старые заказы ↗</a></header>
@@ -85,11 +85,13 @@ nav a.active{background:#39142e;color:#ffc3e8}
 <button id="incomingLater" type="button" class="secondary">Позже</button>
 </article>
 </div>
-<nav aria-label="Рабочие разделы"><a href="partner.html?v=34"><span data-teplo-icon="store"></span> Ресторан</a><a href="pilot-dispatch.html?v=34" class="active"><span data-teplo-icon="clipboard"></span> Диспетчер</a><a href="pilot-courier.html?v=67"><span data-teplo-icon="bike"></span> Курьер</a></nav>
+<nav aria-label="Рабочие разделы"><a href="partner.html?v=34"><span data-teplo-icon="store"></span> Ресторан</a><a href="pilot-dispatch.html?v=68" class="active"><span data-teplo-icon="clipboard"></span> Диспетчер</a><a href="pilot-courier.html?v=68"><span data-teplo-icon="bike"></span> Курьер</a></nav>
 <script type="module">
+import {deliveryTimer,syncDeliveryTiming} from './delivery-timer.js?v=68';
+import {DELIVERY_ZONES} from './delivery-policy.js?v=68';
 import {createClient} from 'https://esm.sh/@supabase/supabase-js@2';
 import {deliveryHistory} from './dispatcher-history.js?v=58';
-import {attentionReasons} from './dispatcher-attention.js?v=58';
+import {attentionReasons} from './dispatcher-attention.js?v=68';
 import {deliveryNotes} from './dispatcher-notes.js?v=58';
 const db=createClient('https://bgtegxdekqsajttkhhrj.supabase.co','sb_publishable_aSOKkJ_F47sGj9e8v8uJ3g_24rlQ8XG');
 const $=id=>document.getElementById(id),txt=(tag,t='',cls='')=>{const e=document.createElement(tag);e.textContent=String(t??'');if(cls)e.className=cls;return e};
@@ -272,6 +274,14 @@ function card(job){
  for(const reason of problems)e.append(txt('p',reason,'warning'));
  if(problems.length)e.append(txt('p','Тестовые пороги контроля. Это сигнал проверить заказ, а не автоматическая отмена.','muted'));
  e.append(txt('p','Заведение: '+job.shop_name_snapshot+' · '+new Date(job.created_at).toLocaleString('ru-RU',{hour:'2-digit',minute:'2-digit',day:'2-digit',month:'2-digit'})));
+ e.append(deliveryTimer(job));
+ if(['new','assigned','accepted'].includes(job.status)||(job.status==='picked_up'&&!job.delivery_due_at)){
+  const zoneSelect=document.createElement('select');zoneSelect.setAttribute('aria-label','Зона доставки');
+  for(const [code,policy] of Object.entries(DELIVERY_ZONES)){const option=txt('option',policy.label+' · '+policy.minutes+' мин');option.value=code;zoneSelect.append(option)}
+  if(job.delivery_zone)zoneSelect.value=job.delivery_zone;
+  const apply=txt('button','Уточнить зону','secondary');apply.type='button';apply.onclick=async()=>{const note=prompt('Причина уточнения зоны (от 5 символов):');if(!note||note.trim().length<5)return;apply.disabled=true;try{const {error}=await db.rpc('teplo_set_delivery_zone',{p_job_id:job.id,p_zone:zoneSelect.value,p_note:note.trim()});if(error)throw error;await load()}catch(error){feedback.textContent=error.message||String(error)}finally{apply.disabled=false}};
+  const zoneDetails=document.createElement('details');zoneDetails.append(txt('summary','Зона и срок доставки'),zoneSelect,apply);e.append(zoneDetails);
+ }
  e.append(txt('p','Состав: '+job.order_summary),txt('p','Готовность: '+(job.ready_in_minutes===0?'сразу':job.ready_in_minutes+' мин')));
  e.append(txt('p','Стоимость доставки: '+uah(job.delivery_fee_uah)+' · Курьеру после доставки: '+uah(job.courier_reward_uah)));
  if(job.slot_id){const slot=slots.find(x=>x.id===job.slot_id);if(slot)e.append(txt('p','Слот: '+slotDay(slot.slot_start)+' · '+slotClock(slot.slot_start)+'–'+slotClock(slot.slot_end)+' · '+slot.booked+'/'+slot.capacity,'muted'))}else e.append(txt('p','Старая заявка · без слота','muted'));
@@ -320,7 +330,7 @@ function card(job){
  e.append(feedback,deliveryHistory(db,job.id),deliveryNotes(db,job.id));return e;
 }
 async function loadDeliveryJobs(){
- const columns='id,slot_id,source_order_id,shop_name_snapshot,shop_address_snapshot,order_summary,ready_in_minutes,customer_name,customer_phone,delivery_address,status,courier_id,created_at,updated_at,assigned_at,accepted_at,picked_up_at,ready_at,delivery_fee_uah,courier_reward_uah';
+ const columns='id,slot_id,source_order_id,shop_name_snapshot,shop_address_snapshot,order_summary,ready_in_minutes,customer_name,customer_phone,delivery_address,status,courier_id,created_at,updated_at,assigned_at,accepted_at,picked_up_at,ready_at,delivery_fee_uah,courier_reward_uah,delivery_zone,delivery_minutes,delivery_due_at,delivered_at';
  const active=[];
  for(let start=0;;start+=500){
   const {data,error}=await db.from('teplo_pilot_jobs').select(columns).in('status',['new','assigned','accepted','picked_up']).order('created_at').order('id').range(start,start+499);
@@ -367,6 +377,7 @@ async function load(){
   window.dispatchEvent(new Event('teplo:sync-ok'));
 
   
+  await syncDeliveryTiming(db);
   const rows=jobs||[];
   callRows=rows;
   couriers=(roster||[]).map(x=>({
@@ -398,7 +409,7 @@ async function load(){
     stat('Свободных курьеров',availableCouriers.length),
     stat('Завершено (тест)',rows.filter(j=>j.status==='delivered').length)
   );
-  const signature=JSON.stringify({jobs:rows.map(j=>[j.id,j.status,j.courier_id,j.slot_id,j.updated_at,attentionReasons(j,slots,couriers).join('|')]),couriers:couriers.map(c=>[c.id,c.activeJobs,c.onShift]),slots:slots.map(s=>[s.id,s.booked,s.capacity,s.is_open])});
+  const signature=JSON.stringify({jobs:rows.map(j=>[j.id,j.status,j.courier_id,j.slot_id,j.updated_at,j.delivery_due_at,j.delivery_zone,attentionReasons(j,slots,couriers).join('|')]),couriers:couriers.map(c=>[c.id,c.activeJobs,c.onShift]),slots:slots.map(s=>[s.id,s.booked,s.capacity,s.is_open])});
   const editing=$('deliveryDetail').contains(document.activeElement)&&['SELECT','INPUT','TEXTAREA'].includes(document.activeElement?.tagName);
   if(signature!==lastCallSignature&&!editing){lastCallSignature=signature;renderCallQueue()}
   alertForIncoming(rows);

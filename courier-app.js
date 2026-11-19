@@ -1,18 +1,19 @@
-import {CourierView} from './courier-view.js?v=66';
-import {ACTIVE,canClaim} from './courier-model.js?v=66';
+import {syncDeliveryTiming,deliveryClock} from './delivery-timer.js?v=68';
+import {CourierView} from './courier-view.js?v=68';
+import {ACTIVE,canClaim} from './courier-model.js?v=68';
 const $=id=>document.getElementById(id);
 const preview=location.pathname.endsWith('/courier-preview.html')||new URLSearchParams(location.search).get('preview')==='1';
-let db=null,uid=null,loading=false,mutating=false,state=null,historyLimit=80,previewStage='accepted',refreshAgain=false;
+let db=null,uid=null,loading=false,mutating=false,state=null,historyLimit=80,previewStage='accepted',previewZone='local',refreshAgain=false;
 let assignedSeen=new Set(),noticeQueue=[],noticeJob=null,sessionId=null;
 const notify=(text,kind='info')=>window.TEPLOTouch?.notify?.(text,kind);
-const view=new CourierView({step,claim,reportIssue,moreHistory:async()=>{historyLimit+=80;await load();}});
+const view=new CourierView({step,claim,reportIssue,setZone,moreHistory:async()=>{historyLimit+=80;await load();}});
 function notice(text){$('connectionNotice').hidden=!text;$('connectionNotice').textContent=text;}
 function refreshView(){if(!state)return;state.online=navigator.onLine;state.mutating=mutating;state.canClaim=canClaim({activeCount:state.active.length,shift:state.shift,role:state.role,busy:mutating,online:state.online});view.update(state);}
 function lock(message){state=null;view.selected=null;$('loading').hidden=true;$('app').hidden=true;$('tabbar').hidden=true;$('routeActions').hidden=true;document.body.classList.remove('has-route-action');$('lock').hidden=false;$('lockText').textContent=message;if($('incomingDialog').open)$('incomingDialog').close();if($('issueDialog').open)$('issueDialog').close();}
 function reveal(){ $('loading').hidden=true;$('lock').hidden=true;$('app').hidden=false;$('tabbar').hidden=false; }
 function authRequired(){notice('');lock('Войди в подтверждённый аккаунт курьера. Доступ назначает владелец TEPLO.');}
 async function allEarnings(userId){const rows=[];for(let start=0;;start+=500){const {data,error}=await db.from('teplo_pilot_earnings').select('job_id,amount_uah,recorded_at').eq('courier_id',userId).order('recorded_at',{ascending:false}).order('job_id').range(start,start+499);if(error)throw error;rows.push(...(data||[]));if((data||[]).length<500)return rows;}}
-const jobColumns='id,shop_name_snapshot,shop_address_snapshot,order_summary,ready_in_minutes,ready_at,customer_name,customer_phone,delivery_address,status,created_at,assigned_at,accepted_at,picked_up_at,delivered_at,delivery_fee_uah,courier_reward_uah';
+const jobColumns='id,shop_name_snapshot,shop_address_snapshot,order_summary,ready_in_minutes,ready_at,customer_name,customer_phone,delivery_address,status,created_at,assigned_at,accepted_at,picked_up_at,delivered_at,delivery_fee_uah,courier_reward_uah,delivery_zone,delivery_minutes,delivery_due_at';
 async function load(){
  if(preview){await loadPreview();return;}
  if(loading){refreshAgain=true;return;}loading=true;$('refresh').disabled=true;
@@ -36,6 +37,8 @@ async function load(){
   ]);
   for(const r of [activeResult,historyResult,shiftResult,openResult])if(r.error)throw r.error;
   const active=activeResult.data||[],stops=new Map();
+  const timing=await syncDeliveryTiming(db,[...active,...(openResult.data||[])].map(j=>j.id));
+  for(const job of [...active,...(openResult.data||[])])Object.assign(job,timing.get(job.id)||{});
   if(active.length){const {data,error}=await db.from('teplo_pilot_job_stops').select('job_id,stop_number,shop_name_snapshot,shop_address_snapshot,ready_at').in('job_id',active.map(j=>j.id)).order('stop_number');if(error)throw error;for(const row of data||[]){if(!stops.has(row.job_id))stops.set(row.job_id,[]);stops.get(row.job_id).push(row);}}
   const currentShift=shiftResult.data?.[0];
   state={active,history:(historyResult.data||[]).slice(0,historyLimit),moreHistory:(historyResult.data||[]).length>historyLimit,open:openResult.data||[],earnings,stops,shift:!!currentShift,shiftStarted:currentShift?.started_at,role:profile.role,name:profile.full_name||'Курьер',email:user.email||''};
@@ -67,6 +70,7 @@ async function reportIssue(job,text){
  if(!navigator.onLine)throw new Error('Нет интернета. Текст остаётся здесь — повтори после подключения.');
  const {error}=await db.rpc('teplo_courier_report_issue',{p_job_id:job.id,p_note:text});if(error)throw error;
 }
+async function setZone(job,zone){await mutation(()=>db.rpc('teplo_set_delivery_zone',{p_job_id:job.id,p_zone:zone,p_note:'Курьер уточнил населённый пункт перед забором'}),'Зона доставки сохранена');}
 $('refresh').onclick=()=>void load();
 $('shiftButton').onclick=()=>void mutation(()=>db.rpc('teplo_toggle_courier_shift',{p_start:!state.shift}),state.shift?'Смена завершена':'Смена открыта');
 $('saveProfile').onclick=async()=>{if(preview){notify('Предпросмотр: имя не сохраняется.');return;}const name=$('profileName').value.trim().replace(/\s+/g,' ');if(name.length<2||name.length>80){$('profileMsg').textContent='Введи имя от 2 до 80 символов.';return;}const b=$('saveProfile');b.disabled=true;try{const {data,error}=await db.from('profiles').update({full_name:name}).eq('id',uid).select('full_name').single();if(error)throw error;if(data?.full_name!==name)throw new Error('Изменение не подтверждено');$('profileMsg').textContent='Имя сохранено.';await load();}catch(e){$('profileMsg').textContent=e.message||'Не удалось сохранить имя.';}finally{b.disabled=false;}};
@@ -78,6 +82,6 @@ $('incomingOpen').onclick=()=>dismissIncoming(true);$('incomingLater').onclick=(
 window.addEventListener('offline',()=>{notice('Нет интернета. Действия временно недоступны. Заказы на экране сохранены.');refreshView();});
 window.addEventListener('online',()=>void load());
 let resumeLoad=false;document.addEventListener('visibilitychange',()=>{if(!document.hidden)void load();});
-async function loadPreview(){const {makePreview}=await import('./courier-preview.js?v=66');state=makePreview(previewStage);reveal();refreshView();$('profileName').value=state.name;$('loading').hidden=true;}
-if(preview){$('previewBanner').hidden=false;$('previewStage').onchange=()=>{previewStage=$('previewStage').value;view.selected=null;void loadPreview();};document.querySelector('[data-teplo-push-settings]').textContent='Уведомления подключаются в рабочем кабинете после входа.';await loadPreview();}
+async function loadPreview(){const {makePreview}=await import('./courier-preview.js?v=68');state=makePreview(previewStage,previewZone);deliveryClock.set(new Date().toISOString());reveal();refreshView();$('profileName').value=state.name;$('loading').hidden=true;}
+if(preview){$('previewBanner').hidden=false;$('previewZone').onchange=()=>{previewZone=$('previewZone').value;view.selected=null;void loadPreview();};$('previewStage').onchange=()=>{previewStage=$('previewStage').value;view.selected=null;void loadPreview();};document.querySelector('[data-teplo-push-settings]').textContent='Уведомления подключаются в рабочем кабинете после входа.';await loadPreview();}
 else{const {createClient}=await import('https://esm.sh/@supabase/supabase-js@2');db=createClient('https://bgtegxdekqsajttkhhrj.supabase.co','sb_publishable_aSOKkJ_F47sGj9e8v8uJ3g_24rlQ8XG');db.auth.onAuthStateChange(()=>{if(resumeLoad)return;resumeLoad=true;setTimeout(()=>{resumeLoad=false;void load();},0);});await load();await import('./teplo-push-client.js?v=66');setInterval(()=>{if(!document.hidden&&navigator.onLine&&!mutating&&!$('issueDialog').open&&!$('incomingDialog').open)void load();},8000);}

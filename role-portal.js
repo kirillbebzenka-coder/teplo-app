@@ -13,9 +13,9 @@ const permissions={
 };
 const destinations={
  admin:'team.html?v=35',
- dispatcher:'pilot-dispatch.html?v=35',
+ dispatcher:'pilot-dispatch.html?v=68',
  venue:'partner.html?v=35',
- courier:'pilot-courier.html?v=67',
+ courier:'pilot-courier.html?v=68',
  customer:'courier-start.html?v=35'
 };
 function applyRoleNavigation(role){
@@ -25,11 +25,11 @@ function applyRoleNavigation(role){
  if(!legacy)return;
  legacy.replaceChildren();
  const pages=role==='admin'?
- [['store','Ресторан','partner.html?v=55'],['clipboard','Диспетчер','pilot-dispatch.html?v=55'],['bike','Курьер · тест','pilot-courier.html?v=67'],['users','Команда','team.html?v=55']]:
- role==='dispatcher'? [['clipboard','Заявки','pilot-dispatch.html?v=55']]:
+ [['store','Ресторан','partner.html?v=55'],['clipboard','Диспетчер','pilot-dispatch.html?v=68'],['bike','Курьер · тест','pilot-courier.html?v=68'],['users','Команда','team.html?v=55']]:
+ role==='dispatcher'? [['clipboard','Заявки','pilot-dispatch.html?v=68']]:
  role==='venue'? [['store','Мои заявки','partner.html?v=55']]:
- role==='courier'? [['bike','Мои заказы','pilot-courier.html?v=67']]:
- role==='customer'? [['store','Магазины','./?v=55'],['history','Мои заказы','order.html?v=55#orders-section']]: [];
+ role==='courier'? [['bike','Мои заказы','pilot-courier.html?v=68']]:
+ role==='customer'? [['store','Магазины','./?v=55'],['history','Мои заказы','order.html?v=68#orders-section']]: [];
  if(!pages.length){legacy.hidden=true;return}
  legacy.hidden=false;
  legacy.style.gridTemplateColumns='repeat('+pages.length+',minmax(0,1fr))';

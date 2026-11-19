@@ -10,3 +10,4 @@ jobs:
       - run: node tests/checkout-network.test.mjs
       - run: node tests/courier-workspace.test.mjs
       - run: node tests/courier-controller.test.mjs
+      - run: node tests/delivery-timer.test.mjs
