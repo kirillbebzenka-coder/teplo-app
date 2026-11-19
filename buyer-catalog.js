@@ -16,7 +16,7 @@ async function load(){
   for(const old of root.querySelectorAll('[data-live-shop],a[href^="order.html"]'))old.remove();
   for(const shop of shops||[]){
    const card=example.cloneNode(true),items=(products||[]).filter(p=>p.shop_id===shop.id),demo=/^TEPLO TEST/i.test(shop.name);
-   card.dataset.liveShop=shop.id;card.href='order.html?v=63&shop='+encodeURIComponent(shop.id);card.dataset.tags='test '+(items.some(p=>/пицц|pizza/i.test(p.name))?'pizza':'');card.dataset.search=[shop.name,shop.description,...items.map(x=>x.name)].join(' ').toLocaleLowerCase('ru');
+   card.dataset.liveShop=shop.id;card.href='order.html?v=64&shop='+encodeURIComponent(shop.id);card.dataset.tags='test '+(items.some(p=>/пицц|pizza/i.test(p.name))?'pizza':'');card.dataset.search=[shop.name,shop.description,...items.map(x=>x.name)].join(' ').toLocaleLowerCase('ru');
    card.querySelector('h3').textContent=shop.name;card.querySelector('.brand-tag').textContent=shop.name;card.querySelector('.flag').textContent=demo?'ТЕСТ · БЕЗ ОПЛАТЫ':'МЕНЮ';
    card.querySelector('.restaurant-body p').textContent=shop.description||'Выбери товары в меню заведения';
    const tags=card.querySelector('.tags');tags.replaceChildren();for(const text of [items.length+' позиций',demo?'Тестовое заведение':'Каталог']){const tag=document.createElement('span');tag.className='tag';tag.textContent=text;tags.append(tag)}

@@ -47,7 +47,7 @@ async function status(){
     await auth();
     const {error}=await db.rpc('teplo_push_save_subscription',{p_subscription:subscription.toJSON()});
     if(error)throw error;
-    state('Включено',true);info('Телефон зарегистрирован в TEPLO. Проверь тестовым уведомлением, затем создай заявку из ресторана.');
+    state('Нужна проверка',true);info('Телефон зарегистрирован в TEPLO. Проверь тестовым уведомлением, затем создай заявку из ресторана.');
    }catch(e){
     state('Требуется вход');info('Не удалось привязать подписку: '+(e?.message||String(e)));
    }
@@ -72,13 +72,13 @@ $('pushEnable').onclick=async()=>{
   const sub=(await reg.pushManager.getSubscription())||await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:key});
   const {error}=await db.rpc('teplo_push_save_subscription',{p_subscription:sub.toJSON()});
   if(error)throw error;
-  state('Включено',true);info('Телефон подключён. Нажми «Проверить», затем отправь тестовый заказ магазина.');
+  state('Нужна проверка',true);info('Телефон подключён. Нажми «Проверить», затем отправь тестовый заказ магазина.');
  }catch(e){info('Не удалось включить: '+(e?.message||String(e)))}
  finally{pending=false;$('pushEnable').disabled=false}
 };
 $('pushTest').onclick=async()=>{
  if(pending)return;pending=true;$('pushTest').disabled=true;
- try{const token=await auth();const result=await invoke('/test',token,{});info(result.sent?'Сервер передал тестовый push в службу уведомлений телефона. Если он не отображается, проверь разрешения Chrome и уведомления Android.':'Push не отправлен: зарегистрированных устройств 0 или служба доставки недоступна. Нажми «Переподключить».')}
+ try{const token=await auth();const result=await invoke('/test',token,{});info(result.sent?'Сервер передал тестовый push в службу уведомлений телефона. Если он не отображается, проверь разрешения Chrome и уведомления Android.':(result.failures?.['410']||result.failures?.['404']?'Подписка устарела. Нажми «Переподключить», затем «Проверить».':'Push не отправлен: нет действующих устройств или служба недоступна. Нажми «Переподключить».'))}
  catch(e){info('Ошибка теста: '+(e?.message||String(e)))}
  finally{pending=false;$('pushTest').disabled=false}
 };
@@ -99,7 +99,7 @@ $('pushResync').onclick=async()=>{
   const sub=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:key});
   const {error}=await db.rpc('teplo_push_save_subscription',{p_subscription:sub.toJSON()});
   if(error)throw error;
-  state('Включено',true);info('Подписка обновлена. Нажми «Проверить».');
+  state('Нужна проверка',true);info('Подписка обновлена. Нажми «Проверить».');
  }catch(e){info('Не удалось переподключить: '+(e?.message||String(e)))}
  finally{pending=false;$('pushResync').disabled=false}
 };

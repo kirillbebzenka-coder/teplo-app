@@ -25,6 +25,7 @@ begin
  perform set_config('request.jwt.claim.sub',rider::text,true);
  if not exists(select 1 from public.teplo_pilot_open_jobs_eta() where id=jid) then raise exception 'Courier cannot see checkout';end if;
  perform public.teplo_pilot_claim_job(jid);
+ begin perform public.teplo_toggle_courier_shift(false);raise exception 'ASSERT: active courier finished shift';exception when others then if sqlerrm like 'ASSERT:%' then raise;end if;end;
  if (select status from public.teplo_pilot_jobs where id=jid)<>'accepted' then raise exception 'Claim not accepted';end if;
  perform public.teplo_pilot_courier_step(jid,'picked_up');
  perform public.teplo_pilot_courier_step(jid,'delivered');

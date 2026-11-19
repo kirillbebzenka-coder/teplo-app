@@ -7,3 +7,4 @@ jobs:
       - uses: actions/checkout@v4
       - run: node scripts/check-js.mjs
       - run: node tests/dispatcher-attention.test.mjs
+      - run: node tests/checkout-network.test.mjs

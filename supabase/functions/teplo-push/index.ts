@@ -46,7 +46,7 @@ async function sendTo(ids:string[],payload:{title:string,body:string,url:string,
   contactInformation:"https://kirillbebzenka-coder.github.io/teplo-app/",
   vapidKeys:keys
  });
- let sent=0;
+ let sent=0;const failures:Record<string,number>={};
  await Promise.all(subs.map(async(sub)=>{
   try{
    // Avoid outbound requests to arbitrary user-supplied hostnames.
@@ -56,12 +56,13 @@ async function sendTo(ids:string[],payload:{title:string,body:string,url:string,
    await subscriber.pushTextMessage(JSON.stringify(payload),{ttl:3600,urgency:webpush.Urgency.High});
    sent++;
   }catch(e){
-   const status=Number((e as {status?:number,statusCode?:number})?.status||(e as {statusCode?:number})?.statusCode||0);
+   const status=Number((e as {response?:Response})?.response?.status||(e as {status?:number})?.status||(e as {statusCode?:number})?.statusCode||0);
+   const code=String(status||'transport');failures[code]=(failures[code]||0)+1;
    if(status===404||status===410)await admin.from("teplo_push_subscriptions").delete().eq("endpoint",sub.endpoint);
    console.warn("Push delivery failed",status||"unavailable");
   }
  }));
- return {sent,attempted:subs.length};
+ return {sent,attempted:subs.length,failures};
 }
 async function handleEvent(evt:{type?:string,id?:string}){
  if(typeof evt.id!=="string"||!/^[a-f0-9-]{36}$/i.test(evt.id))return answer({error:"Invalid job id"},400);
@@ -72,6 +73,10 @@ async function handleEvent(evt:{type?:string,id?:string}){
  }
  let recipients:string[]=[];
  let payload={title:"TEPLO · Новый заказ",body:"Открой рабочий кабинет",url:"/teplo-app/pilot-dispatch.html?v=49",tag:"teplo-order-"+evt.id};
+ if(type==="operator_test"){
+  const {data:staff}=await admin.from("profiles").select("id").eq("role","admin");
+  return answer(await sendTo((staff||[]).map(p=>p.id),{title:"TEPLO · Техническая проверка",body:"Проверка уведомлений перед тестированием приложения.",url:"/teplo-app/test.html",tag:"teplo-readiness-check"}));
+ }
  if(type==="delivery_delay"){
   const reasons:Record<string,string>={no_courier:"Нет свободных курьеров на смене",unclaimed:"Заказ не принимают более 5 минут",unconfirmed:"Назначение не подтверждено",pickup:"Нужно проверить забор заказа",delivery:"Нужно проверить завершение доставки",slot:"Временной слот закончился",closed_slot:"Слот закрыт для принятия"};
   const reason=(evt as {reason?:string}).reason||"";

@@ -308,6 +308,13 @@ function card(job){
   const person=couriers.find(c=>c.id===job.courier_id);
   e.append(txt('p','Курьер: '+(person?.name||'назначен'),'muted'));
  }
+ if(job.status==='picked_up'){
+  const note=document.createElement('textarea');note.maxLength=400;note.minLength=12;note.placeholder='Причина ручного завершения и подтверждение вручения (12–400 символов)';note.setAttribute('aria-label','Подтверждение ручного вручения');
+  const finish=txt('button','Подтвердить вручение вручную','secondary');finish.type='button';
+  finish.onclick=async()=>{if(note.value.trim().length<12){feedback.textContent='Опиши причину и подтверждение вручения (минимум 12 символов).';return}if(!confirm('Подтверждаешь, что тестовый заказ вручен получателю?'))return;finish.disabled=true;
+   try{const {error}=await db.rpc('teplo_dispatch_confirm_manual_delivery',{p_job_id:job.id,p_note:note.value.trim()});if(error)throw error;await load()}catch(e){feedback.textContent=e?.message||String(e)}finally{finish.disabled=false}};
+  e.append(note,finish);
+ }
  if(job.status==='delivered')e.append(txt('p','Доставка завершена. Повторно назначить этот заказ нельзя.','muted'));
  if(job.status==='cancelled')e.append(txt('p','Заказ отменён. Для назначения нужна новая заявка.','muted'));
  e.append(feedback,deliveryHistory(db,job.id),deliveryNotes(db,job.id));return e;
@@ -404,4 +411,4 @@ window.addEventListener('online',()=>void load());
 window.setInterval(()=>{if(!document.hidden&&navigator.onLine)void load()},8000);
 db.auth.onAuthStateChange(()=>setTimeout(()=>void load(),0));
 await load();
-</script><script type="module" src="./pilot-buyer-dispatch.js?v=61"></script><script type="module" src="./teplo-push-client.js?v=55"></script></body></html>
+</script><script type="module" src="./pilot-buyer-dispatch.js?v=61"></script><script type="module" src="./teplo-push-client.js?v=64"></script></body></html>

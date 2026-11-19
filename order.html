@@ -66,7 +66,7 @@ main{padding-bottom:calc(172px + env(safe-area-inset-bottom))}
 .buyer-nav a.active{background:#3a2938;border-radius:12px;color:#edb6d4!important}
 #cartBar{bottom:calc(78px + env(safe-area-inset-bottom))}
 </style><link rel="stylesheet" href="./neon.css?v=26">
-<script type="module" src="./role-portal.js?v=55"></script></head><body><main><header><div><h1>TEPLO</h1><small>Тестовый магазин · оформление заказа</small></div><a href="./?v=63" class="quick-orders">← Рестораны</a><span id="connection" hidden>Проверяем…</span></header><nav class="buyer-nav" aria-label="Навигация покупателя"><a href="./?v=63">🏪 Рестораны</a><a href="order.html?v=63#orders-section" class="active">🧾 Мои заказы</a></nav><div class="welcome"><span>Доставка с теплом</span><h2>Тестовая доставка.<br>Проверяем весь путь.</h2><p>Тестовые заведения подтверждают заказ автоматически. Курьер принимает его в своём кабинете. Реальных оплат и поездок нет.</p></div>
+<script type="module" src="./role-portal.js?v=55"></script></head><body><main><header><div><h1>TEPLO</h1><small>Тестовый магазин · оформление заказа</small></div><a href="./?v=64" class="quick-orders">← Рестораны</a><span id="connection" hidden>Проверяем…</span></header><nav class="buyer-nav" aria-label="Навигация покупателя"><a href="./?v=64">🏪 Рестораны</a><a href="order.html?v=64#orders-section" class="active">🧾 Мои заказы</a></nav><div class="welcome"><span>Доставка с теплом</span><h2>Тестовая доставка.<br>Проверяем весь путь.</h2><p>Тестовые заведения подтверждают заказ автоматически. Курьер принимает его в своём кабинете. Реальных оплат и поездок нет.</p></div>
 <section id="accountSection" class="account-section"><details id="authDetails"><summary id="accountSummary">Аккаунт · Войти / регистрация</summary><div class="auth-content"><p class="muted">Вход нужен только для оформления заказа и просмотра его статуса.</p><input id="email" type="email" autocomplete="email" placeholder="Email"><input id="password" type="password" autocomplete="current-password" placeholder="Пароль (минимум 6 символов)"><button id="login">Войти</button> <button id="signup">Регистрация</button> <button id="resend">Повторить письмо</button> <button id="logout" hidden>Выйти</button><p id="authStatus" role="status" aria-live="polite" style="min-height:24px;color:#d89a45;font-weight:600"></p><p id="who"></p></div></details></section>
 <section id="market"><div class="heading-row"><h2>1. Выбери товары</h2><span class="demo-tag">● ТЕСТ</span></div><p class="muted">Нажми «+ Добавить» у понравившегося товара.</p><button id="refresh">Обновить</button><div id="catalog"></div></section>
 <section id="cart-section" hidden><h2>2. Корзина</h2><button type="button" id="backToCatalog" class="secondary">← Назад к товарам</button><div id="cart"></div><button id="goCheckout">Продолжить →</button></section>
@@ -92,6 +92,7 @@ main{padding-bottom:calc(172px + env(safe-area-inset-bottom))}
 import {createClient} from 'https://esm.sh/@supabase/supabase-js@2';
 const db=createClient('https://bgtegxdekqsajttkhhrj.supabase.co','sb_publishable_aSOKkJ_F47sGj9e8v8uJ3g_24rlQ8XG');
 const $=id=>document.getElementById(id); const el=(tag,txt='',cls='')=>{const n=document.createElement(tag);n.textContent=String(txt??'');if(cls)n.className=cls;return n};
+let checkoutBusy=false;
 let loadedShops=[]; let loadedProducts=[]; let cartShopId=null; let cartItems=new Map(); let cartRequestId=null; let deliveryFeePreview=65;
 const money=n=>new Intl.NumberFormat('uk-UA',{style:'currency',currency:'UAH'}).format(Number(n||0));
 function message(t,error=false){$('msg').textContent=t;$('msg').className=error?'error':'ok'}
@@ -126,6 +127,7 @@ function renderCart(){
  summary.textContent=lines.length+' позиций · '+new Set(lines.map(x=>x.shopId)).size+' заведений · Товары '+money(total)+' + доставка '+money(deliveryFeePreview)+' = '+money(grand)+' (демо-расчёт)';
 }
 function adjustCart(item,change){
+ if(checkoutBusy)return;
  const current=cartItems.get(item.id)?.quantity||0;
  const next=Math.max(0,Math.min(20,current+change));
  if(next===0)cartItems.delete(item.id);
@@ -134,6 +136,7 @@ function adjustCart(item,change){
  cartRequestId=null;saveCartDraft();renderCart();
 }
 function addToCart(product,shop){
+ if(checkoutBusy)return;
  if(!/^TEPLO TEST/i.test(shop.name)){$('catalogStatus').textContent='Пока доступны только тестовые товары TEPLO TEST. Реальные заказы отключены.';return}
  cartShopId=shop.id;
  adjustCart({id:product.id,name:product.name,shopId:shop.id,shopName:shop.name,price:Number(product.price),quantity:0},1);
@@ -143,6 +146,7 @@ let restoredDraft=false;
 const requestedShop=new URLSearchParams(location.search).get('shop');
 function saveCartDraft(){try{sessionStorage.setItem('teplo:buyer-cart',JSON.stringify({items:[...cartItems.values()].map(x=>({id:x.id,quantity:x.quantity})),requestId:cartRequestId}))}catch{}}
 async function catalog(){
+ if(checkoutBusy)return;
  const root=$('catalog');root.replaceChildren(el('p','Загрузка меню…'));
  try{
   const [{data:shops,error},{data:products,error:pe}]=await Promise.all([
@@ -152,7 +156,7 @@ async function catalog(){
   if(error||pe)throw error||pe;loadedShops=shops||[];root.replaceChildren();
   const feedback=el('p','','muted');feedback.id='catalogStatus';feedback.setAttribute('role','status');root.append(feedback);
   const switcher=el('div','','row');
-  for(const shop of loadedShops){const link=el('a',shop.name);link.href='order.html?v=63&shop='+encodeURIComponent(shop.id);link.className='badge';if(shop.id===requestedShop)link.setAttribute('aria-current','page');switcher.append(link)}root.append(switcher);
+  for(const shop of loadedShops){const link=el('a',shop.name);link.href='order.html?v=64&shop='+encodeURIComponent(shop.id);link.className='badge';if(shop.id===requestedShop)link.setAttribute('aria-current','page');switcher.append(link)}root.append(switcher);
   $('shopPick').replaceChildren(...loadedShops.map(shop=>{const o=el('option',shop.name);o.value=shop.id;return o}));await pickProducts();
   const visible=requestedShop?loadedShops.filter(x=>x.id===requestedShop):loadedShops;
   if(!visible.length)root.append(el('p','Заведение недоступно. Выбери другое в списке выше.','muted'));
@@ -246,7 +250,12 @@ async function resendConfirmation(){
     }else{show('Ошибка: '+readableAuthError(e),true)}
   }finally{btn.disabled=false}
 }
+function lockCheckout(busy){
+ checkoutBusy=busy;
+ for(const button of document.querySelectorAll('#cart button,.add-btn,#goCheckout,#refresh'))button.disabled=busy;
+}
 async function saveDemoCheckout(){
+ if(checkoutBusy)return;
  const btn=$('saveDemoCheckout'),status=$('demoCheckoutStatus');
  const name=$('demoName').value.trim(),phone=$('demoPhone').value.trim(),
        street=$('demoStreet').value.trim(),house=$('demoHouse').value.trim(),
@@ -254,7 +263,8 @@ async function saveDemoCheckout(){
  const lines=[...cartItems.values()];
  if(!lines.length){status.style.color='#ff9999';status.textContent='Выбери товар в каталоге и добавь его в корзину.';return}
  if(name.length<2||phone.length<7||street.length<3||!house){status.style.color='#ff9999';status.textContent='Заполни имя, тестовый телефон, улицу и дом.';return}
- btn.disabled=true;status.style.color='#d89a45';status.textContent='Отправляем демо-заказ на сервер…';
+ if(!navigator.onLine){status.textContent='Нет интернета. Корзина сохранена. Отправь заказ после восстановления связи.';return}
+ lockCheckout(true);btn.disabled=true;status.style.color='#d89a45';status.textContent='Отправляем демо-заказ на сервер…';
  if(!cartRequestId)cartRequestId=crypto.randomUUID();saveCartDraft();
  try{
   const {data:{user},error:authError}=await db.auth.getUser();
@@ -267,8 +277,8 @@ async function saveDemoCheckout(){
   if(error)throw error;
   status.textContent='✓ Заказ оформлен!';$('successDetails').textContent='Тестовый заказ №'+String(data).slice(0,8)+' сохранён. Диспетчер увидит его в своей панели.';$('orderSuccess').hidden=false;
   cartItems.clear();cartShopId=null;cartRequestId=null;saveCartDraft();renderCart();await orders();$('orderSuccess').scrollIntoView({behavior:'smooth',block:'start'});
- }catch(e){status.style.color='#ff9999';const reason=e?.message||String(e);status.textContent='Заказ не создан: '+reason+'. Корзина сохранена — можно исправить ошибку и повторить.'}
- finally{btn.disabled=false}
+ }catch(e){status.style.color='#ff9999';const reason=e?.message||String(e);status.textContent='Отправка не подтверждена: '+reason+'. Если ответ потерялся, заказ мог сохраниться. Корзина и номер оформления сохранены. Проверь «Мои заказы» или повтори отправку — тот же номер защищает от дубля.'}
+ finally{lockCheckout(false);btn.disabled=false}
 }
 async function createDemoOrder(){
   const btn=$('testCheckout'), status=$('testStatus');
