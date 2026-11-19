@@ -10,7 +10,7 @@ begin
  select jsonb_agg(jsonb_build_object('product_id',p.id,'quantity',1)) into items from public.products p join teplo_private.demo_venue_acceptance d on d.shop_id=p.shop_id where p.is_available;
  insert into public.teplo_pilot_slots(slot_start,slot_end,capacity,is_open) values(clock_timestamp()-interval '1 minute',clock_timestamp()+interval '2 hours',8,true) returning id into fixture_slot;
  foreach area in array array['teplodar','dachi','shyroka_balka','myrne','prom'] loop
-  zone:=teplo_private.delivery_zone_for_area(area);mins:=teplo_private.delivery_zone_minutes(zone);request:=gen_random_uuid();
+  zone:=teplo_private.delivery_zone_for_area(area);mins:=case zone when 'local' then 20 when 'dachi' then 30 else 40 end;request:=gen_random_uuid();
   perform set_config('request.jwt.claim.sub',owner_id::text,true);
   oid:=public.place_teplo_demo_zoned_cart(items,'Тест таймера','0000000000','Тестовая улица','1','','cash_on_delivery',request,area);
   set constraints all immediate;
