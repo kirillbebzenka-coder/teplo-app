@@ -21,7 +21,7 @@ export function deliveryNotes(db,jobId){
   if(busy)return;busy=true;save.disabled=true;
   try{
    const {error}=await db.rpc('teplo_dispatch_record_note',{p_job_id:jobId,p_kind:select.value,p_note:note});if(error)throw error;
-   input.value='';message.textContent='Запись сохранена.';await load(true);
+   input.value='';message.textContent='Запись сохранена.';await load(true);window.dispatchEvent(new CustomEvent('teplo:dispatch-note-saved',{detail:{id:jobId}}));
   }catch(e){message.textContent='Ошибка: '+(e?.message||String(e))}finally{busy=false;save.disabled=false}
  };return box;
 }
