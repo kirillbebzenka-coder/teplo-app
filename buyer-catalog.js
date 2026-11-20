@@ -1,7 +1,7 @@
 /* Guest browsing uses public catalog reads only; checkout retains existing authentication. */
 import {createClient} from 'https://esm.sh/@supabase/supabase-js@2';
-import {venueFromShop,previewVenue,visibleVenues,savedCartUnits,quantityLabel} from './buyer-storefront-model.js?v=71';
-import './buyer-storefront.js?v=71';
+import {venueFromShop,previewVenue,visibleVenues,savedCartUnits,quantityLabel} from './buyer-storefront-model.js?v=72';
+import './buyer-storefront.js?v=72';
 const db=createClient('https://bgtegxdekqsajttkhhrj.supabase.co','sb_publishable_aSOKkJ_F47sGj9e8v8uJ3g_24rlQ8XG');
 const $=id=>document.getElementById(id),el=(tag,text='',className='')=>{const n=document.createElement(tag);n.textContent=text;if(className)n.className=className;return n};
 let venues=[previewVenue],kind='all',loading=false;
