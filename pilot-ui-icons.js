@@ -1,6 +1,10 @@
 /* TEPLO pilot icon polish — inline monochrome SVGs, currentColor palette. */
 (() => {
  const paths = {
+  pizza: '<path d="M4 20 9 3a24 24 0 0 1 12 12L4 20Z"/><path d="M8 6a20 20 0 0 1 10 10"/><circle cx="11" cy="12" r="1.5"/><circle cx="8" cy="17" r="1"/>',
+  cup: '<path d="M5 7h12l-1 14H6L5 7ZM4 7h14M8 3l2 4M13 2v5M17 9h3v5h-3"/>',
+  bag: '<path d="M5 7h14l1 14H4L5 7Z"/><path d="M8 8V6a4 4 0 0 1 8 0v2"/>',
+  chevron: '<path d="m5 9 7 7 7-7"/>',
   phone: '<path d="M5 3h4l2 5-3 2a15 15 0 0 0 6 6l2-3 5 2v4a2 2 0 0 1-2 2A18 18 0 0 1 3 5a2 2 0 0 1 2-2Z"/>',
   search: '<circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5"/>',
   bike: '<circle cx="5.5" cy="17.5" r="3.5"/><circle cx="18.5" cy="17.5" r="3.5"/><path d="M15 6h2l2.5 6.5M5.5 17.5 10 9h5l-5.5 8.5M8 6h3"/>',

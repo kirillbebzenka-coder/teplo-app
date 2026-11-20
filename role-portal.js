@@ -21,8 +21,8 @@ const destinations={
 function applyRoleNavigation(role){
  const teamLinks=document.querySelector('footer details');
  if(teamLinks&&role!=='admin')teamLinks.hidden=true;
- const legacy=document.querySelector('nav.teplo-tabs,nav.nav-bottom,nav.buyer-nav,nav[aria-label="Рабочие разделы"],nav[aria-label="Разделы TEPLO"]');
- if(!legacy)return;
+ const legacy=document.querySelector('nav[data-buyer-navigation],nav.teplo-tabs,nav.nav-bottom,nav.buyer-nav,nav[aria-label="Рабочие разделы"],nav[aria-label="Разделы TEPLO"]');
+ if(!legacy||legacy.hasAttribute('data-buyer-navigation'))return;
  legacy.replaceChildren();
  const pages=role==='admin'?
  [['store','Ресторан','partner.html?v=55'],['clipboard','Диспетчер','pilot-dispatch.html?v=68'],['bike','Курьер · тест','pilot-courier.html?v=68'],['users','Команда','team.html?v=55']]:
