@@ -1,6 +1,6 @@
 import {appendCustomerComment} from './customer-comment.js?v=74';
-import {deliveryTimer} from './delivery-timer.js?v=68';
-import {DELIVERY_ZONES} from './delivery-policy.js?v=68';
+import {deliveryTimer} from './delivery-timer.js?v=75';
+import {DELIVERY_ZONES} from './delivery-policy.js?v=75';
 import {ACTIVE,statusText,money,clock,stamp,pickups,nextAction,mapLink,phoneLink,earningsForPeriod,earningsSummary} from './courier-model.js?v=68';
 const el=(tag,text='',cls='')=>{const n=document.createElement(tag);n.textContent=String(text??'');if(cls)n.className=cls;return n};
 const paths={bike:'M4 17a3 3 0 1 0 6 0 3 3 0 1 0-6 0m10 0a3 3 0 1 0 6 0 3 3 0 1 0-6 0M7 17l4-9 6 9M8 5h4m3-1h3l2 6M10 10h7',bag:'M5 7h14l2 14H3L5 7Zm3 0V5a4 4 0 0 1 8 0v2',wallet:'M3 6h18v15H3V6Zm0 4h18M5 6V3h13m-2 12h3',user:'M8 7a4 4 0 1 0 8 0 4 4 0 1 0-8 0M4 21a8 8 0 0 1 16 0',pin:'M20 10c0 6-8 12-8 12S4 16 4 10a8 8 0 1 1 16 0ZM9 10a3 3 0 1 0 6 0 3 3 0 1 0-6 0',phone:'m5 3 4 4-2 3a16 16 0 0 0 7 7l3-2 4 4c-1 4-5 4-9 1S4 14 3 10 2 4 5 3Z',back:'m14 5-7 7 7 7M7 12h14',refresh:'M20 7v5h-5M4 17v-5h5M5 9a8 8 0 0 1 14-2l1 5M4 12l1 5a8 8 0 0 0 14-2',alert:'m12 3 10 18H2L12 3Zm0 5v6m0 3v.1',arrow:'M4 12h16m-6-6 6 6-6 6',check:'m4 12 5 5L20 6',clock:'M3 12a9 9 0 1 0 18 0 9 9 0 1 0-18 0m9-5v5l4 2'};
@@ -29,18 +29,43 @@ export class CourierView{
   document.getElementById('activeBadge').textContent=this.state.active.length||'';
   if(this.selected){const job=this.state.active.find(j=>j.id===this.selected);if(job)this.renderRoute(job,detail);}
   if(!this.state.active.length)root.append(empty('Активных доставок нет',this.state.shift||this.state.role==='admin'?'Выбери доступный заказ. Назначения диспетчера появятся здесь.':'Открой смену в профиле, когда будешь готов.',button(this.state.shift||this.state.role==='admin'?'Посмотреть заказы':'Открыть профиль',()=>this.navigate(this.state.shift||this.state.role==='admin'?'orders':'profile'))));
-  for(const job of this.state.active){const card=el('button','','delivery-card');card.type='button';card.setAttribute('aria-label','Открыть маршрут №'+job.id.slice(0,8).toUpperCase());card.onclick=()=>this.openJob(job.id);const head=el('div','','row');head.append(el('strong','№'+job.id.slice(0,8).toUpperCase()),badge(statusText[job.status]));card.append(head);const meta=el('div','','card-meta');meta.append(icon('bag'),el('span',this.stopList(job).length+(this.stopList(job).length===1?' точка забора':' точки забора')),el('strong','+'+money(job.courier_reward_uah)));card.append(meta,deliveryTimer(job),this.routeSummary(job));const bottom=el('div','','row card-bottom');bottom.append(el('span','Открыть маршрут'),icon('arrow'));card.append(bottom);root.append(card);}
+  for(const job of this.state.active)root.append(this.activeCard(job));
   if(!this.state.history.length)history.append(empty('История пока пуста','Завершённые и отменённые доставки будут здесь.'));
   for(const job of this.state.history){const card=el('article','','delivery-card history-card'),head=el('div','','row');head.append(el('strong','№'+job.id.slice(0,8).toUpperCase()),badge(statusText[job.status]));const earned=this.state.earnings.find(e=>e.job_id===job.id);card.append(head,el('p',job.shop_name_snapshot,'place-title'),el('p',job.delivery_address,'muted'),el('div',stamp(job.delivered_at||job.created_at),'muted'),el('p',earned?'Начислено '+money(earned.amount_uah):job.status==='cancelled'?'Без начисления':'Нет записи начисления','reward'),deliveryTimer(job));appendCustomerComment(card,job.customer_comment);history.append(card);}
   if(this.state.moreHistory)history.append(button('Показать ещё',()=>this.callbacks.moreHistory?.(),'secondary full'));
   this.renderNavigation();
  }
- renderRoute(job,root){const back=button('К доставкам',()=>{this.selected=null;this.renderDeliveries();},'back-button');back.prepend(icon('back'));root.append(back);const head=el('div','','row route-head');head.append(el('h2','№'+job.id.slice(0,8).toUpperCase()),badge(statusText[job.status]));root.append(head,deliveryTimer(job));
+ recipientInfo(job){
+  const recipient=el('section','','recipient-info');recipient.append(el('p','ДОСТАВИТЬ','eyebrow'),el('h2',job.delivery_address||'Адрес не указан','recipient-address'),el('p',job.customer_name||'Имя получателя не указано','recipient-name'));
+  const actions=el('div','','stop-actions');if(job.delivery_address)actions.append(link('Маршрут к получателю',mapLink(job.delivery_address),'pin'));
+  const phone=phoneLink(job.customer_phone);if(phone)actions.append(link(job.customer_phone,phone,'phone'));else recipient.append(el('p',job.customer_phone||'Телефон не указан','muted'));
+  recipient.append(actions);return recipient;
+ }
+ zoneControl(job){
+  const zoneBox=el('section','','zone-control'),select=el('select');select.setAttribute('aria-label','Уточнить зону доставки');for(const [code,policy] of Object.entries(DELIVERY_ZONES)){const o=el('option',policy.label+' · '+policy.minutes+' мин');o.value=code;select.append(o);}const save=button('Подтвердить зону',()=>this.callbacks.setZone?.(job,select.value),'secondary full');save.disabled=Boolean(this.state.mutating)||!this.state.online;zoneBox.append(el('p','Адрес не распознан. Выбери зону до забора.','muted'),select,save);return zoneBox;
+ }
+ activeCard(job){
+  const card=el('article','','delivery-card courier-job-card');card.dataset.jobId=job.id;card.setAttribute('aria-label','Заказ №'+job.id.slice(0,8).toUpperCase());
+  const head=el('div','','row');head.append(el('h2','№'+job.id.slice(0,8).toUpperCase()),badge(statusText[job.status]));card.append(head);
+  appendCustomerComment(card,job.customer_comment);
+  const contents=el('section','','order-contents');contents.append(el('p','СОСТАВ ЗАКАЗА','eyebrow'),el('p',job.order_summary||'Состав не указан','order-content'));card.append(contents,deliveryTimer(job));
+  const pickup=el('section','','card-pickups');pickup.append(el('p',job.status==='picked_up'?'ЗАБРАНО':'ЗАБРАТЬ','eyebrow'));
+  for(const point of this.stopList(job)){const row=el('div','','card-pickup');row.append(el('h3',point.name||'Заведение'),el('p',point.address||'Адрес не указан','pickup-address'),el('p','Готовность по плану: '+(point.readyAt?stamp(point.readyAt):'уточняется'),'muted'));if(point.address)row.append(link('К заведению',mapLink(point.address),'pin'));pickup.append(row);}
+  card.append(pickup,this.recipientInfo(job));
+  const amounts=el('div','','card-amounts');amounts.append(el('span','Стоимость доставки: '+money(job.delivery_fee_uah)),el('strong','Твой доход: '+money(job.courier_reward_uah),'reward'));card.append(amounts);
+  if(!job.delivery_zone)card.append(this.zoneControl(job));
+  const next=nextAction(job,this.stopList(job).length),actions=el('div','','card-actions');
+  if(next){const action=button(next.label,()=>this.callbacks.step?.(job,next.action),'primary full');action.disabled=Boolean(this.state.mutating)||!this.state.online;actions.append(action);}
+  const secondary=el('div','','card-secondary-actions'),problem=button('Проблема',()=>this.openIssue(job),'text-button');problem.disabled=Boolean(this.state.mutating);secondary.append(button('Подробнее',()=>this.openJob(job.id),'text-button'),problem);
+  if(job.status==='assigned'){const decline=button('Не могу выполнить',()=>this.callbacks.step?.(job,'declined'),'text-button decline');decline.disabled=Boolean(this.state.mutating)||!this.state.online;secondary.append(decline);}
+  actions.append(secondary);card.append(actions);return card;
+ }
+ renderRoute(job,root){const back=button('К доставкам',()=>{this.selected=null;this.renderDeliveries();},'back-button');back.prepend(icon('back'));root.append(back);const head=el('div','','row route-head');head.append(el('h2','№'+job.id.slice(0,8).toUpperCase()),badge(statusText[job.status]));root.append(head);appendCustomerComment(root,job.customer_comment);root.append(deliveryTimer(job));
   const points=this.stopList(job),delivering=job.status==='picked_up',current=el('section','','current-stop');current.append(el('p',job.status==='assigned'?'НАЗНАЧЕНИЕ':delivering?'СЛЕДУЮЩАЯ ТОЧКА · ПОЛУЧАТЕЛЬ':'ЗАБОР · '+points.length+(points.length===1?' ТОЧКА':' ТОЧКИ'),'eyebrow'));
   if(delivering){current.append(el('h2',job.delivery_address||'Адрес не указан','current-address'),el('p',job.customer_name||'Получатель','place-title'));const actions=el('div','','stop-actions');if(job.delivery_address)actions.append(link('Маршрут',mapLink(job.delivery_address),'pin'));const phone=phoneLink(job.customer_phone);if(phone)actions.append(link('Позвонить',phone,'phone'));current.append(actions);if(job.customer_phone)current.append(el('p',job.customer_phone,'muted'));}
   else for(const point of points){const block=el('div','','pickup-point');block.append(el('h2',point.name||'Заведение','place-title'),el('p',point.address||'Адрес не указан','current-address'),el('p','Готовность к '+clock(point.readyAt),'muted'));if(point.address)block.append(link('Маршрут',mapLink(point.address),'pin'));current.append(block);}
-  root.append(current);appendCustomerComment(root,job.customer_comment);
-  if(!job.delivery_zone){const zoneBox=el('section','','zone-control'),select=el('select');select.setAttribute('aria-label','Уточнить зону доставки');for(const [code,policy] of Object.entries(DELIVERY_ZONES)){const o=el('option',policy.label+' · '+policy.minutes+' мин');o.value=code;select.append(o);}const save=button('Подтвердить зону',()=>this.callbacks.setZone?.(job,select.value),'secondary full');save.disabled=this.state.mutating;zoneBox.append(el('p','Адрес не распознан. Выбери зону до забора.','muted'),select,save);root.append(zoneBox);}
+  root.append(current);if(!delivering)root.append(this.recipientInfo(job));
+  if(!job.delivery_zone)root.append(this.zoneControl(job));
 
   const info=el('section','','delivery-card order-info');const amounts=el('div','','row');amounts.append(el('span','За доставку'),el('strong','+'+money(job.courier_reward_uah),'reward'));info.append(amounts,el('p',job.order_summary||'Состав не указан','order-content'));if(!delivering)info.append(el('p','Получатель: '+(job.customer_name||'Не указан'),'muted'),el('p',job.delivery_address||'Адрес не указан','place-title'));root.append(info);
   const all=el('details','','all-stops');all.append(el('summary','Все остановки · '+(points.length+1)),this.routeSummary(job));root.append(all);

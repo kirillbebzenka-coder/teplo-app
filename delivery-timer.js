@@ -1,4 +1,4 @@
-import {ServerClock,timerState} from './delivery-policy.js?v=68';
+import {ServerClock,timerState} from './delivery-policy.js?v=75';
 export const deliveryClock=new ServerClock();
 const models=new WeakMap();
 export async function syncDeliveryTiming(db,ids=[]){const started=performance.now();const {data,error}=await db.rpc('teplo_delivery_timing',{p_job_ids:[...new Set(ids)].slice(0,200)});if(error)throw error;deliveryClock.set(data?.server_now,started,performance.now());return new Map((data.jobs||[]).map(j=>[j.id,j]));}

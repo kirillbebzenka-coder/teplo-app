@@ -1,5 +1,5 @@
-<!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name="theme-color" content="#08070c"><meta name="color-scheme" content="dark"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>TEPLO · Меню и заказ</title><link rel="stylesheet" href="./buyer-storefront.css?v=72"><link rel="stylesheet" href="./buyer-menu.css?v=74"><link rel="stylesheet" href="./pilot-touch.css?v=29"><script src="./pilot-touch.js?v=29" defer></script><script src="./pilot-ui-icons.js?v=72" defer></script><script type="module" src="./role-portal.js?v=74"></script></head><body class="buyer-menu"><main><header class="menu-header"><a class="buyer-brand" href="./?v=74">TEPLO</a><a class="menu-back" href="./?v=74">Все заведения</a><span id="connection" hidden></span></header><div class="menu-intro"><h1 id="menuTitle">Меню</h1><p>Тестовый режим · без оплат и реальных поездок</p></div>
-<nav class="buyer-bottom buyer-nav" data-buyer-navigation aria-label="Навигация покупателя"><a href="./?v=74"><span data-teplo-icon="store"></span><span>Главная</span></a><a href="order.html?v=74#cart-section"><span data-teplo-icon="bag"></span><span>Корзина</span></a><a href="order.html?v=74#orders-section"><span data-teplo-icon="history"></span><span>Заказы</span></a><a href="order.html?v=74#accountSection"><span data-teplo-icon="user"></span><span>Профиль</span></a></nav>
+<!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name="theme-color" content="#08070c"><meta name="color-scheme" content="dark"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>TEPLO · Меню и заказ</title><link rel="stylesheet" href="./buyer-storefront.css?v=72"><link rel="stylesheet" href="./buyer-menu.css?v=75"><link rel="stylesheet" href="./pilot-touch.css?v=29"><script src="./pilot-touch.js?v=29" defer></script><script src="./pilot-ui-icons.js?v=72" defer></script><script type="module" src="./role-portal.js?v=75"></script></head><body class="buyer-menu"><main><header class="menu-header"><a class="buyer-brand" href="./?v=75">TEPLO</a><a class="menu-back" href="./?v=75">Все заведения</a><span id="connection" hidden></span></header><div class="menu-intro"><h1 id="menuTitle">Меню</h1><p>Тестовый режим · без оплат и реальных поездок</p></div>
+<nav class="buyer-bottom buyer-nav" data-buyer-navigation aria-label="Навигация покупателя"><a href="./?v=75"><span data-teplo-icon="store"></span><span>Главная</span></a><a href="order.html?v=75#cart-section"><span data-teplo-icon="bag"></span><span>Корзина</span></a><a href="order.html?v=75#orders-section"><span data-teplo-icon="history"></span><span>Заказы</span></a><a href="order.html?v=75#accountSection"><span data-teplo-icon="user"></span><span>Профиль</span></a></nav>
 
 <section id="market"><div class="heading-row"><h2>Выбирай из меню</h2></div><label class="buyer-search menu-search"><span data-teplo-icon="search"></span><input id="menuSearch" type="search" placeholder="Найти в меню" aria-label="Поиск товаров в меню" autocomplete="off"></label><p id="menuNoResults" class="muted" hidden>Нет товаров по этому запросу.</p><button id="refresh">Обновить</button><div id="catalog"></div></section>
 <section id="cart-section" hidden><h2>Корзина</h2><button type="button" id="backToCatalog" class="secondary">К товарам</button><div id="cart"></div><button id="goCheckout">К оформлению</button></section>
@@ -22,9 +22,9 @@
 <section id="accountSection" class="account-section"><details id="authDetails"><summary id="accountSummary">Аккаунт · Войти / регистрация</summary><div class="auth-content"><p class="muted">Вход нужен только для оформления заказа и просмотра его статуса.</p><input id="email" type="email" autocomplete="email" placeholder="Email"><input id="password" type="password" autocomplete="current-password" placeholder="Пароль (минимум 6 символов)"><button id="login">Войти</button> <button id="signup">Регистрация</button> <button id="resend">Повторить письмо</button> <button id="logout" hidden>Выйти</button><p id="authStatus" role="status" aria-live="polite" style="min-height:24px;color:#f279c4;font-weight:600"></p><p id="who"></p></div></details></section><div hidden id="oldTechnical"><section><details><summary>Дополнительные технические проверки (необязательно)</summary><p class="muted">Настоящие заказы сейчас выключены.</p><button id="testCheckout">Создать демонстрационный заказ без адреса</button><p id="testStatus" role="status" aria-live="polite"></p><details><summary>Обычное оформление (пока выключено)</summary><p class="muted">Реальные заказы пока заблокированы на сервере.</p><select id="shopPick" style="width:100%;padding:12px;background:#0b1220;color:white"></select><div id="productPick"></div><input id="custName" placeholder="Имя"><input id="custPhone" placeholder="Телефон"><input id="custAddress" placeholder="Адрес доставки"><button id="checkout" disabled title="Доставка пока выключена">Оформить настоящий заказ (выключено)</button><p id="checkoutStatus"></p></details></details></section><section><h2>Состояние</h2><p id="msg">Подключаемся…</p><p class="muted">Реальные доставки пока отключены. Тестовые суммы вычисляет сервер.</p></section></div></main>
 <div id="cartBar" hidden><div class="cart-bar-inner"><div class="cart-bar-copy"><strong id="cartBarTotal">0 грн</strong><small id="cartBarCount">Корзина</small></div><button type="button" id="cartBarOpen">Открыть корзину</button></div></div>
 <script type="module">
-import {deliveryTimer,deliveryClock} from './delivery-timer.js?v=68';
-import {appendCustomerComment,CUSTOMER_COMMENT_MAX} from './customer-comment.js?v=74';
-import {DELIVERY_AREAS} from './delivery-policy.js?v=68';
+import {deliveryTimer,deliveryClock} from './delivery-timer.js?v=75';
+import {appendCustomerComment,CUSTOMER_COMMENT_MAX} from './customer-comment.js?v=75';
+import {DELIVERY_AREAS} from './delivery-policy.js?v=75';
 import './buyer-storefront.js?v=72';
 import {createClient} from 'https://esm.sh/@supabase/supabase-js@2';
 const db=createClient('https://bgtegxdekqsajttkhhrj.supabase.co','sb_publishable_aSOKkJ_F47sGj9e8v8uJ3g_24rlQ8XG');
@@ -57,7 +57,7 @@ function renderCart(){
   controls.append(minus,count,plus);row.append(controls);root.append(row);
  }
  }
- const more=el('a','+ Добавить из другого заведения');more.href='./?v=74';root.append(more);
+ const more=el('a','+ Добавить из другого заведения');more.href='./?v=75';root.append(more);
  const grand=total+deliveryFeePreview;
  root.append(el('p','Товары: '+money(total)+' · Доставка (тест): '+money(deliveryFeePreview)));
  root.append(el('h3','Итого: '+money(grand)));
@@ -93,7 +93,7 @@ async function catalog(){
   if(error||pe)throw error||pe;loadedShops=shops||[];root.replaceChildren();
   const feedback=el('p','','muted');feedback.id='catalogStatus';feedback.setAttribute('role','status');root.append(feedback);
   const switcher=el('div','','row');
-  for(const shop of loadedShops){const link=el('a',shop.name);link.href='order.html?v=74&shop='+encodeURIComponent(shop.id);link.className='badge';if(shop.id===requestedShop)link.setAttribute('aria-current','page');switcher.append(link)}root.append(switcher);
+  for(const shop of loadedShops){const link=el('a',shop.name);link.href='order.html?v=75&shop='+encodeURIComponent(shop.id);link.className='badge';if(shop.id===requestedShop)link.setAttribute('aria-current','page');switcher.append(link)}root.append(switcher);
   $('shopPick').replaceChildren(...loadedShops.map(shop=>{const o=el('option',shop.name);o.value=shop.id;return o}));await pickProducts();
   const visible=requestedShop?loadedShops.filter(x=>x.id===requestedShop):loadedShops;
   $('menuTitle').textContent=visible.length===1?visible[0].name:'Меню заведений';

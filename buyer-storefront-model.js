@@ -5,7 +5,7 @@ export function venueFromShop(shop,products=[]){
  const items=products.filter(p=>p.shop_id===shop.id&&p.is_available!==false),text=normaliseSearch([shop.name,shop.description,...items.map(p=>p.name)].join(' '));
  const food=/пицц|pizza|суш|ролл|шаверм|шаурм|бургер|паст[аы]|ресторан|кафе/.test(text),drinks=!food&&/напит|вод[аы]|сок|cola|drink|кофе|чай/.test(text);
  const demo=/^TEPLO TEST/i.test(shop.name);
- return {id:shop.id,name:shop.name,kind:food?'food':'stores',art:food?'pizza':drinks?'drink':'bag',subtitle:food?'Еда':drinks?'Напитки':'Магазин',mode:demo?'Тестовое меню':'Каталог',demo,count:items.length,search:text,href:'order.html?v=74&shop='+encodeURIComponent(shop.id)};
+ return {id:shop.id,name:shop.name,kind:food?'food':'stores',art:food?'pizza':drinks?'drink':'bag',subtitle:food?'Еда':drinks?'Напитки':'Магазин',mode:demo?'Тестовое меню':'Каталог',demo,count:items.length,search:text,href:'order.html?v=75&shop='+encodeURIComponent(shop.id)};
 }
 export const previewVenue={id:'preview-felicita',name:'Фелічіта',kind:'food',art:'pizza',subtitle:'Пицца и паста',mode:'Превью меню',demo:false,preview:true,count:null,search:'фелічіта феличита felicita пицца паста бургеры салаты десерты',href:'felicita.html?v=72'};
 export function visibleVenues(venues,{kind='all',search=''}={}){const query=normaliseSearch(search);return venues.filter(v=>(kind==='all'||v.kind===kind)&&(!query||normaliseSearch(v.search).includes(query)));}
