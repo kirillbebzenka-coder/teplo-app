@@ -1,5 +1,6 @@
+import {loadJobCustomerComments} from './customer-comment.js?v=74';
 import {syncDeliveryTiming,deliveryClock} from './delivery-timer.js?v=68';
-import {CourierView} from './courier-view.js?v=68';
+import {CourierView} from './courier-view.js?v=74';
 import {ACTIVE,canClaim} from './courier-model.js?v=68';
 const $=id=>document.getElementById(id);
 const preview=location.pathname.endsWith('/courier-preview.html')||new URLSearchParams(location.search).get('preview')==='1';
@@ -37,6 +38,7 @@ async function load(){
   ]);
   for(const r of [activeResult,historyResult,shiftResult,openResult])if(r.error)throw r.error;
   const active=activeResult.data||[],stops=new Map();
+  await loadJobCustomerComments(db,[...active,...(historyResult.data||[])]);
   const timing=await syncDeliveryTiming(db,[...active,...(openResult.data||[])].map(j=>j.id));
   for(const job of [...active,...(openResult.data||[])])Object.assign(job,timing.get(job.id)||{});
   if(active.length){const {data,error}=await db.from('teplo_pilot_job_stops').select('job_id,stop_number,shop_name_snapshot,shop_address_snapshot,ready_at').in('job_id',active.map(j=>j.id)).order('stop_number');if(error)throw error;for(const row of data||[]){if(!stops.has(row.job_id))stops.set(row.job_id,[]);stops.get(row.job_id).push(row);}}
@@ -82,6 +84,6 @@ $('incomingOpen').onclick=()=>dismissIncoming(true);$('incomingLater').onclick=(
 window.addEventListener('offline',()=>{notice('Нет интернета. Действия временно недоступны. Заказы на экране сохранены.');refreshView();});
 window.addEventListener('online',()=>void load());
 let resumeLoad=false;document.addEventListener('visibilitychange',()=>{if(!document.hidden)void load();});
-async function loadPreview(){const {makePreview}=await import('./courier-preview.js?v=68');state=makePreview(previewStage,previewZone);deliveryClock.set(new Date().toISOString());reveal();refreshView();$('profileName').value=state.name;$('loading').hidden=true;}
+async function loadPreview(){const {makePreview}=await import('./courier-preview.js?v=74');state=makePreview(previewStage,previewZone);deliveryClock.set(new Date().toISOString());reveal();refreshView();$('profileName').value=state.name;$('loading').hidden=true;}
 if(preview){$('previewBanner').hidden=false;$('previewZone').onchange=()=>{previewZone=$('previewZone').value;view.selected=null;void loadPreview();};$('previewStage').onchange=()=>{previewStage=$('previewStage').value;view.selected=null;void loadPreview();};document.querySelector('[data-teplo-push-settings]').textContent='Уведомления подключаются в рабочем кабинете после входа.';await loadPreview();}
 else{const {createClient}=await import('https://esm.sh/@supabase/supabase-js@2');db=createClient('https://bgtegxdekqsajttkhhrj.supabase.co','sb_publishable_aSOKkJ_F47sGj9e8v8uJ3g_24rlQ8XG');db.auth.onAuthStateChange(()=>{if(resumeLoad)return;resumeLoad=true;setTimeout(()=>{resumeLoad=false;void load();},0);});await load();await import('./teplo-push-client.js?v=66');setInterval(()=>{if(!document.hidden&&navigator.onLine&&!mutating&&!$('issueDialog').open&&!$('incomingDialog').open)void load();},8000);}

@@ -1,10 +1,11 @@
+import {loadJobCustomerComments} from './customer-comment.js?v=74';
 import {syncDeliveryTiming,deliveryClock} from './delivery-timer.js?v=68';
-import {dispatchCard,readCardDraft,restoreCardDraft} from './dispatcher-card.js?v=69';
+import {dispatchCard,readCardDraft,restoreCardDraft} from './dispatcher-card.js?v=74';
 import {dispatchStatus,dispatchAttention,dispatchCounts,visibleDispatchJobs,unresolvedDispatchIssues} from './dispatcher-board-model.js?v=69';
 import {initDispatcherWorkspace} from './dispatcher-workspace.js?v=69';
-import {mountBuyerOrders} from './pilot-buyer-dispatch.js?v=69';
+import {mountBuyerOrders} from './pilot-buyer-dispatch.js?v=74';
 const preview=new URLSearchParams(location.search).get('preview')==='1';
-const db=preview?(await import('./dispatcher-preview.js?v=69')).previewDatabase():
+const db=preview?(await import('./dispatcher-preview.js?v=74')).previewDatabase():
  (await import('https://esm.sh/@supabase/supabase-js@2')).createClient('https://bgtegxdekqsajttkhhrj.supabase.co','sb_publishable_aSOKkJ_F47sGj9e8v8uJ3g_24rlQ8XG');
 initDispatcherWorkspace();
 if(preview){document.getElementById('demoLabel').textContent='ПРЕВЬЮ · вымышленные данные';document.getElementById('roleLinks').hidden=true;}
@@ -249,6 +250,7 @@ async function load(){
     db.rpc('teplo_pilot_list_slots')
   ]);
   if(re)throw re;if(je)throw je;if(adminCountError)throw adminCountError;if(slotError)throw slotError;
+  await loadJobCustomerComments(db,jobs||[]);
   const extra=await loadBoardExtras(jobs||[]);if(accessVersion!==authEpoch)return;issues=extra.issues;jobStops=extra.stops;
   slots=slotRows||[];
   const slotSignature=JSON.stringify(slots.map(x=>[x.id,x.slot_start,x.capacity,x.is_open,x.booked]));
@@ -273,7 +275,7 @@ async function load(){
   $('message').textContent='На связи · '+slotClock(Date.now());$('message').classList.remove('warning');
   const counts=dispatchCounts(rows,couriers,slots,issues,deliveryClock.now());
   $('stats').replaceChildren();for(const [label,count,target] of [['Назначить',counts.new,'new'],['Внимание',counts.attention,'attention'],['Курьеры',counts.available,'couriers']]){const item=txt('button','','stat-button');item.type='button';item.append(txt('strong',count),txt('span',label));item.onclick=()=>target==='couriers'?window.TEPLOWorkspace.show('couriers'):selectFilter(target);$('stats').append(item);}
-  const signature=JSON.stringify({issues:[...issues],jobs:rows.map(j=>[j.id,j.status,j.courier_id,j.slot_id,j.updated_at,j.delivery_due_at,j.delivery_zone,dispatchAttention(j,slots,couriers,issues,deliveryClock.now()).join('|')]),couriers:couriers.map(c=>[c.id,c.activeJobs,c.onShift]),slots:slots.map(s=>[s.id,s.booked,s.capacity,s.is_open])});
+  const signature=JSON.stringify({issues:[...issues],jobs:rows.map(j=>[j.id,j.status,j.courier_id,j.slot_id,j.updated_at,j.customer_comment,j.delivery_due_at,j.delivery_zone,dispatchAttention(j,slots,couriers,issues,deliveryClock.now()).join('|')]),couriers:couriers.map(c=>[c.id,c.activeJobs,c.onShift]),slots:slots.map(s=>[s.id,s.booked,s.capacity,s.is_open])});
   const editing=$('deliveryDetail').contains(document.activeElement)&&['SELECT','INPUT','TEXTAREA'].includes(document.activeElement?.tagName);
   if(signature!==lastCallSignature&&!editing){lastCallSignature=signature;renderCallQueue()}
   alertForIncoming(rows);

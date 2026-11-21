@@ -1,3 +1,4 @@
+import {appendCustomerComment} from './customer-comment.js?v=74';
 export function mountBuyerOrders(db,{preview=false}={}){
 const el=(tag,text='',cls='')=>{const node=document.createElement(tag);node.textContent=String(text??'');if(cls)node.className=cls;return node};
 const money=n=>Number(n||0).toLocaleString('ru-RU',{maximumFractionDigits:2})+' ₴';
@@ -67,7 +68,7 @@ function card(o,tasks,slots,links){
  if(automatic&&!linked)c.append(el('p','Автопередача: '+automatic.reason,automatic.state==='error'?'warning':'muted'));
  c.append(top,el('p','Покупатель · '+new Date(o.created_at).toLocaleString('ru-RU',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}),'muted'));
  c.append(el('p','Получатель: '+o.customer_name+' · '+o.customer_phone));
- c.append(el('p','Адрес доставки: '+o.delivery_address));
+ c.append(el('p','Адрес доставки: '+o.delivery_address));appendCustomerComment(c,o.customer_comment);
  c.append(el('p','Стоимость товаров: '+money(o.subtotal)+' · Доставка: '+money(o.delivery_fee)+' · Итого: '+money(o.total)));
  if(linked){
   c.append(el('p','Доставка №'+linked.id.slice(0,8).toUpperCase()+' · '+(deliveryStates[linked.status]||linked.status),'muted'));
@@ -172,7 +173,7 @@ async function load(force=false){
   if(!['admin','dispatcher'].includes(profile.role)||!auth.user.email_confirmed_at){root.replaceChildren();details.replaceChildren();ordersCache=[];return}
   section.hidden=Boolean(window.TEPLOWorkspace && window.TEPLOWorkspace.active!=='buyers');
   const [{data:orders,error:oe},{data:tasks,error:te},{data:slots,error:se},{data:links,error:le},{data:auto,error:autoError}]=await Promise.all([
-   db.from('orders').select('id,customer_name,customer_phone,delivery_address,subtotal,delivery_fee,total,created_at,is_test,order_items(shop_id,product_name_snapshot,quantity,line_total)').eq('is_test',true).order('created_at',{ascending:false}).limit(70),
+   db.from('orders').select('id,customer_name,customer_phone,delivery_address,customer_comment,subtotal,delivery_fee,total,created_at,is_test,order_items(shop_id,product_name_snapshot,quantity,line_total)').eq('is_test',true).order('created_at',{ascending:false}).limit(70),
    db.from('teplo_order_venue_tasks').select('order_id,shop_id,shop_name_snapshot,shop_address_snapshot,state,operator_note,ready_at').limit(350),
    db.rpc('teplo_pilot_list_slots'),
    db.from('teplo_pilot_jobs').select('id,source_order_id,status').not('source_order_id','is',null).limit(100),
@@ -186,7 +187,7 @@ async function load(force=false){
    for(const order of ordersCache.filter(o=>!seenBuyerIds.has(o.id)))window.TEPLODispatcherAlert?.buyer(order);
   }
   seenBuyerIds=nextIds;
-  const signature=JSON.stringify({auto:autoCache,o:ordersCache.map(o=>[o.id,o.total]),t:tasksCache.map(t=>[t.order_id,t.shop_id,t.state,t.operator_note,t.ready_at]),j:linksCache.map(j=>[j.id,j.status]),s:slotsCache.map(x=>[x.id,x.booked,x.capacity,x.is_open])});
+  const signature=JSON.stringify({auto:autoCache,o:ordersCache.map(o=>[o.id,o.total,o.customer_comment]),t:tasksCache.map(t=>[t.order_id,t.shop_id,t.state,t.operator_note,t.ready_at]),j:linksCache.map(j=>[j.id,j.status]),s:slotsCache.map(x=>[x.id,x.booked,x.capacity,x.is_open])});
   const editing=details.contains(document.activeElement)&&['INPUT','SELECT','TEXTAREA'].includes(document.activeElement?.tagName);
   if((force||signature!==lastSignature)&&(!editing||force)){lastSignature=signature;renderQueue()}
  }catch(e){root.querySelector('.buyer-load-error')?.remove();const p=el('p','Не удалось загрузить заказы: '+(e?.message||String(e)),'warning buyer-load-error');root.prepend(p)}

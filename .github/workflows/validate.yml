@@ -15,3 +15,4 @@ jobs:
       - run: node tests/dispatcher-controller.test.mjs
       - run: node tests/buyer-storefront.test.mjs
       - run: node tests/buyer-role-navigation.test.mjs
+      - run: node tests/customer-comment.test.mjs

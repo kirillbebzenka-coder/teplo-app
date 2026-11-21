@@ -235,6 +235,6 @@ let initializing=false;
 async function init(){if(initializing)return;initializing=true;try{await getIdentity();await loadJobs()}catch(e){window.dispatchEvent(new Event('teplo:sync-error'));$('accessMessage').textContent='Не удалось проверить аккаунт: '+(e?.message||String(e));if(navigator.onLine)$('requestForm').hidden=true}finally{initializing=false}}
 await init();
 </script>
-<script type="module" src="./venue-orders.js?v=61"></script>
+<script type="module" src="./venue-orders.js?v=74"></script>
 </body>
 </html>

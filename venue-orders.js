@@ -1,3 +1,4 @@
+import {appendCustomerComment} from './customer-comment.js?v=74';
 /* Venue-scoped RPCs, separate from direct courier calls. Existing TEPLO theme is inherited. */
 import {createClient} from 'https://esm.sh/@supabase/supabase-js@2';
 const db=createClient('https://bgtegxdekqsajttkhhrj.supabase.co','sb_publishable_aSOKkJ_F47sGj9e8v8uJ3g_24rlQ8XG');
@@ -14,6 +15,7 @@ function render(rows){
  for(const row of rows){
   const card=el('article'),title=el('h3',row.shop_name_snapshot+' · №'+row.order_id.slice(0,8).toUpperCase());
   card.append(title,el('p',row.delivery_status?(delivery[row.delivery_status]||row.delivery_status):(labels[row.state]||row.state)));
+  appendCustomerComment(card,row.customer_comment);
   for(const item of row.items||[])card.append(el('p',item.name+' × '+item.quantity+' · '+Number(item.total).toLocaleString('ru-RU')+' ₴'));
   if(row.ready_at)card.append(el('p','Готовность: '+new Date(row.ready_at).toLocaleString('ru-RU',{timeZone:'Europe/Kyiv'}),'muted'));
   if(row.operator_note)card.append(el('p',row.operator_note,'muted'));
