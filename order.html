@@ -1,5 +1,5 @@
-<!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name="theme-color" content="#08070c"><meta name="color-scheme" content="dark"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>TEPLO · Меню и заказ</title><link rel="stylesheet" href="./buyer-storefront.css?v=72"><link rel="stylesheet" href="./buyer-menu.css?v=72"><link rel="stylesheet" href="./pilot-touch.css?v=29"><script src="./pilot-touch.js?v=29" defer></script><script src="./pilot-ui-icons.js?v=72" defer></script><script type="module" src="./role-portal.js?v=72"></script></head><body class="buyer-menu"><main><header class="menu-header"><a class="buyer-brand" href="./?v=72">TEPLO</a><a class="menu-back" href="./?v=72">Все заведения</a><span id="connection" hidden></span></header><div class="menu-intro"><h1 id="menuTitle">Меню</h1><p>Тестовый режим · без оплат и реальных поездок</p></div>
-<nav class="buyer-bottom buyer-nav" data-buyer-navigation aria-label="Навигация покупателя"><a href="./?v=72"><span data-teplo-icon="store"></span><span>Главная</span></a><a href="order.html?v=72#cart-section"><span data-teplo-icon="bag"></span><span>Корзина</span></a><a href="order.html?v=72#orders-section"><span data-teplo-icon="history"></span><span>Заказы</span></a><a href="order.html?v=72#accountSection"><span data-teplo-icon="user"></span><span>Профиль</span></a></nav>
+<!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name="theme-color" content="#08070c"><meta name="color-scheme" content="dark"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>TEPLO · Меню и заказ</title><link rel="stylesheet" href="./buyer-storefront.css?v=72"><link rel="stylesheet" href="./buyer-menu.css?v=72"><link rel="stylesheet" href="./pilot-touch.css?v=29"><script src="./pilot-touch.js?v=29" defer></script><script src="./pilot-ui-icons.js?v=72" defer></script><script type="module" src="./role-portal.js?v=73"></script></head><body class="buyer-menu"><main><header class="menu-header"><a class="buyer-brand" href="./?v=73">TEPLO</a><a class="menu-back" href="./?v=73">Все заведения</a><span id="connection" hidden></span></header><div class="menu-intro"><h1 id="menuTitle">Меню</h1><p>Тестовый режим · без оплат и реальных поездок</p></div>
+<nav class="buyer-bottom buyer-nav" data-buyer-navigation aria-label="Навигация покупателя"><a href="./?v=73"><span data-teplo-icon="store"></span><span>Главная</span></a><a href="order.html?v=73#cart-section"><span data-teplo-icon="bag"></span><span>Корзина</span></a><a href="order.html?v=73#orders-section"><span data-teplo-icon="history"></span><span>Заказы</span></a><a href="order.html?v=73#accountSection"><span data-teplo-icon="user"></span><span>Профиль</span></a></nav>
 
 <section id="market"><div class="heading-row"><h2>Выбирай из меню</h2></div><label class="buyer-search menu-search"><span data-teplo-icon="search"></span><input id="menuSearch" type="search" placeholder="Найти в меню" aria-label="Поиск товаров в меню" autocomplete="off"></label><p id="menuNoResults" class="muted" hidden>Нет товаров по этому запросу.</p><button id="refresh">Обновить</button><div id="catalog"></div></section>
 <section id="cart-section" hidden><h2>Корзина</h2><button type="button" id="backToCatalog" class="secondary">К товарам</button><div id="cart"></div><button id="goCheckout">К оформлению</button></section>
@@ -56,7 +56,7 @@ function renderCart(){
   controls.append(minus,count,plus);row.append(controls);root.append(row);
  }
  }
- const more=el('a','+ Добавить из другого заведения');more.href='./?v=72';root.append(more);
+ const more=el('a','+ Добавить из другого заведения');more.href='./?v=73';root.append(more);
  const grand=total+deliveryFeePreview;
  root.append(el('p','Товары: '+money(total)+' · Доставка (тест): '+money(deliveryFeePreview)));
  root.append(el('h3','Итого: '+money(grand)));
@@ -92,7 +92,7 @@ async function catalog(){
   if(error||pe)throw error||pe;loadedShops=shops||[];root.replaceChildren();
   const feedback=el('p','','muted');feedback.id='catalogStatus';feedback.setAttribute('role','status');root.append(feedback);
   const switcher=el('div','','row');
-  for(const shop of loadedShops){const link=el('a',shop.name);link.href='order.html?v=72&shop='+encodeURIComponent(shop.id);link.className='badge';if(shop.id===requestedShop)link.setAttribute('aria-current','page');switcher.append(link)}root.append(switcher);
+  for(const shop of loadedShops){const link=el('a',shop.name);link.href='order.html?v=73&shop='+encodeURIComponent(shop.id);link.className='badge';if(shop.id===requestedShop)link.setAttribute('aria-current','page');switcher.append(link)}root.append(switcher);
   $('shopPick').replaceChildren(...loadedShops.map(shop=>{const o=el('option',shop.name);o.value=shop.id;return o}));await pickProducts();
   const visible=requestedShop?loadedShops.filter(x=>x.id===requestedShop):loadedShops;
   $('menuTitle').textContent=visible.length===1?visible[0].name:'Меню заведений';

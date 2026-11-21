@@ -14,3 +14,4 @@ jobs:
       - run: node tests/dispatcher-board.test.mjs
       - run: node tests/dispatcher-controller.test.mjs
       - run: node tests/buyer-storefront.test.mjs
+      - run: node tests/buyer-role-navigation.test.mjs

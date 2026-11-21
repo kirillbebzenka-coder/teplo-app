@@ -1,0 +1,7 @@
+# Buyer menu incorrectly redirected a signed-in courier
+
+The home catalogue was public, but role-portal classified order.html as customer/admin-only. Opening a test shop with a courier session therefore redirected to pilot-courier.html. The catalogue redesign's public navigation exemption did not bypass this older page permission check. A guest-only browser test did not catch the signed-in staff case.
+
+The server already permits verified users to create their own demo orders regardless of work role, and buyer progress is scoped to customer_id = auth.uid(). Remove the erroneous buyer-page restriction from client routing. Staff workspace checks and backend policies/RPCs remain unchanged. No user role or account is changed. Buyer entry points and role-portal imports use v73 to avoid cached redirect rules.
+
+Validation: actual role-portal controller tested with guest, customer, courier, venue, dispatcher and admin sessions on public pages, and unauthorized/authorized staff workspace cases. A new backend transaction under authenticated courier identity creates a zoned combined order, reads its own order/progress, refuses unrelated order visibility and dispatcher access, preserves courier role, deduplicates retry, and lets another courier accept/pick up/deliver with one earnings record. All fixtures roll back. Checkout-to-delivery, access-and-dispatch and role-RLS also pass. Syntax, attention, checkout-network and buyer-storefront checks pass. Brother's actual device/session is not impersonated or changed.

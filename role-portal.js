@@ -2,14 +2,15 @@
 import {createClient} from 'https://esm.sh/@supabase/supabase-js@2';
 const client=createClient('https://bgtegxdekqsajttkhhrj.supabase.co','sb_publishable_aSOKkJ_F47sGj9e8v8uJ3g_24rlQ8XG');
 const page=location.pathname.split('/').pop().toLowerCase();
+// Buyer pages are public. Staff roles keep their work permissions while placing
+// their own orders; ownership and confirmed-account checks remain on the server.
 const permissions={
  'team.html':['admin'],
  'dispatcher.html':['admin','dispatcher'],
  'pilot-dispatch.html':['admin','dispatcher'],
  'shop.html':['admin','venue'],
  'partner.html':['admin','venue'],
- 'courier.html':['admin','courier'],
- 'order.html':['admin','customer']
+ 'courier.html':['admin','courier']
 };
 const destinations={
  admin:'team.html?v=35',
