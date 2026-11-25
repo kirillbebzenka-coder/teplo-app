@@ -2,9 +2,9 @@
 <html lang="ru">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#050507"><meta name="color-scheme" content="dark">
+<meta name="theme-color" content="#ffffff"><meta name="color-scheme" content="light">
 <title>Фелічіта · Превью меню в TEPLO</title>
-<link rel="stylesheet" href="./theme.css?v=25">
+
 <style>
 *{box-sizing:border-box}
 html{scroll-behavior:smooth}body{background:#0b0b10;color:#f3edf2;margin:0;min-width:300px}
@@ -74,11 +74,11 @@ main{max-width:790px;margin:auto;padding:0 16px calc(150px + env(safe-area-inset
 @media(max-width:430px){main{padding:0 14px 125px}.cover{height:200px}.cover-title{font-size:32px}.item-grid{grid-template-columns:1fr}.menu-item{min-height:111px}.menu-item .photo{width:88px;height:88px;flex-basis:88px}.section{margin-top:26px}}
 @media(prefers-reduced-motion:reduce){.menu-item{transition:none}}
 </style>
-<link rel="stylesheet" href="./neon.css?v=26">
-<link rel="stylesheet" href="./buyer-storefront.css?v=72"><script src="./pilot-ui-icons.js?v=72" defer></script></head>
-<body>
+
+<link rel="stylesheet" href="./buyer-storefront.css?v=80"><script src="./pilot-ui-icons.js?v=80" defer></script><link rel="stylesheet" href="./buyer-light.css?v=80"></head>
+<body class="buyer-preview customer-light">
 <main>
-<header class="navtop"><a href="./?v=72">← Все рестораны</a><button id="share" type="button">↗ Поделиться</button></header>
+<header class="navtop"><a href="./?v=80">← Все рестораны</a><button id="share" type="button">↗ Поделиться</button></header>
 <div class="cover"><img alt="Иллюстративная фотография пиццы, не блюдо из меню ресторана" src="https://images.unsplash.com/photo-1574071318508-1cdbab80d002?auto=format&fit=crop&w=1400&q=80">
 <span class="cover-label">ДЕМО-ПРЕВЬЮ · НЕ ОФИЦИАЛЬНОЕ МЕНЮ</span><div class="cover-title">Фелічіта</div></div>
 <section class="restaurant-intro">
@@ -97,7 +97,7 @@ main{max-width:790px;margin:auto;padding:0 16px calc(150px + env(safe-area-inset
 <p id="empty" class="empty" hidden>Ничего не найдено. Попробуй другое слово или категорию.</p>
 <div class="footer">TEPLO · Дизайн-превью, не связанное с рестораном<br>Иллюстративные фотографии еды, не реальные блюда заведения</div>
 </main>
-<nav class="buyer-bottom" data-buyer-navigation aria-label="Навигация покупателя"><a href="./?v=72" class="active" aria-current="page"><span data-teplo-icon="store"></span><span>Главная</span></a><a href="order.html?v=72#cart-section"><span data-teplo-icon="bag"></span><span>Корзина</span></a><a href="order.html?v=72#orders-section"><span data-teplo-icon="history"></span><span>Заказы</span></a><a href="order.html?v=72#accountSection"><span data-teplo-icon="user"></span><span>Профиль</span></a></nav>
+<nav class="buyer-bottom" data-buyer-navigation aria-label="Навигация покупателя"><a href="./?v=80" class="active" aria-current="page"><span data-teplo-icon="store"></span><span>Главная</span></a><a href="order.html?v=80#cart-section"><span data-teplo-icon="bag"></span><span>Корзина</span></a><a href="order.html?v=80#orders-section"><span data-teplo-icon="history"></span><span>Заказы</span></a><a href="order.html?v=80#accountSection"><span data-teplo-icon="user"></span><span>Профиль</span></a></nav>
 <div id="sheetBackdrop" class="sheet-backdrop" hidden>
   <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="detailName">
     <div class="sheet-handle"></div>
