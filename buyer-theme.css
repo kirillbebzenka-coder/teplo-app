@@ -1,0 +1,35 @@
+/* Colour tokens only: page geometry is shared by both themes. */
+:root[data-buyer-theme=dark]{
+ color-scheme:dark;background:#0b090f;
+ --customer-scheme:dark;
+ --customer-surface:#0b090f;
+ --customer-raised:#1b1422;
+ --customer-selection:#38213f;
+ --customer-line:#49314f;
+ --customer-text:#f5edf8;
+ --customer-muted:#c2afcc;
+ --customer-accent:#f291cc;
+ --customer-on-accent:#23102a;
+ --customer-hero:#24172b;
+ --customer-hero-fade:#24172b1a;
+ --customer-nav:#100c16f5;
+ --customer-shadow:#0006;
+ --customer-success:#ade1bd;
+ --customer-success-bg:#132c20;
+ --customer-success-line:#426d58;
+ --customer-warning:#f0ce8b;
+ --customer-warning-bg:#332719;
+ --customer-warning-line:#86653f;
+ --customer-late:#ffabc3;
+ --customer-late-bg:#361927;
+ --customer-late-line:#965067;
+}
+#buyerThemeToggle{
+ display:inline-flex;align-items:center;justify-content:center;flex:0 0 42px;
+ width:42px;min-width:42px;height:42px;min-height:42px!important;padding:0!important;margin:0;
+ border:1px solid var(--customer-line,#e6d5e4)!important;border-radius:14px!important;
+ background:var(--customer-raised,#fff5fb)!important;color:var(--customer-accent,#a42e74)!important;
+ font:24px/1 system-ui,sans-serif!important;cursor:pointer;box-shadow:none!important;
+}
+#buyerThemeToggle:focus-visible{outline:2px solid var(--customer-accent,#a42e74);outline-offset:3px}
+@media(max-width:360px){#buyerThemeToggle{flex-basis:38px;min-width:38px;width:38px;height:40px;min-height:40px!important}}
