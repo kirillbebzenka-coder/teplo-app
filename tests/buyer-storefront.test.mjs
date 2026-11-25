@@ -15,3 +15,11 @@ const events={},areaNodes=new Map(['areaSelect','areaLabel','areaDialog','areaOp
 const ui=vm.createContext({DELIVERY_AREAS,sessionStorage:{getItem:k=>saved.get(k),setItem:(k,v)=>saved.set(k,v)},location:{hash:'#cart-section'},requestAnimationFrame:fn=>fn(),document:{getElementById:id=>areaNodes.get(id)||null,querySelectorAll:selector=>selector.includes('data-buyer-navigation')?[nav]:selector.includes('.product')?[product]:[]},window:{addEventListener:(name,fn)=>{(events[name]??=[]).push(fn)}}});
 vm.runInContext(fs.readFileSync('buyer-storefront.js','utf8').replace(/^import .*;\n/gm,'').replaceAll('export function','function'),ui);assert.equal(areaNodes.get('demoArea').value,'dachi');assert.equal(areaNodes.get('areaLabel').textContent,'Дачи');assert.equal(areaNodes.get('cart-section').hidden,false);areaNodes.get('cart-section').hidden=true;for(const fn of events['teplo:buyer-ready'])fn();assert.equal(areaNodes.get('cart-section').hidden,false,'cart deep link opens after draft hydration');ui.location.hash='#accountSection';areaNodes.set('accountSection',new Element());for(const fn of events.hashchange)fn();assert.equal(areaNodes.get('authDetails').open,true);areaNodes.get('menuSearch').value='кола';areaNodes.get('menuSearch').listeners.input();assert.equal(product.hidden,true);assert.equal(areaNodes.get('menuNoResults').hidden,false);
 console.log('PASS: guest search/categories, real/demo distinction, cart validation, public-only reads, offline catalogue retention, saved locality, menu search and cart/profile deep links.');
+
+// Profile, history and checkout are isolated views even after hydration.
+ui.document.body={dataset:{}};areaNodes.set('delivery-form',new Element());
+for(const [hash,view] of [['#accountSection','profile'],['#orders-section','orders'],['#delivery-form','checkout'],['#cart-section','cart'],['#market','menu'],['','menu']]){
+ ui.location.hash=hash;for(const fn of events.hashchange)fn();assert.equal(ui.document.body.dataset.buyerView,view);
+ for(const fn of events['teplo:buyer-ready'])fn();assert.equal(ui.document.body.dataset.buyerView,view);
+}
+console.log('PASS: tab isolation survives navigation and cart/catalogue hydration.');

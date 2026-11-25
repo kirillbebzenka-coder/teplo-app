@@ -3,3 +3,26 @@
 #catalog .product strong{overflow-wrap:anywhere}
 
 .buyer-menu textarea{resize:vertical;min-height:95px;line-height:1.5}.buyer-menu textarea:focus-visible{outline:2px solid #ad85f1;outline-offset:2px}
+
+/* Tabs are separate views, not anchors into one long page. */
+body[data-buyer-view] main>section{display:none!important}
+body[data-buyer-view=menu] #market,
+body[data-buyer-view=profile] #accountSection,
+body[data-buyer-view=orders] #orders-section,
+body[data-buyer-view=cart] #cart-section,
+body[data-buyer-view=checkout] #delivery-form,
+body[data-buyer-view=success] #orderSuccess{display:block!important}
+body[data-buyer-view=profile] #cartBar,body[data-buyer-view=orders] #cartBar,
+body[data-buyer-view=checkout] #cartBar,body[data-buyer-view=success] #cartBar{display:none!important}
+body[data-buyer-view=profile] .menu-intro>p,body[data-buyer-view=orders] .menu-intro>p{display:none}
+.current-orders>h3,.order-history>h3{font-size:17px;margin:20px 0 8px}
+.buyer-menu #orders-section .order-compact{margin:8px 0 0;padding:0;border:1px solid #422d4d;border-radius:12px;overflow:hidden}
+.order-compact>summary{display:flex;align-items:center;gap:10px;min-height:66px;padding:12px;cursor:pointer;list-style:none}
+.order-compact>summary::-webkit-details-marker{display:none}
+.history-copy{flex:1;min-width:0}.history-copy>strong{display:block;font-size:15px;overflow-wrap:anywhere}
+.history-copy>small{display:block;margin-top:3px;font-size:12px;line-height:1.4}
+.history-total{font-size:15px;white-space:nowrap;color:#f5c2e6}
+.order-compact>summary:after{content:'+';font-size:20px;color:#d9b4ec}.order-compact[open]>summary:after{content:'−'}
+.order-compact[open]>summary{border-bottom:1px solid #422d4d}
+.order-compact>p,.order-compact>small,.order-compact>.customer-comment{margin:10px 12px}
+#ordersStatus:empty{display:none}#ordersStatus{color:#ffbcce;margin:12px 0}

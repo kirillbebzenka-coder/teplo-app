@@ -8,8 +8,23 @@ export function initBuyerArea(){
  if(checkout)checkout.addEventListener('change',()=>{const value=checkout.value;if(DELIVERY_AREAS[value]){try{sessionStorage.setItem('teplo:buyer-area',value)}catch{}}});
 }
 export function initBuyerNavigation(){
- function route(){const hash=location.hash;for(const a of document.querySelectorAll('[data-buyer-navigation] a')){const current=a.getAttribute('href').includes(hash)&&hash.length>1;a.classList.toggle('active',current);if(current)a.setAttribute('aria-current','page');else a.removeAttribute('aria-current');}if(hash==='#accountSection'){document.getElementById('authDetails').open=true;}if(hash==='#cart-section')document.getElementById('cart-section').hidden=false;const target=document.getElementById(hash.slice(1));if(target)requestAnimationFrame(()=>target.scrollIntoView({block:'start'}));}
- window.addEventListener('hashchange',route);window.addEventListener('teplo:buyer-ready',route);if(location.hash)route();
+ function route(){
+  const hash=location.hash;
+  const view=hash==='#accountSection'?'profile':hash==='#orders-section'?'orders':hash==='#cart-section'?'cart':hash==='#delivery-form'?'checkout':hash==='#orderSuccess'?'success':'menu';
+  if(document.body)document.body.dataset.buyerView=view;
+  const title=document.getElementById('menuTitle');
+  if(title)title.textContent=({profile:'Профиль',orders:'Мои заказы',cart:'Корзина',checkout:'Оформление',success:'Заказ оформлен'})[view]||title.dataset.venueName||'Меню';
+  for(const a of document.querySelectorAll('[data-buyer-navigation] a')){
+   const current=view==='profile'?a.getAttribute('href').includes('#accountSection'):view==='orders'?a.getAttribute('href').includes('#orders-section'):['cart','checkout','success'].includes(view)?a.getAttribute('href').includes('#cart-section'):false;
+   a.classList.toggle('active',current);if(current)a.setAttribute('aria-current','page');else a.removeAttribute('aria-current');
+  }
+  if(view==='profile')document.getElementById('authDetails').open=true;
+  if(view==='cart')document.getElementById('cart-section').hidden=false;
+  if(view==='checkout')document.getElementById('delivery-form').hidden=false;
+  const target=document.getElementById(hash.slice(1));if(target)requestAnimationFrame(()=>target.scrollIntoView({block:'start'}));
+ }
+
+ window.addEventListener('hashchange',route);window.addEventListener('teplo:buyer-ready',route);route();
 }
 initBuyerArea();if(document.getElementById('market'))initBuyerNavigation();
 const menuSearch=document.getElementById('menuSearch');
