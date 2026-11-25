@@ -1,0 +1,25 @@
+name: Build TEPLO customer test APK
+on:
+  push:
+    branches: [feat/customer-apk-v82]
+    paths: [android/customer/**, .github/workflows/customer-apk.yml]
+permissions:
+  contents: read
+jobs:
+  apk:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build and verify test APK
+        run: bash android/customer/build.sh
+      - name: Save installable APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: TEPLO-customer-test-v82
+          path: |
+            android/customer/build/TEPLO-customer-test-v82.apk
+            android/customer/build/verification.txt
+            android/customer/build/SHA256SUMS.txt
+          if-no-files-found: error
+          retention-days: 7
