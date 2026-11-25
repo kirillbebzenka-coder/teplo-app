@@ -59,3 +59,13 @@
 .storefront-home dialog select{background:#faf7fb;color:#302533;border-color:#ded0e0}
 .storefront-home dialog .primary{background:#ad2f78;color:white}
 .storefront-home .secondary{background:#f5edf6;border-color:#e5d3e8;color:#71406e}
+
+/* Larger covers keep the established two/three-column venue grid. */
+.storefront-home .venue-tile{border-radius:15px}
+.storefront-home .venue-art{height:auto;aspect-ratio:3/2;flex:none}
+@media(max-width:600px){
+ .storefront-home main{padding-left:13px;padding-right:13px}
+ .storefront-home .venue-grid{gap:10px}
+ .storefront-home .venue-tile{border-radius:13px}
+ .storefront-home .venue-art{height:auto;aspect-ratio:3/2}
+}
