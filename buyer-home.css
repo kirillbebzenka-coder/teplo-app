@@ -1,0 +1,61 @@
+/* The customer home only. Staff workspaces and shared menu styles are untouched. */
+.storefront-home{color-scheme:light;background:#fff;color:#241f29;--buyer-text:#241f29;--buyer-muted:#766b7c;--buyer-pink:#ac286f;--buyer-violet:#8056a9}
+.storefront-home main{max-width:1080px;padding-left:28px;padding-right:28px}
+.storefront-home .home-header{min-height:88px;border-bottom:1px solid #eee7ed}
+.storefront-home .buyer-brand{font-size:21px;letter-spacing:.18em;color:#b42d78}
+.storefront-home .area-button{padding:9px 14px;color:#584e5e;background:#faf7fa;border:1px solid #e9dfe8;border-radius:24px;font-size:14px}
+.storefront-home .home-cart{border-radius:50%;color:#a32c72;border-color:#eed9e5;background:#fff3f9}
+.storefront-home .home-intro{position:relative;isolation:isolate;overflow:hidden;min-height:254px;display:flex;flex-direction:column;justify-content:center;padding:28px 32px;border:1px solid #f0e4e8;border-radius:26px;margin:25px 0 22px;background:#fff4f5}
+.storefront-home .home-intro:before{content:'';position:absolute;inset:0;z-index:-1;background:linear-gradient(90deg,#fff4f5 0%,#fff4f5 43%,#fff4f51a 76%),url('https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=1200&q=85') right 52%/60% auto no-repeat;opacity:.95}
+.storefront-home .hero-eyebrow{color:#9d4778;letter-spacing:.12em;text-transform:uppercase;font-size:12px;font-weight:750;margin:0 0 14px}
+.storefront-home .home-intro h1{font-size:clamp(34px,5vw,52px);letter-spacing:-.055em;line-height:1.04;max-width:560px;font-weight:850}
+.storefront-home .home-intro h1 em{font-style:normal;color:#ad2c72}
+.storefront-home .home-intro>p:last-child{font-size:15px;color:#675662;max-width:290px;margin-top:16px}
+.storefront-home .buyer-search{height:54px;border-radius:17px;background:#fff;border-color:#e7dce6;box-shadow:0 4px 20px #4d254607;color:#8e788f}
+.storefront-home .buyer-search input{font-size:16px;color:#302632!important}.storefront-home .buyer-search input::placeholder{color:#8c808e}
+.storefront-home .home-filters{justify-content:flex-start;margin:16px 0 26px;gap:10px}
+.storefront-home .home-filters button{flex:0 1 auto;min-width:100px;border-radius:24px;min-height:44px;font-size:14px;background:#faf7fa;border:1px solid #ebe3eb;color:#6c5a70}
+.storefront-home .home-filters button[aria-pressed=true]{background:#af2e77;color:#fff;border-color:#af2e77;box-shadow:0 3px 14px #a92b7115}
+.storefront-home .venues-heading{margin-bottom:16px}.storefront-home .venues-heading h2{font-size:23px;font-weight:780;letter-spacing:-.035em}
+.storefront-home .venues-heading>span{font-size:13px;color:#84748b}
+.storefront-home .venue-grid{gap:18px}.storefront-home .venue-tile{border-radius:22px;background:#fff;border-color:#ebe3e9;box-shadow:0 6px 22px #50274208}
+.storefront-home .venue-tile:hover{border-color:#c76c9f;transform:translateY(-3px)}
+.storefront-home .venue-art{height:158px;padding:20px;position:relative}
+.storefront-home .venue-photo{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:1}
+.storefront-home .venue-art:after{content:'';position:absolute;inset:0;z-index:2;background:linear-gradient(0deg,#130b1880,transparent 65%);pointer-events:none}
+.storefront-home .venue-label{position:absolute;left:12px;top:12px;z-index:3;max-width:calc(100% - 24px);font-size:11px;font-weight:650;background:#170d20d9;color:#f4d6ed;border:1px solid #ffffff26;padding:5px 9px;border-radius:20px;backdrop-filter:blur(8px)}
+.storefront-home .venue-copy{padding:17px 18px 18px}.storefront-home .venue-copy h3{font-size:20px;letter-spacing:-.035em}
+.storefront-home .venue-subtitle{color:#7a6c80;font-size:14px;margin-top:5px}
+.storefront-home .venue-mode{border-top:1px solid #f0e9ef;padding-top:12px;margin-top:12px;font-size:12px;color:#a83176}
+.storefront-home .test-note{font-size:12px;line-height:1.6;color:#87798c;margin-top:20px}
+.storefront-home .home-about{margin-top:18px;border-color:#eee6ed;color:#85728d}
+.storefront-home .buyer-bottom{background:#ffffffed;border-top-color:#e9dfe8}
+.storefront-home .buyer-bottom a{color:#88768e}.storefront-home .buyer-bottom a.active{background:#faeaf3;color:#a22b71}
+@media(max-width:600px){
+ .storefront-home main{padding-left:17px;padding-right:17px}
+ .storefront-home .home-header{min-height:68px;gap:10px}.storefront-home .buyer-brand{font-size:17px}
+ .storefront-home .area-button{padding:8px 10px;font-size:12px}.storefront-home .area-button #areaLabel{max-width:106px}
+ .storefront-home .home-intro{min-height:138px;margin:16px 0;padding:18px;border-radius:21px}
+ .storefront-home .home-intro:before{background-size:auto,65% auto;background-position:center,right 53%}
+ .storefront-home .hero-eyebrow{font-size:10px;margin-bottom:8px;letter-spacing:.1em}
+ .storefront-home .home-intro h1{font-size:32px;max-width:245px}
+ .storefront-home .home-intro>p:last-child{font-size:12px;max-width:180px;margin-top:9px;display:block}
+ .storefront-home .buyer-search{height:48px;border-radius:14px}
+ .storefront-home .home-filters{margin:12px 0 19px;gap:8px}.storefront-home .home-filters button{flex:1;min-width:0;min-height:40px;padding:8px 12px}
+ .storefront-home .venues-heading{margin-bottom:12px}.storefront-home .venues-heading h2{font-size:21px}
+ .storefront-home .venue-grid{gap:12px}.storefront-home .venue-tile{border-radius:17px}.storefront-home .venue-art{height:91px}
+ .storefront-home .venue-copy{padding:12px}.storefront-home .venue-copy h3{font-size:17px}.storefront-home .venue-subtitle{font-size:12px}
+ .storefront-home .venue-mode{font-size:11px;margin-top:9px;padding-top:8px}.storefront-home .venue-label{left:8px;top:8px;font-size:10px;padding:4px 7px}
+}
+@media(max-width:600px) and (max-height:740px){
+ .storefront-home .home-intro{min-height:111px;padding:15px;margin:12px 0}.storefront-home .home-intro h1{font-size:28px}.storefront-home .home-intro>p:last-child{display:none}
+ .storefront-home .home-header{min-height:60px}.storefront-home .venue-art{height:70px}.storefront-home .venue-mode{margin-top:6px;padding-top:6px}.storefront-home .venue-copy{padding:10px}
+}
+@media(prefers-reduced-motion:reduce){.storefront-home .venue-tile:hover{transform:none}}
+
+.storefront-home .catalog-message p{color:#765a78}
+.storefront-home dialog{color-scheme:light;background:#fff;color:#241f29;border-color:#e0c4d7}
+.storefront-home dialog label,.storefront-home dialog p{color:#75637e}
+.storefront-home dialog select{background:#faf7fb;color:#302533;border-color:#ded0e0}
+.storefront-home dialog .primary{background:#ad2f78;color:white}
+.storefront-home .secondary{background:#f5edf6;border-color:#e5d3e8;color:#71406e}
