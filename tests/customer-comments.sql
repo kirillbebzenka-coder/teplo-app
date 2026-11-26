@@ -1,5 +1,7 @@
 -- End-to-end comment regression, including real authenticated RLS contexts.
 begin;
+-- Isolated fixture only. Application defaults remain manual after ROLLBACK.
+update teplo_private.demo_venue_acceptance set auto_confirm_enabled=true;
 do $$
 declare buyer uuid; rider uuid; staff_id uuid; shop uuid; oid uuid; blank_oid uuid; jid uuid; items jsonb; req uuid:=gen_random_uuid();
  note text:=E'Без лука.\nПодъезд 2, домофон не работает. <b>Позвоните</b>'; due timestamptz; before_comments jsonb;

@@ -1,15 +1,19 @@
 import {appendCustomerComment} from './customer-comment.js?v=74';
+export function preparationMinutes(value){
+ if(typeof value!=='string'||!/^(0|[1-9]\d*)$/.test(value)||Number(value)>180)throw Error('Укажи время готовности со слов заведения.');
+ return Number(value);
+}
 export function mountBuyerOrders(db,{preview=false}={}){
 const el=(tag,text='',cls='')=>{const node=document.createElement(tag);node.textContent=String(text??'');if(cls)node.className=cls;return node};
 const money=n=>Number(n||0).toLocaleString('ru-RU',{maximumFractionDigits:2})+' ₴';
 const day=t=>new Date(t).toLocaleDateString('ru-RU',{timeZone:'Europe/Kyiv',day:'2-digit',month:'2-digit'});
 const clock=t=>new Date(t).toLocaleTimeString('ru-RU',{timeZone:'Europe/Kyiv',hour:'2-digit',minute:'2-digit'});
 const deliveryStates={new:'Ищем курьера',assigned:'Курьер назначен',accepted:'Курьер принял',picked_up:'Курьер забрал',delivered:'Доставлен',cancelled:'Отменён'};
-const states={pending:'Не размещён',ordered:'Заказ размещён',confirmed:'Подтверждено',issue:'Проблема'};
+const states={pending:'Ждёт звонка',ordered:'Заказ размещён',confirmed:'Подтверждено',issue:'Проблема'};
 const section=document.getElementById('buyerOrderArea');
 const header=el('div','','row'),h2=el('h2','Подтверждения заведений'),refresh=el('button','Обновить','secondary');
 refresh.type='button';header.append(h2,refresh);
-section.append(header,el('p','Один заказ — одна карточка. Подтверждения заведений внутри.','muted'));
+section.append(header,el('p','Позвони в каждое заведение, передай заказ и уточни время готовности. Только после подтверждения всех точек заказ появится у курьера.','muted'));
 const filters=el('div','','buyer-filters'),extraFilters=el('details','','dispatch-disclosure buyer-extra-filters'),extraButtons=el('div','','buyer-filters');extraFilters.append(el('summary','История заказов покупателей'),extraButtons);
 const shell=el('div','','queue-shell');
 const root=el('div','','queue-list');root.id='buyerOrders';
@@ -89,23 +93,25 @@ function card(o,tasks,slots,links){
    const controls=el('div','','actions'),note=document.createElement('input'),msg=el('p','','muted');
    const readySelect=document.createElement('select');
    readySelect.setAttribute('aria-label','Через сколько минут готов заказ в '+task.shop_name_snapshot);
+   const empty=el('option','Выбери время со слов заведения');empty.value='';empty.disabled=true;empty.selected=true;readySelect.append(empty);
    for(const mins of [0,10,15,20,30,45,60,90,120,180]){
     const option=el('option',mins===0?'Уже готово':'Через '+mins+' мин');
-    option.value=String(mins);if(mins===20)option.selected=true;readySelect.append(option);
+    option.value=String(mins);readySelect.append(option);
    }
-   if(task.state==='ordered'||task.state==='confirmed')part.append(el('p','Готовность по ответу заведения','mini-section-heading'),readySelect);
+   part.append(el('p','Готовность по ответу заведения','mini-section-heading'),readySelect);
    note.placeholder='Комментарий / причина проблемы';note.maxLength=400;
-   const choices=task.state==='pending'?[['ordered','Заказ размещён'],['issue','Проблема']]
-    :task.state==='ordered'?[['confirmed','Подтверждено'],['issue','Проблема']]
-    :task.state==='issue'?[['ordered','Разместить повторно']]:[['issue','Проблема']];
+   const choices=task.state==='pending'?[['confirmed','Позвонил — заказ принят'],['issue','Проблема']]
+    :task.state==='ordered'?[['confirmed','Заведение подтвердило'],['issue','Проблема']]
+    :task.state==='issue'?[['confirmed','Связался — заказ принят']]:[['issue','Проблема']];
    for(const [next,label] of (linked?[]:choices)){
     const b=el('button',label,'secondary');b.type='button';
     b.onclick=async()=>{
+     let minutes;try{if(next==='confirmed')minutes=preparationMinutes(readySelect.value)}catch(e){msg.textContent=e.message;return}
      b.disabled=true;msg.textContent='Сохраняем…';
      try{
       const {error}=next==='confirmed'
-       ?await db.rpc('teplo_dispatch_confirm_venue',{
-        p_order_id:o.id,p_shop_id:task.shop_id,p_ready_minutes:Number(readySelect.value),p_note:note.value.trim()
+       ?await db.rpc('teplo_dispatch_phone_confirm',{
+        p_order_id:o.id,p_shop_id:task.shop_id,p_ready_minutes:minutes,p_note:note.value.trim()
        })
        :await db.rpc('teplo_dispatch_update_venue',{
         p_order_id:o.id,p_shop_id:task.shop_id,p_action:next,p_note:note.value.trim()
@@ -119,10 +125,11 @@ function card(o,tasks,slots,links){
    if(task.state==='confirmed'){
     const edit=el('button',task.ready_at?'Изменить готовность':'Указать готовность','secondary');
     edit.type='button';edit.onclick=async()=>{
+     let minutes;try{minutes=preparationMinutes(readySelect.value)}catch(e){msg.textContent=e.message;return}
      edit.disabled=true;msg.textContent='Сохраняем время готовности…';
      try{
       const {error}=await db.rpc('teplo_dispatch_set_venue_readiness',{
-       p_order_id:o.id,p_shop_id:task.shop_id,p_ready_minutes:Number(readySelect.value)
+       p_order_id:o.id,p_shop_id:task.shop_id,p_ready_minutes:minutes
       });
       if(error)throw error;
       await load(true);

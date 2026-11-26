@@ -3,7 +3,7 @@ import {syncDeliveryTiming,deliveryClock} from './delivery-timer.js?v=75';
 import {dispatchCard,readCardDraft,restoreCardDraft} from './dispatcher-card.js?v=75';
 import {dispatchStatus,dispatchAttention,dispatchCounts,visibleDispatchJobs,unresolvedDispatchIssues} from './dispatcher-board-model.js?v=69';
 import {initDispatcherWorkspace} from './dispatcher-workspace.js?v=69';
-import {mountBuyerOrders} from './pilot-buyer-dispatch.js?v=74';
+import {mountBuyerOrders} from './pilot-buyer-dispatch.js?v=83';
 const preview=new URLSearchParams(location.search).get('preview')==='1';
 const db=preview?(await import('./dispatcher-preview.js?v=74')).previewDatabase():
  (await import('https://esm.sh/@supabase/supabase-js@2')).createClient('https://bgtegxdekqsajttkhhrj.supabase.co','sb_publishable_aSOKkJ_F47sGj9e8v8uJ3g_24rlQ8XG');

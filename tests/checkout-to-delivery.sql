@@ -1,7 +1,8 @@
 -- Full demo path under customer/courier identities, rolled back without phone notifications.
 begin;
+update teplo_private.demo_venue_acceptance set auto_confirm_enabled=false;
 do $$
-declare buyer uuid; rider uuid; oid uuid; jid uuid; req uuid:=gen_random_uuid(); items jsonb; first_role text;
+declare buyer uuid; rider uuid; oid uuid; jid uuid; req uuid:=gen_random_uuid(); items jsonb; shop uuid;
 begin
  select p.id into buyer from public.profiles p join auth.users u on u.id=p.id where u.email_confirmed_at is not null order by (p.role='admin') desc limit 1;
  select p.id into rider from public.profiles p join auth.users u on u.id=p.id
@@ -17,6 +18,13 @@ begin
  perform set_config('request.jwt.claim.sub',buyer::text,true);
  oid:=public.place_teplo_demo_combined_cart(items,'Тестовый покупатель','0000000000','Тестовая улица','1','','cash_on_delivery',req);
  set constraints all immediate;
+ if exists(select 1 from public.teplo_pilot_jobs where source_order_id=oid) then raise exception 'Unconfirmed checkout reached courier queue';end if;
+ if exists(select 1 from public.teplo_order_venue_tasks where order_id=oid and (state<>'pending' or ready_at is not null)) then raise exception 'Kitchen was simulated without operator';end if;
+ update public.profiles set role='dispatcher' where id=buyer;
+ for shop in select shop_id from public.teplo_order_venue_tasks where order_id=oid order by shop_id loop
+  perform public.teplo_dispatch_phone_confirm(oid,shop,20,'Тест: заведение приняло заказ по телефону');
+ end loop;
+ update public.profiles set role='customer' where id=buyer;
  select id into jid from public.teplo_pilot_jobs where source_order_id=oid;
  if jid is null then raise exception 'Checkout did not reach courier queue';end if;
  if not exists(select 1 from jsonb_array_elements(public.teplo_buyer_order_progress()) x where x->>'order_id'=oid::text and x->>'state'='new') then raise exception 'Buyer queue progress missing';end if;

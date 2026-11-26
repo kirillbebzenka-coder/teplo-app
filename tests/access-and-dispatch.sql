@@ -1,4 +1,6 @@
 begin;
+-- Isolated fixture only. Application defaults remain manual after ROLLBACK.
+update teplo_private.demo_venue_acceptance set auto_confirm_enabled=true;
 do $$
 declare owner_id uuid; first_rider uuid; second_rider uuid; oid uuid; jid uuid; items jsonb;
 begin

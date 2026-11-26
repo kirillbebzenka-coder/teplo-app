@@ -1,5 +1,7 @@
 -- Disposable fixtures. All data, role changes and queued HTTP requests roll back.
 begin;
+-- Isolated fixture only. Application defaults remain manual after ROLLBACK.
+update teplo_private.demo_venue_acceptance set auto_confirm_enabled=true;
 do $$
 declare owner_id uuid;rider uuid;other_rider uuid;items jsonb;oid uuid;jid uuid; area text;zone text;mins int;deadline timestamptz;request uuid;unknown_id uuid;late_id uuid;fixture_slot uuid;result jsonb;
 begin
